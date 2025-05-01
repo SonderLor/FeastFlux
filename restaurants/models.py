@@ -34,4 +34,4 @@ class Restaurant(models.Model):
     name = models.CharField(max_length=150, verbose_name=_("Название"))
     address = models.CharField(max_length=255, verbose_name=_("Адрес"))
     phone_number = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Телефон"))
-    table = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="tables")
+    table = models.ForeignKey(Table, on_delete=models.CASCADE, related_name="tables")
