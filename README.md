@@ -132,4 +132,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📞 Contact
-For questions or support, please contact your-email@example.com.
+For questions or support, please contact mralexey111@gmail.com.
