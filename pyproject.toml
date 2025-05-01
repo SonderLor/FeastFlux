@@ -16,13 +16,11 @@ dependencies = [
     "django-celery-beat>=2.5.0",
     "djangorestframework>=3.14.0",
     "django-filter>=23.2",
+    "django-cors-headers>=4.7.0",
     "pillow>=10.0.0",
     "gunicorn>=21.2.0",
     "python-dotenv>=1.0.0",
-]
-
-[project.optional-dependencies]
-dev = [
+    "redis>=6.0.0",
     "django-debug-toolbar>=4.2.0",
     "pytest>=7.4.0",
     "pytest-django>=4.5.2",
@@ -31,13 +29,6 @@ dev = [
     "mypy>=1.4.1",
     "flake8>=6.1.0",
 ]
-
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-packages = ["config", "core", "users", "restaurants", "menu", "orders", "kitchen", "analytics"]
 
 [tool.black]
 line-length = 100

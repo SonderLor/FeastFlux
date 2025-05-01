@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_celery_beat',
     'django_filters',
+    'corsheaders',
 
     'core.apps.CoreConfig',
     'users.apps.UsersConfig',
@@ -31,6 +32,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -127,6 +129,8 @@ SESSION_CACHE_ALIAS = 'default'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
+
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost,http://127.0.0.1').split(',')
 
 LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/'

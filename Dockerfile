@@ -7,7 +7,7 @@ ENV PYTHONPATH=/app
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc postgresql-client libpq-dev \
+    && apt-get install -y --no-install-recommends gcc postgresql-client libpq-dev netcat-openbsd \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -16,17 +16,14 @@ COPY pyproject.toml /app/
 COPY uv.lock /app/
 RUN uv pip install --system -e .
 
-RUN uv pip install --system gunicorn redis celery
-
 COPY . /app/
 
 RUN mkdir -p /app/staticfiles /app/media
 
+RUN chmod +x /app/docker-entrypoint.sh
+
 RUN adduser --disabled-password --gecos '' appuser
 RUN chown -R appuser:appuser /app
 USER appuser
-
-COPY ./docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
