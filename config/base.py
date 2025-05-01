@@ -132,6 +132,8 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
     "CORS_ALLOWED_ORIGINS", "http://localhost,http://127.0.0.1"
 ).split(",")
 
+AUTH_USER_MODEL = "users.User"
+
 LOGIN_URL = "/users/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/users/login/"
