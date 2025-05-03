@@ -1,0 +1,147 @@
+/* Основные стили для приложения FeastFlux */
+
+body {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Заголовки */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+}
+
+/* Футер */
+.footer {
+    background-color: #f8f9fa;
+    padding: 3rem 0;
+    margin-top: 3rem;
+}
+
+/* Стили для текста */
+.text-primary {
+    color: #4e73df !important;
+}
+
+.bg-primary {
+    background-color: #4e73df !important;
+}
+
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2e59d9;
+}
+
+/* Карточки и тени */
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.shadow {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem 0 rgba(58, 59, 69, 0.1) !important;
+}
+
+/* Навигация */
+.navbar {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.navbar-light .navbar-brand {
+    color: #4e73df;
+    font-weight: 700;
+}
+
+/* Формы */
+.form-control:focus {
+    border-color: #bac8f3;
+    box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+}
+
+/* Анимации */
+.fadeIn {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Стили для профилей */
+.profile-card {
+    border-radius: 0.5rem;
+    background-color: #fff;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.profile-header {
+    padding: 1.5rem;
+    background-color: #4e73df;
+    color: white;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.profile-body {
+    padding: 1.5rem;
+}
+
+/* Особые стили для страницы КБЖУ */
+.nutrition-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    margin-right: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.calories-badge {
+    background-color: #f6c23e;
+    color: #212529;
+}
+
+.protein-badge {
+    background-color: #4e73df;
+    color: white;
+}
+
+.fat-badge {
+    background-color: #e74a3b;
+    color: white;
+}
+
+.carbs-badge {
+    background-color: #36b9cc;
+    color: white;
+}
+
+/* Стили для аллергенов */
+.allergen-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    margin-right: 0.25rem;
+}
+
+.allergen-warning {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
