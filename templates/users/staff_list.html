@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0 text-gray-800">Управление персоналом</h1>
     <a href="{% url 'staff_create' %}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Добавить сотрудника
+        <i class="fas fa-plus-circle me-2"></i> Добавить сотрудника
     </a>
 </div>
 
@@ -22,9 +22,7 @@
                 <select name="role" id="role" class="form-select">
                     <option value="">Все роли</option>
                     {% for role_value, role_name in role_choices %}
-                    <option value="{{ role_value }}" {% if selected_role== role_value %}selected{% endif %}>{{ role_name
-                        }}
-                    </option>
+                    <option value="{{ role_value }}" {% if selected_role == role_value %}selected{% endif %}>{{ role_name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -34,15 +32,14 @@
                 <select name="restaurant" id="restaurant" class="form-select">
                     <option value="">Все рестораны</option>
                     {% for restaurant in restaurants %}
-                    <option value="{{ restaurant.id }}" {% if selected_restaurant== restaurant.id|stringformat:"s" %}
-                    selected{% endif %}>{{ restaurant.name }}</option>
+                    <option value="{{ restaurant.id }}" {% if selected_restaurant == restaurant.id|stringformat:"s" %}selected{% endif %}>{{ restaurant.name }}</option>
                     {% endfor %}
                 </select>
             </div>
 
             <div class="col-md-4 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary">Применить фильтры</button>
-                <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary ms-2">Сбросить</a>
+                <button type="submit" class="btn btn-primary me-2">Применить фильтры</button>
+                <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary">Сбросить</a>
             </div>
         </form>
     </div>
@@ -50,7 +47,7 @@
 
 <!-- Таблица сотрудников -->
 <div class="card shadow mb-4">
-    <div class="card-header py-3">
+    <div class="card-header py-3 bg-light">
         <h6 class="m-0 font-weight-bold text-primary">Список сотрудников</h6>
     </div>
     <div class="card-body">
@@ -76,16 +73,16 @@
                     <td>{{ staff_user.email }}</td>
                     <td>{{ staff_user.profile.phone_number|default:"Не указан" }}</td>
                     <td>
-                                <span class="badge {% if staff_user.is_active %}bg-success{% else %}bg-danger{% endif %}">
-                                    {% if staff_user.is_active %}Активен{% else %}Неактивен{% endif %}
-                                </span>
+                        <span class="badge {% if staff_user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if staff_user.is_active %}Активен{% else %}Неактивен{% endif %}
+                        </span>
                     </td>
                     <td>
-                        <a href="{% url 'staff_edit' staff_user.id %}" class="btn btn-sm btn-primary">
+                        <a href="{% url 'staff_edit' staff_user.id %}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-edit"></i>
                         </a>
                         {% if not staff_user == user and staff_user.is_active %}
-                        <a href="{% url 'staff_deactivate' staff_user.id %}" class="btn btn-sm btn-danger"
+                        <a href="{% url 'staff_deactivate' staff_user.id %}" class="btn btn-sm btn-outline-danger"
                            onclick="return confirm('Вы уверены, что хотите деактивировать этого сотрудника?');">
                             <i class="fas fa-user-slash"></i>
                         </a>
