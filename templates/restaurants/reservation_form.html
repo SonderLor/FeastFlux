@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_create %}Новое бронирование{% else %}Редактирование бронирования{% endif %} | {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'reservation_list' restaurant.id %}">Бронирования</a></li>
+                    <li class="breadcrumb-item active">{% if is_create %}Новое бронирование{% else %}Редактирование бронирования{% endif %}</li>
+                </ol>
+            </nav>
+            <h1>{% if is_create %}Новое бронирование{% else %}Редактирование бронирования{% endif %}</h1>
+        </div>
+        <a href="{% url 'reservation_list' restaurant.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Назад к списку бронирований
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {% for error in form.non_field_errors %}
+                    {{ error }}<br>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Детали бронирования</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.reservation_date.id_for_label }}" class="form-label">{{ form.reservation_date.label }} *</label>
+                                    {{ form.reservation_date }}
+                                    {% if form.reservation_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.reservation_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.reservation_time.id_for_label }}" class="form-label">{{ form.reservation_time.label }} *</label>
+                                    {{ form.reservation_time }}
+                                    {% if form.reservation_time.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.reservation_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.duration.id_for_label }}" class="form-label">{{ form.duration.label }} *</label>
+                                    {{ form.duration }}
+                                    {% if form.duration.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.duration.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.number_of_guests.id_for_label }}" class="form-label">{{ form.number_of_guests.label }} *</label>
+                                    {{ form.number_of_guests }}
+                                    {% if form.number_of_guests.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.number_of_guests.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }} *</label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.status.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.table.id_for_label }}" class="form-label">{{ form.table.label }} *</label>
+                                {{ form.table }}
+                                {% if form.table.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.table.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.special_requests.id_for_label }}" class="form-label">{{ form.special_requests.label }}</label>
+                                {{ form.special_requests }}
+                                {% if form.special_requests.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.special_requests.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Информация о клиенте</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="{{ form.customer_name.id_for_label }}" class="form-label">{{ form.customer_name.label }} *</label>
+                                {{ form.customer_name }}
+                                {% if form.customer_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.customer_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.customer_email.id_for_label }}" class="form-label">{{ form.customer_email.label }} *</label>
+                                {{ form.customer_email }}
+                                {% if form.customer_email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.customer_email.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.customer_phone.id_for_label }}" class="form-label">{{ form.customer_phone.label }} *</label>
+                                {{ form.customer_phone }}
+                                {% if form.customer_phone.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.customer_phone.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Диетические предпочтения и аллергены</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <h6>Диетические предпочтения</h6>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="is_vegetarian" id="id_is_vegetarian" {% if form.is_vegetarian.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_vegetarian">
+                                            {{ form.is_vegetarian.label }}
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="is_vegan" id="id_is_vegan" {% if form.is_vegan.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_vegan">
+                                            {{ form.is_vegan.label }}
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="is_gluten_free" id="id_is_gluten_free" {% if form.is_gluten_free.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_gluten_free">
+                                            {{ form.is_gluten_free.label }}
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="is_lactose_free" id="id_is_lactose_free" {% if form.is_lactose_free.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_lactose_free">
+                                            {{ form.is_lactose_free.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>{{ form.allergens.label }}</h6>
+                                    <p class="text-muted small">{{ form.allergens.help_text }}</p>
+                                    <div class="allergens-container" style="max-height: 150px; overflow-y: auto;">
+                                        {{ form.allergens }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12 mt-4">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'reservation_list' restaurant.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> {% if is_create %}Создать бронирование{% else %}Сохранить изменения{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Стилизация чекбоксов для аллергенов
+    const allergenItems = document.querySelectorAll('.allergens-container ul li');
+    allergenItems.forEach(item => {
+        item.classList.add('mb-2');
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        const label = item.querySelector('label');
+        
+        if (checkbox && label) {
+            checkbox.classList.add('form-check-input', 'me-2');
+            label.classList.add('form-check-label');
+        }
+    });
+    
+    // Проверка доступности столика при изменении даты, времени или продолжительности
+    const dateInput = document.getElementById('{{ form.reservation_date.id_for_label }}');
+    const timeInput = document.getElementById('{{ form.reservation_time.id_for_label }}');
+    const durationInput = document.getElementById('{{ form.duration.id_for_label }}');
+    const guestsInput = document.getElementById('{{ form.number_of_guests.id_for_label }}');
+    const tableSelect = document.getElementById('{{ form.table.id_for_label }}');
+    
+    function updateAvailableTables() {
+        const date = dateInput.value;
+        const time = timeInput.value;
+        const duration = durationInput.value;
+        const guests = guestsInput.value;
+        
+        if (date && time && duration && guests) {
+            // Можно реализовать AJAX-запрос для получения доступных столиков
+            // и обновления списка tableSelect
+        }
+    }
+    
+    dateInput.addEventListener('change', updateAvailableTables);
+    timeInput.addEventListener('change', updateAvailableTables);
+    durationInput.addEventListener('change', updateAvailableTables);
+    guestsInput.addEventListener('change', updateAvailableTables);
+});
+</script>
+{% endblock %}

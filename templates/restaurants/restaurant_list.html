@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Список ресторанов | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Список ресторанов</h1>
+        {% if perms.restaurants.manage_restaurant %}
+        <a href="{% url 'restaurant_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i> Добавить ресторан
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Фильтры</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="city" class="form-label">Город</label>
+                    <input type="text" name="city" id="city" class="form-control" value="{{ form.city.value|default:'' }}" placeholder="Введите город">
+                </div>
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Поиск</label>
+                    <input type="text" name="search" id="search" class="form-control" value="{{ form.search.value|default:'' }}" placeholder="Поиск по названию, адресу или описанию">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Применить</button>
+                    <a href="{% url 'restaurant_list' %}" class="btn btn-outline-secondary">Сбросить</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for restaurant in restaurants %}
+        <div class="col-md-6 col-lg-4 col-xl-3 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ restaurant.name }}</h5>
+                    {% if restaurant.is_active %}
+                    <span class="badge bg-success">Активен</span>
+                    {% else %}
+                    <span class="badge bg-danger">Неактивен</span>
+                    {% endif %}
+                </div>
+                {% if restaurant.logo %}
+                <img src="{{ restaurant.logo.url }}" class="card-img-top" alt="{{ restaurant.name }}" style="height: 180px; object-fit: cover;">
+                {% else %}
+                <div class="text-center py-5 bg-light">
+                    <i class="fas fa-utensils fa-4x text-muted"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <p><i class="fas fa-map-marker-alt text-primary me-2"></i> {{ restaurant.address }}, {{ restaurant.city }}</p>
+                    <p><i class="fas fa-phone text-primary me-2"></i> {{ restaurant.phone }}</p>
+                    
+                    <div class="d-flex justify-content-between mt-3">
+                        <small class="text-muted">Столиков: {{ restaurant.get_table_count }}</small>
+                        <small class="text-muted">Бронирований сегодня: {{ restaurant.get_reservations_today.count }}</small>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'restaurant_detail' restaurant.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-info-circle me-1"></i> Детали
+                        </a>
+                        <div>
+                            <a href="{% url 'table_layout' restaurant.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-chair me-1"></i> Столики
+                            </a>
+                            <a href="{% url 'reservation_list' restaurant.id %}" class="btn btn-sm btn-outline-primary ms-1">
+                                <i class="fas fa-calendar-alt me-1"></i> Бронирования
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> Рестораны не найдены
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if restaurants.has_other_pages %}
+    <nav aria-label="Навигация по страницам" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if restaurants.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if form.city.value %}city={{ form.city.value }}&{% endif %}{% if form.search.value %}search={{ form.search.value }}&{% endif %}page=1">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?{% if form.city.value %}city={{ form.city.value }}&{% endif %}{% if form.search.value %}search={{ form.search.value }}&{% endif %}page={{ restaurants.previous_page_number }}">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in restaurants.paginator.page_range %}
+                {% if restaurants.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > restaurants.number|add:'-3' and num < restaurants.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if form.city.value %}city={{ form.city.value }}&{% endif %}{% if form.search.value %}search={{ form.search.value }}&{% endif %}page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if restaurants.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if form.city.value %}city={{ form.city.value }}&{% endif %}{% if form.search.value %}search={{ form.search.value }}&{% endif %}page={{ restaurants.next_page_number }}">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?{% if form.city.value %}city={{ form.city.value }}&{% endif %}{% if form.search.value %}search={{ form.search.value }}&{% endif %}page={{ restaurants.paginator.num_pages }}">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

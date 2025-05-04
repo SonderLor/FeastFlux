@@ -1,0 +1,399 @@
+{% extends 'base.html' %}
+
+{% block title %}План столиков | {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item active">План столиков</li>
+                </ol>
+            </nav>
+            <h1>План столиков ресторана {{ restaurant.name }}</h1>
+        </div>
+        <div>
+            {% if perms.restaurants.add_table %}
+            <a href="{% url 'table_create' restaurant.id %}" class="btn btn-primary me-2">
+                <i class="fas fa-plus-circle me-1"></i> Добавить столик
+            </a>
+            {% endif %}
+            
+            {% if perms.restaurants.change_table %}
+            <a href="?edit_mode={% if edit_mode %}0{% else %}1{% endif %}" class="btn btn-{% if edit_mode %}success{% else %}outline-secondary{% endif %}">
+                <i class="fas fa-{% if edit_mode %}check{% else %}edit{% endif %} me-1"></i> {% if edit_mode %}Завершить редактирование{% else %}Режим редактирования{% endif %}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-lg-3">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Фильтры</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        {% if edit_mode %}
+                        <input type="hidden" name="edit_mode" value="1">
+                        {% endif %}
+                        
+                        <div class="col-12">
+                            <label for="status" class="form-label">Статус</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">Все статусы</option>
+                                {% for status_value, status_label in table_statuses %}
+                                <option value="{{ status_value }}" {% if request.GET.status == status_value %}selected{% endif %}>{{ status_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="{{ form.min_capacity.id_for_label }}" class="form-label">{{ form.min_capacity.label }}</label>
+                            {{ form.min_capacity }}
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="{{ form.max_capacity.id_for_label }}" class="form-label">{{ form.max_capacity.label }}</label>
+                            {{ form.max_capacity }}
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="{{ form.shape.id_for_label }}" class="form-label">{{ form.shape.label }}</label>
+                            {{ form.shape }}
+                        </div>
+                        
+                        <div class="col-12 d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i> Применить
+                            </button>
+                            <a href="{% url 'table_layout' restaurant.id %}{% if edit_mode %}?edit_mode=1{% endif %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-undo me-1"></i> Сбросить
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Легенда</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-success rounded me-2" style="width: 20px; height: 20px;"></div>
+                        <span>Свободен</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-warning rounded me-2" style="width: 20px; height: 20px;"></div>
+                        <span>Зарезервирован</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-danger rounded me-2" style="width: 20px; height: 20px;"></div>
+                        <span>Занят</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-secondary rounded me-2" style="width: 20px; height: 20px;"></div>
+                        <span>Недоступен</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">План зала</h5>
+                </div>
+                <div class="card-body">
+                    <div class="position-relative bg-light" id="table-layout" style="height: 600px; border: 1px dashed #ccc; overflow: hidden;">
+                        {% for table in tables %}
+                        <div class="table-item position-absolute {% if edit_mode %}draggable{% endif %}" 
+                             id="table-{{ table.id }}" 
+                             data-id="{{ table.id }}" 
+                             data-number="{{ table.number }}" 
+                             data-capacity="{{ table.capacity }}" 
+                             data-status="{{ table.status }}" 
+                             data-shape="{{ table.shape }}"
+                             style="left: {{ table.position_x }}%; top: {{ table.position_y }}%; transform: translate(-50%, -50%);">
+                            
+                            <div class="bg-{% if table.status == 'FREE' %}success{% elif table.status == 'OCCUPIED' %}danger{% elif table.status == 'RESERVED' %}warning{% else %}secondary{% endif %} {% if table.shape == 'ROUND' %}rounded-circle{% else %}rounded{% endif %} d-flex align-items-center justify-content-center"
+                                 style="width: {% if table.shape == 'ROUND' %}80px; height: 80px;{% elif table.shape == 'SQUARE' %}80px; height: 80px;{% elif table.shape == 'RECTANGULAR' %}100px; height: 70px;{% elif table.shape == 'OVAL' %}100px; height: 70px; border-radius: 50px!important;{% else %}80px; height: 80px;{% endif %} color: white; font-weight: bold; cursor: {% if edit_mode %}move{% else %}pointer{% endif %};">
+                                <div class="text-center">
+                                    <div>№{{ table.number }}</div>
+                                    <div>{{ table.capacity }} чел.</div>
+                                </div>
+                            </div>
+                            
+                            {% if edit_mode %}
+                            <div class="table-actions position-absolute bottom-0 start-50 translate-middle-x bg-white rounded py-1 px-2 shadow-sm">
+                                <a href="{% url 'table_edit' table.id %}" class="text-primary me-2" data-bs-toggle="tooltip" title="Редактировать">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'table_delete' table.id %}" class="text-danger" data-bs-toggle="tooltip" title="Удалить">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <div class="d-flex align-items-center justify-content-center h-100">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-chair fa-4x mb-3"></i>
+                                <h5>Столики отсутствуют</h5>
+                                {% if perms.restaurants.add_table %}
+                                <p>Нажмите на кнопку "Добавить столик" чтобы создать новый столик</p>
+                                <a href="{% url 'table_create' restaurant.id %}" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle me-1"></i> Добавить столик
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Список столиков</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>№ столика</th>
+                            <th>Вместимость</th>
+                            <th>Форма</th>
+                            <th>Статус</th>
+                            <th>Расположение</th>
+                            <th>Минимальный чек</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for table in tables %}
+                        <tr>
+                            <td>{{ table.number }}</td>
+                            <td>{{ table.capacity }} чел.</td>
+                            <td>
+                                {% if table.shape == 'ROUND' %}
+                                <i class="fas fa-circle" data-bs-toggle="tooltip" title="Круглый"></i> Круглый
+                                {% elif table.shape == 'SQUARE' %}
+                                <i class="fas fa-square" data-bs-toggle="tooltip" title="Квадратный"></i> Квадратный
+                                {% elif table.shape == 'RECTANGULAR' %}
+                                <i class="fas fa-square" data-bs-toggle="tooltip" title="Прямоугольный"></i> Прямоугольный
+                                {% elif table.shape == 'OVAL' %}
+                                <i class="fas fa-circle" data-bs-toggle="tooltip" title="Овальный"></i> Овальный
+                                {% else %}
+                                <i class="fas fa-shapes" data-bs-toggle="tooltip" title="Нестандартный"></i> Нестандартный
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if table.status == 'FREE' %}
+                                <span class="badge bg-success">Свободен</span>
+                                {% elif table.status == 'OCCUPIED' %}
+                                <span class="badge bg-danger">Занят</span>
+                                {% elif table.status == 'RESERVED' %}
+                                <span class="badge bg-warning text-dark">Зарезервирован</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Недоступен</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ table.location_description|default:"-" }}</td>
+                            <td>{{ table.min_spend|default:"-" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    {% if perms.restaurants.change_table %}
+                                    <a href="{% url 'table_edit' table.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                    
+                                    {% if perms.restaurants.delete_table %}
+                                    <a href="{% url 'table_delete' table.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                    {% endif %}
+                                    
+                                    <button type="button" class="btn btn-outline-info table-focus" data-id="{{ table.id }}" data-bs-toggle="tooltip" title="Найти на плане">
+                                        <i class="fas fa-search-location"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">Столики отсутствуют</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация тултипов
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Обработка клика по столику (не в режиме редактирования)
+    const tableItems = document.querySelectorAll('.table-item:not(.draggable)');
+    tableItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const tableId = this.dataset.id;
+            const tableNumber = this.dataset.number;
+            const tableCapacity = this.dataset.capacity;
+            const tableStatus = this.dataset.status;
+            
+            // Здесь можно показать модальное окно с информацией о столике
+            // или перенаправить на страницу столика
+            alert(`Столик №${tableNumber}\nВместимость: ${tableCapacity} чел.\nСтатус: ${getStatusName(tableStatus)}`);
+        });
+    });
+    
+    // Функция для перевода статуса
+    function getStatusName(status) {
+        switch(status) {
+            case 'FREE': return 'Свободен';
+            case 'OCCUPIED': return 'Занят';
+            case 'RESERVED': return 'Зарезервирован';
+            case 'UNAVAILABLE': return 'Недоступен';
+            default: return status;
+        }
+    }
+    
+    // Поиск столика на плане
+    const tableFocusButtons = document.querySelectorAll('.table-focus');
+    tableFocusButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tableId = this.dataset.id;
+            const tableElement = document.getElementById(`table-${tableId}`);
+            
+            if (tableElement) {
+                // Прокрутка к столику
+                tableElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Подсветка столика
+                tableElement.classList.add('highlight-table');
+                setTimeout(() => {
+                    tableElement.classList.remove('highlight-table');
+                }, 3000);
+            }
+        });
+    });
+    
+    {% if edit_mode %}
+    // Drag & Drop для режима редактирования
+    const draggables = document.querySelectorAll('.draggable');
+    const container = document.getElementById('table-layout');
+    
+    draggables.forEach(draggable => {
+        draggable.addEventListener('mousedown', function(e) {
+            if (e.target.closest('.table-actions')) return; // Игнорируем, если клик по кнопкам
+            
+            const rect = container.getBoundingClientRect();
+            const tableId = this.dataset.id;
+            
+            const onMouseMove = function(e) {
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                
+                draggable.style.left = `${x}%`;
+                draggable.style.top = `${y}%`;
+            };
+            
+            const onMouseUp = function() {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                
+                // Сохраняем новую позицию через AJAX
+                const x = parseFloat(draggable.style.left);
+                const y = parseFloat(draggable.style.top);
+                
+                // Пример AJAX-запроса для сохранения позиции
+                fetch(`/api/tables/${tableId}/position/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ position_x: x, position_y: y })
+                })
+                .then(response => response.json())
+                .then(data => console.log('Позиция сохранена:', data))
+                .catch(error => console.error('Ошибка при сохранении позиции:', error));
+            };
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    });
+    
+    // Функция для получения CSRF-токена из cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    {% endif %}
+});
+</script>
+
+<style>
+.table-item {
+    position: absolute;
+    z-index: 10;
+    user-select: none;
+}
+
+.table-actions {
+    opacity: 0.9;
+    z-index: 20;
+    visibility: hidden;
+}
+
+.table-item:hover .table-actions {
+    visibility: visible;
+}
+
+.highlight-table {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+</style>
+{% endblock %}

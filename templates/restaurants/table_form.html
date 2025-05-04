@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_create %}Добавление столика{% else %}Редактирование столика{% endif %} | {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'table_layout' restaurant.id %}">План столиков</a></li>
+                    <li class="breadcrumb-item active">{% if is_create %}Добавление столика{% else %}Редактирование столика №{{ table.number }}{% endif %}</li>
+                </ol>
+            </nav>
+            <h1>{% if is_create %}Добавление столика{% else %}Редактирование столика №{{ table.number }}{% endif %}</h1>
+        </div>
+        <a href="{% url 'table_layout' restaurant.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Назад к плану столиков
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Основная информация</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="{{ form.restaurant.id_for_label }}" class="form-label">Ресторан *</label>
+                                {{ form.restaurant }}
+                                {% if form.restaurant.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.restaurant.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.number.id_for_label }}" class="form-label">Номер столика *</label>
+                                    {{ form.number }}
+                                    {% if form.number.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.number.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.capacity.id_for_label }}" class="form-label">Вместимость *</label>
+                                    {{ form.capacity }}
+                                    {% if form.capacity.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.capacity.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">Статус *</label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.status.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.shape.id_for_label }}" class="form-label">Форма *</label>
+                                    {{ form.shape }}
+                                    {% if form.shape.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.shape.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row" id="dimensions-container">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.width.id_for_label }}" class="form-label">Ширина (см)</label>
+                                    {{ form.width }}
+                                    {% if form.width.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.width.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.length.id_for_label }}" class="form-label">Длина (см)</label>
+                                    {{ form.length }}
+                                    {% if form.length.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.length.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.min_spend.id_for_label }}" class="form-label">Минимальный чек</label>
+                                {{ form.min_spend }}
+                                {% if form.min_spend.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.min_spend.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Оставьте пустым, если нет минимального чека.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.location_description.id_for_label }}" class="form-label">Описание расположения</label>
+                                {{ form.location_description }}
+                                {% if form.location_description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.location_description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Например: "У окна", "В центре зала", "На террасе".</div>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Активен
+                                </label>
+                                {% if form.is_active.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.is_active.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Расположение на плане</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.position_x.id_for_label }}" class="form-label">Позиция X (%)</label>
+                                    {{ form.position_x }}
+                                    {% if form.position_x.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.position_x.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.position_y.id_for_label }}" class="form-label">Позиция Y (%)</label>
+                                    {{ form.position_y }}
+                                    {% if form.position_y.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.position_y.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-text mb-3">Позиция определяет расположение столика на плане зала. Значения указываются в процентах от размеров плана.</div>
+
+                                <div class="preview-container position-relative bg-light" style="height: 300px; border: 1px dashed #ccc;">
+                                    <div id="table-preview" class="position-absolute" style="transform: translate(-50%, -50%);">
+                                        <div class="preview-table bg-success rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; color: white; font-weight: bold;">
+                                            <div class="text-center">
+                                                <div>№<span id="preview-number">-</span></div>
+                                                <div><span id="preview-capacity">-</span> чел.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-text mt-3">
+                                    <i class="fas fa-info-circle me-1"></i> После создания столика вы сможете точнее настроить его позицию на плане зала с помощью перетаскивания.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Предпросмотр</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-preview text-center">
+                                <div id="shape-preview" class="d-inline-block position-relative">
+                                    <div id="table-shape-preview" class="bg-success rounded d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; color: white; font-weight: bold;">
+                                        <div>
+                                            <div>Столик №<span id="shape-preview-number">-</span></div>
+                                            <div><span id="shape-preview-capacity">-</span> человек</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <div id="preview-status" class="badge bg-success">Свободен</div>
+                                    <div id="preview-shape-text" class="badge bg-secondary">Квадратный</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 mt-4">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'table_layout' restaurant.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> {% if is_create %}Создать столик{% else %}Сохранить изменения{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Элементы формы
+    const numberInput = document.getElementById('{{ form.number.id_for_label }}');
+    const capacityInput = document.getElementById('{{ form.capacity.id_for_label }}');
+    const statusSelect = document.getElementById('{{ form.status.id_for_label }}');
+    const shapeSelect = document.getElementById('{{ form.shape.id_for_label }}');
+    const positionXInput = document.getElementById('{{ form.position_x.id_for_label }}');
+    const positionYInput = document.getElementById('{{ form.position_y.id_for_label }}');
+
+    // Элементы предпросмотра
+    const tablePreview = document.getElementById('table-preview');
+    const previewNumber = document.getElementById('preview-number');
+    const previewCapacity = document.getElementById('preview-capacity');
+    const shapePreviewNumber = document.getElementById('shape-preview-number');
+    const shapePreviewCapacity = document.getElementById('shape-preview-capacity');
+    const tableShapePreview = document.getElementById('table-shape-preview');
+    const previewStatus = document.getElementById('preview-status');
+    const previewShapeText = document.getElementById('preview-shape-text');
+
+    // Обновление предпросмотра расположения
+    function updatePositionPreview() {
+        const x = positionXInput.value || 50;
+        const y = positionYInput.value || 50;
+        tablePreview.style.left = `${x}%`;
+        tablePreview.style.top = `${y}%`;
+    }
+
+    // Обновление предпросмотра формы столика
+    function updateShapePreview() {
+        const shape = shapeSelect.value;
+        let width, height, borderRadius;
+
+        switch(shape) {
+            case 'ROUND':
+                width = '100px';
+                height = '100px';
+                borderRadius = '50%';
+                previewShapeText.textContent = 'Круглый';
+                break;
+            case 'SQUARE':
+                width = '100px';
+                height = '100px';
+                borderRadius = '5px';
+                previewShapeText.textContent = 'Квадратный';
+                break;
+            case 'RECTANGULAR':
+                width = '120px';
+                height = '80px';
+                borderRadius = '5px';
+                previewShapeText.textContent = 'Прямоугольный';
+                break;
+            case 'OVAL':
+                width = '120px';
+                height = '80px';
+                borderRadius = '40px';
+                previewShapeText.textContent = 'Овальный';
+                break;
+            default:
+                width = '100px';
+                height = '100px';
+                borderRadius = '15px';
+                previewShapeText.textContent = 'Нестандартный';
+        }
+
+        tableShapePreview.style.width = width;
+        tableShapePreview.style.height = height;
+        tableShapePreview.style.borderRadius = borderRadius;
+    }
+
+    // Обновление предпросмотра статуса
+    function updateStatusPreview() {
+        const status = statusSelect.value;
+
+        let bgColor, statusText;
+        switch(status) {
+            case 'FREE':
+                bgColor = 'bg-success';
+                statusText = 'Свободен';
+                break;
+            case 'OCCUPIED':
+                bgColor = 'bg-danger';
+                statusText = 'Занят';
+                break;
+            case 'RESERVED':
+                bgColor = 'bg-warning';
+                statusText = 'Зарезервирован';
+                break;
+            case 'UNAVAILABLE':
+                bgColor = 'bg-secondary';
+                statusText = 'Недоступен';
+                break;
+            default:
+                bgColor = 'bg-success';
+                statusText = 'Свободен';
+        }
+
+        previewStatus.className = `badge ${bgColor}`;
+        previewStatus.textContent = statusText;
+
+        // Обновляем также цвет предпросмотра
+        tableShapePreview.className = tableShapePreview.className.replace(/bg-\w+/, bgColor);
+    }
+
+    // Обновление номера и вместимости в предпросмотре
+    function updateInfoPreview() {
+        const number = numberInput.value || '-';
+        const capacity = capacityInput.value || '-';
+
+        previewNumber.textContent = number;
+        previewCapacity.textContent = capacity;
+        shapePreviewNumber.textContent = number;
+        shapePreviewCapacity.textContent = capacity;
+    }
+
+    // Инициализация и обработчики событий
+    updatePositionPreview();
+    updateShapePreview();
+    updateStatusPreview();
+    updateInfoPreview();
+
+    positionXInput.addEventListener('input', updatePositionPreview);
+    positionYInput.addEventListener('input', updatePositionPreview);
+    shapeSelect.addEventListener('change', updateShapePreview);
+    statusSelect.addEventListener('change', updateStatusPreview);
+    numberInput.addEventListener('input', updateInfoPreview);
+    capacityInput.addEventListener('input', updateInfoPreview);
+
+    // Интерактивный предпросмотр расположения
+    const previewContainer = document.querySelector('.preview-container');
+
+    previewContainer.addEventListener('click', function(e) {
+        const rect = this.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        positionXInput.value = Math.round(x * 10) / 10;
+        positionYInput.value = Math.round(y * 10) / 10;
+
+        updatePositionPreview();
+    });
+});
+</script>
+{% endblock %}

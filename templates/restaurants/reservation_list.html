@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+
+{% block title %}Бронирования | {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item active">Бронирования</li>
+                </ol>
+            </nav>
+            <h1>Бронирования ресторана {{ restaurant.name }}</h1>
+        </div>
+        <div>
+            <a href="{% url 'restaurant_detail' restaurant.id %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Назад к ресторану
+            </a>
+            {% if perms.restaurants.add_reservation %}
+            <a href="{% url 'reservation_create' restaurant.id %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> Новое бронирование
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-3">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Фильтры</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-12">
+                            <label for="date" class="form-label">Дата</label>
+                            <input type="date" class="form-control" id="date" name="date" value="{{ filter_date }}">
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="status" class="form-label">Статус</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">Все статусы</option>
+                                {% for status_value, status_label in statuses %}
+                                <option value="{{ status_value }}" {% if filter_status == status_value %}selected{% endif %}>{{ status_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="table" class="form-label">Столик</label>
+                            <select class="form-select" id="table" name="table">
+                                <option value="">Все столики</option>
+                                {% for table in tables %}
+                                <option value="{{ table.id }}" {% if filter_table == table.id|stringformat:"s" %}selected{% endif %}>№{{ table.number }} ({{ table.capacity }} чел.)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i> Применить
+                            </button>
+                            <a href="{% url 'reservation_list' restaurant.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-undo me-1"></i> Сбросить
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Статистика бронирований</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Всего на выбранную дату
+                            <span class="badge bg-primary rounded-pill">{{ reservations.count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Ожидает подтверждения
+                            <span class="badge bg-warning text-dark rounded-pill">{{ reservations.filter.status='PENDING').count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Подтверждено
+                            <span class="badge bg-success rounded-pill">{{ reservations.filter.status='CONFIRMED').count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Отменено
+                            <span class="badge bg-danger rounded-pill">{{ reservations.filter.status='CANCELLED').count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Завершено
+                            <span class="badge bg-secondary rounded-pill">{{ reservations.filter.status='COMPLETED').count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Не пришли
+                            <span class="badge bg-dark rounded-pill">{{ reservations.filter.status='NO_SHOW').count }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Список бронирований на {{ filter_date }}</h5>
+                    <a href="{% url 'reservation_create' restaurant.id %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i> Новое бронирование
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Время</th>
+                                    <th>Клиент</th>
+                                    <th>Телефон</th>
+                                    <th>Столик</th>
+                                    <th>Гостей</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reservation in reservations %}
+                                <tr>
+                                    <td>{{ reservation.reservation_time|time:"H:i" }} - {{ reservation.end_time|time:"H:i" }}</td>
+                                    <td>{{ reservation.customer_name }}</td>
+                                    <td>{{ reservation.customer_phone }}</td>
+                                    <td>№{{ reservation.table.number }}</td>
+                                    <td>{{ reservation.number_of_guests }}</td>
+                                    <td>
+                                        {% if reservation.status == 'PENDING' %}
+                                        <span class="badge bg-warning text-dark">Ожидает подтверждения</span>
+                                        {% elif reservation.status == 'CONFIRMED' %}
+                                        <span class="badge bg-success">Подтверждено</span>
+                                        {% elif reservation.status == 'CANCELLED' %}
+                                        <span class="badge bg-danger">Отменено</span>
+                                        {% elif reservation.status == 'COMPLETED' %}
+                                        <span class="badge bg-secondary">Завершено</span>
+                                        {% elif reservation.status == 'NO_SHOW' %}
+                                        <span class="badge bg-dark">Не пришли</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% if perms.restaurants.change_reservation %}
+                                            <a href="{% url 'reservation_edit' reservation.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            
+                                            <button type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                                                <span class="visually-hidden">Дополнительно</span>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#reservationModal{{ reservation.id }}">
+                                                    <i class="fas fa-info-circle me-1"></i> Детали
+                                                </a></li>
+                                                
+                                                {% if reservation.status == 'PENDING' %}
+                                                <li><a class="dropdown-item" href="{% url 'reservation_edit' reservation.id %}?status=CONFIRMED">
+                                                    <i class="fas fa-check me-1"></i> Подтвердить
+                                                </a></li>
+                                                {% endif %}
+                                                
+                                                {% if reservation.status == 'PENDING' or reservation.status == 'CONFIRMED' %}
+                                                <li><a class="dropdown-item" href="{% url 'reservation_cancel' reservation.id %}">
+                                                    <i class="fas fa-times me-1"></i> Отменить
+                                                </a></li>
+                                                {% endif %}
+                                                
+                                                {% if reservation.status == 'CONFIRMED' %}
+                                                <li><a class="dropdown-item" href="{% url 'reservation_edit' reservation.id %}?status=COMPLETED">
+                                                    <i class="fas fa-check-double me-1"></i> Отметить как завершенное
+                                                </a></li>
+                                                {% endif %}
+
+                                                {% if reservation.status == 'CONFIRMED' %}
+                                                <li><a class="dropdown-item" href="{% url 'reservation_edit' reservation.id %}?status=NO_SHOW">
+                                                    <i class="fas fa-user-slash me-1"></i> Отметить как "не пришли"
+                                                </a></li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Модальное окно с деталями -->
+                                <div class="modal fade" id="reservationModal{{ reservation.id }}" tabindex="-1" aria-labelledby="reservationModalLabel{{ reservation.id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="reservationModalLabel{{ reservation.id }}">Бронирование #{{ reservation.id|truncatechars:8 }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <h6 class="fw-bold">Информация о бронировании</h6>
+                                                        <p><strong>Дата:</strong> {{ reservation.reservation_date|date:"d.m.Y" }}</p>
+                                                        <p><strong>Время:</strong> {{ reservation.reservation_time|time:"H:i" }} - {{ reservation.end_time|time:"H:i" }}</p>
+                                                        <p><strong>Столик:</strong> №{{ reservation.table.number }} ({{ reservation.table.capacity }} чел.)</p>
+                                                        <p><strong>Количество гостей:</strong> {{ reservation.number_of_guests }}</p>
+                                                        <p>
+                                                            <strong>Статус:</strong>
+                                                            {% if reservation.status == 'PENDING' %}
+                                                            <span class="badge bg-warning text-dark">Ожидает подтверждения</span>
+                                                            {% elif reservation.status == 'CONFIRMED' %}
+                                                            <span class="badge bg-success">Подтверждено</span>
+                                                            {% elif reservation.status == 'CANCELLED' %}
+                                                            <span class="badge bg-danger">Отменено</span>
+                                                            {% elif reservation.status == 'COMPLETED' %}
+                                                            <span class="badge bg-secondary">Завершено</span>
+                                                            {% elif reservation.status == 'NO_SHOW' %}
+                                                            <span class="badge bg-dark">Не пришли</span>
+                                                            {% endif %}
+                                                        </p>
+                                                        <p><strong>Создано:</strong> {{ reservation.created_at|date:"d.m.Y H:i" }}</p>
+                                                        {% if reservation.created_by %}
+                                                        <p><strong>Кем создано:</strong> {{ reservation.created_by.get_full_name|default:reservation.created_by.username }}</p>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <h6 class="fw-bold">Информация о клиенте</h6>
+                                                        <p><strong>Имя:</strong> {{ reservation.customer_name }}</p>
+                                                        <p><strong>Email:</strong> {{ reservation.customer_email }}</p>
+                                                        <p><strong>Телефон:</strong> {{ reservation.customer_phone }}</p>
+                                                        {% if reservation.user %}
+                                                        <p><strong>Аккаунт:</strong> {{ reservation.user.username }}</p>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+
+                                                {% if reservation.special_requests %}
+                                                <div class="mt-3">
+                                                    <h6 class="fw-bold">Особые пожелания</h6>
+                                                    <p>{{ reservation.special_requests|linebreaks }}</p>
+                                                </div>
+                                                {% endif %}
+
+                                                <div class="row mt-3">
+                                                    <div class="col-md-6">
+                                                        {% if reservation.dietary_preferences %}
+                                                        <h6 class="fw-bold">Диетические предпочтения</h6>
+                                                        <ul class="list-group">
+                                                            {% if reservation.dietary_preferences.vegetarian %}
+                                                            <li class="list-group-item">
+                                                                <i class="fas fa-leaf text-success me-2"></i> Вегетарианская диета
+                                                            </li>
+                                                            {% endif %}
+                                                            {% if reservation.dietary_preferences.vegan %}
+                                                            <li class="list-group-item">
+                                                                <i class="fas fa-seedling text-success me-2"></i> Веганская диета
+                                                            </li>
+                                                            {% endif %}
+                                                            {% if reservation.dietary_preferences.gluten_free %}
+                                                            <li class="list-group-item">
+                                                                <i class="fas fa-bread-slice text-warning me-2"></i> Безглютеновая диета
+                                                            </li>
+                                                            {% endif %}
+                                                            {% if reservation.dietary_preferences.lactose_free %}
+                                                            <li class="list-group-item">
+                                                                <i class="fas fa-cookie-bite text-warning me-2"></i> Безлактозная диета
+                                                            </li>
+                                                            {% endif %}
+                                                        </ul>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        {% if reservation.allergy_information and reservation.allergy_information.names %}
+                                                        <h6 class="fw-bold">Аллергии</h6>
+                                                        <ul class="list-group">
+                                                            {% for allergen in reservation.allergy_information.names %}
+                                                            <li class="list-group-item">
+                                                                <i class="fas fa-exclamation-triangle text-danger me-2"></i> {{ allergen }}
+                                                            </li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                                {% if perms.restaurants.change_reservation %}
+                                                <a href="{% url 'reservation_edit' reservation.id %}" class="btn btn-primary">
+                                                    <i class="fas fa-edit me-1"></i> Редактировать
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="text-muted">
+                                            <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                                            <h5>Нет бронирований на выбранную дату</h5>
+                                            <p>Измените фильтры или создайте новое бронирование</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация тултипов
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}
