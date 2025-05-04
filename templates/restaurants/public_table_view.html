@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}Столики в ресторане {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-layout {
+        position: relative;
+        border: 1px solid #ddd;
+        background-color: #f9f9f9;
+        min-height: 500px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .restaurant-table {
+        position: absolute;
+        border: 2px solid #999;
+        background-color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .table-round {
+        border-radius: 50%;
+    }
+
+    .table-square {
+        border-radius: 4px;
+    }
+
+    .table-rectangular {
+        border-radius: 4px;
+    }
+
+    .table-oval {
+        border-radius: 50% / 25%;
+    }
+
+    .table-free {
+        border-color: #28a745;
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+
+    .table-occupied {
+        border-color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+
+    .table-reserved {
+        border-color: #ffc107;
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+
+    .table-unavailable {
+        border-color: #6c757d;
+        background-color: rgba(108, 117, 125, 0.1);
+    }
+
+    .restaurant-table:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        z-index: 10;
+    }
+
+    .table-details {
+        max-width: 400px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Заголовок -->
+<div class="row mb-4 align-items-center">
+    <div class="col-lg-8">
+        <h1 class="h2 fw-bold">Столики в ресторане "{{ restaurant.name }}"</h1>
+        <p class="text-muted">Просмотрите расположение и выберите подходящий столик</p>
+    </div>
+    <div class="col-lg-4 text-lg-end">
+        <a href="{% url 'public_restaurant_detail' restaurant.id %}" class="btn btn-outline-primary me-2">
+            <i class="fas fa-arrow-left me-1"></i> К ресторану
+        </a>
+        <a href="{% url 'customer_reservation' restaurant.id %}" class="btn btn-success">
+            <i class="fas fa-calendar-alt me-1"></i> Забронировать
+        </a>
+    </div>
+</div>
+
+<!-- Фильтры -->
+<div class="card shadow mb-4">
+    <div class="card-header">
+        <h2 class="h5 fw-bold mb-0">Фильтры</h2>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-2">
+                <label for="{{ form.min_capacity.id_for_label }}" class="form-label">{{ form.min_capacity.label
+                    }}</label>
+                {{ form.min_capacity }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ form.max_capacity.id_for_label }}" class="form-label">{{ form.max_capacity.label
+                    }}</label>
+                {{ form.max_capacity }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ form.shape.id_for_label }}" class="form-label">{{ form.shape.label }}</label>
+                {{ form.shape }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ form.date.id_for_label }}" class="form-label">{{ form.date.label }}</label>
+                {{ form.date }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ form.time.id_for_label }}" class="form-label">{{ form.time.label }}</label>
+                {{ form.time }}
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Применить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Условные обозначения -->
+<div class="mb-4">
+    <div class="d-flex flex-wrap gap-3">
+        <div class="d-flex align-items-center">
+            <div class="restaurant-table table-square table-free me-2"
+                 style="position: static; width: 30px; height: 30px;"></div>
+            <span>Свободен</span>
+        </div>
+        <div class="d-flex align-items-center">
+            <div class="restaurant-table table-square table-occupied me-2"
+                 style="position: static; width: 30px; height: 30px;"></div>
+            <span>Занят</span>
+        </div>
+        <div class="d-flex align-items-center">
+            <div class="restaurant-table table-square table-reserved me-2"
+                 style="position: static; width: 30px; height: 30px;"></div>
+            <span>Зарезервирован</span>
+        </div>
+        <div class="d-flex align-items-center">
+            <div class="restaurant-table table-square table-unavailable me-2"
+                 style="position: static; width: 30px; height: 30px;"></div>
+            <span>Недоступен</span>
+        </div>
+    </div>
+</div>
+
+<!-- Визуальная схема зала -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h2 class="h5 fw-bold mb-0">Схема зала</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-layout" id="floorPlan">
+                    {% for table in tables %}
+                    {% with shape=table.shape|lower %}
+                    <div
+                            class="restaurant-table table-{{ shape }} table-{{ table.status|lower }}"
+                            style="width: {{ table.width|default:80 }}px; height: {{ table.length|default:80 }}px; left: {{ table.position_x }}px; top: {{ table.position_y }}px;"
+                            data-bs-toggle="popover"
+                            data-bs-trigger="hover"
+                            data-bs-placement="top"
+                            data-bs-html="true"
+                            data-bs-title="Столик №{{ table.number }}"
+                            data-bs-content="
+                                    <div class='table-details'>
+                                        <p><strong>Вместимость:</strong> {{ table.capacity }} человек</p>
+                                        <p><strong>Форма:</strong> {{ table.get_shape_display }}</p>
+                                        {% if table.location_description %}
+                                            <p><strong>Расположение:</strong> {{ table.location_description }}</p>
+                                        {% endif %}
+                                        {% if table.min_spend %}
+                                            <p><strong>Минимальный чек:</strong> {{ table.min_spend }} ₽</p>
+                                        {% endif %}
+                                        <p><strong>Статус:</strong> {{ table.get_status_display }}</p>
+                                    </div>
+                                "
+                            {% if table.status==
+                    'FREE' %}
+                    data-table-id="{{ table.id }}"
+                    onclick="selectTable('{{ table.id }}')"
+                    {% endif %}
+                    >
+                    <span style="font-weight: bold;">{{ table.number }}</span>
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Список столиков (альтернативный вид) -->
+<div class="card shadow mb-4">
+    <div class="card-header">
+        <h2 class="h5 fw-bold mb-0">Список столиков</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Вместимость</th>
+                    <th>Форма</th>
+                    <th>Расположение</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for table in tables %}
+                <tr>
+                    <td>{{ table.number }}</td>
+                    <td>{{ table.capacity }} чел.</td>
+                    <td>{{ table.get_shape_display }}</td>
+                    <td>{{ table.location_description|default:"-" }}</td>
+                    <td>
+                                <span class="badge
+                                    {% if table.status == 'FREE' %}bg-success
+                                    {% elif table.status == 'OCCUPIED' %}bg-danger
+                                    {% elif table.status == 'RESERVED' %}bg-warning
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ table.get_status_display }}
+                                </span>
+                    </td>
+                    <td>
+                        {% if table.status == 'FREE' %}
+                        <a href="{% url 'customer_reservation' restaurant.id %}?table_id={{ table.id }}"
+                           class="btn btn-sm btn-success">
+                            Забронировать
+                        </a>
+                        {% else %}
+                        <button class="btn btn-sm btn-outline-secondary" disabled>Недоступен</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <p class="mb-0 text-muted">Нет столиков, соответствующих выбранным критериям</p>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Инициализация всплывающих подсказок
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl)
+    })
+
+    // Функция выбора столика
+    function selectTable(tableId) {
+        window.location.href = "{% url 'customer_reservation' restaurant.id %}?table_id=" + tableId;
+    }
+
+    // Автоматическое размещение столиков, если координаты некорректны
+    document.addEventListener('DOMContentLoaded', function() {
+        var floorPlan = document.getElementById('floorPlan');
+        var tables = document.querySelectorAll('.restaurant-table');
+
+        // Если координаты столиков не заданы (все в одном месте),
+        // автоматически распределяем их по схеме
+        var needsAutoLayout = false;
+        var positions = {};
+
+        tables.forEach(function(table) {
+            var left = parseInt(table.style.left);
+            var top = parseInt(table.style.top);
+
+            // Проверяем, совпадают ли координаты с другими столиками
+            var posKey = left + 'x' + top;
+            if (positions[posKey]) {
+                needsAutoLayout = true;
+            } else {
+                positions[posKey] = true;
+            }
+
+            // Если координаты нулевые или за пределами контейнера
+            if (left <= 0 || top <= 0 || left >= floorPlan.offsetWidth || top >= floorPlan.offsetHeight) {
+                needsAutoLayout = true;
+            }
+        });
+
+        // Если нужна автоматическая расстановка
+        if (needsAutoLayout) {
+            // Определяем ширину и высоту контейнера
+            var containerWidth = floorPlan.offsetWidth;
+            var containerHeight = floorPlan.offsetHeight;
+
+            // Расставляем столики в сетку
+            var rows = Math.ceil(Math.sqrt(tables.length));
+            var cols = Math.ceil(tables.length / rows);
+
+            var cellWidth = containerWidth / cols;
+            var cellHeight = containerHeight / rows;
+
+            tables.forEach(function(table, index) {
+                var row = Math.floor(index / cols);
+                var col = index % cols;
+
+                var tableWidth = parseInt(table.style.width);
+                var tableHeight = parseInt(table.style.height);
+
+                // Центрируем столик в ячейке
+                var left = col * cellWidth + (cellWidth - tableWidth) / 2;
+                var top = row * cellHeight + (cellHeight - tableHeight) / 2;
+
+                // Устанавливаем новые координаты
+                table.style.left = left + 'px';
+                table.style.top = top + 'px';
+            });
+        }
+    });
+</script>
+{% endblock %}

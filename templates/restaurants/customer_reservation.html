@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+
+{% block title %}Бронирование столика | {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<!-- Заголовок -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <h1 class="h2 fw-bold">Бронирование столика</h1>
+        <p class="text-muted">{{ restaurant.name }} - {{ restaurant.address }}</p>
+    </div>
+    <div class="col-lg-4 text-lg-end">
+        <a href="{% url 'public_restaurant_detail' restaurant.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i> Назад к ресторану
+        </a>
+    </div>
+</div>
+
+<!-- Форма бронирования -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h2 class="h5 fw-bold mb-0">Заполните форму бронирования</h2>
+            </div>
+            <div class="card-body p-4">
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    {{ error }}<br>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.reservation_date.id_for_label }}" class="form-label">{{
+                                form.reservation_date.label }}</label>
+                            {{ form.reservation_date }}
+                            {% if form.reservation_date.errors %}
+                            <div class="text-danger">
+                                {% for error in form.reservation_date.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.reservation_time.id_for_label }}" class="form-label">{{
+                                form.reservation_time.label }}</label>
+                            {{ form.reservation_time }}
+                            {% if form.reservation_time.errors %}
+                            <div class="text-danger">
+                                {% for error in form.reservation_time.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.duration.id_for_label }}" class="form-label">{{ form.duration.label
+                                }}</label>
+                            {{ form.duration }}
+                            {% if form.duration.errors %}
+                            <div class="text-danger">
+                                {% for error in form.duration.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.customer_name.id_for_label }}" class="form-label">{{
+                                form.customer_name.label }}</label>
+                            {{ form.customer_name }}
+                            {% if form.customer_name.errors %}
+                            <div class="text-danger">
+                                {% for error in form.customer_name.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.customer_email.id_for_label }}" class="form-label">{{
+                                form.customer_email.label }}</label>
+                            {{ form.customer_email }}
+                            {% if form.customer_email.errors %}
+                            <div class="text-danger">
+                                {% for error in form.customer_email.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label for="{{ form.customer_phone.id_for_label }}" class="form-label">{{
+                                form.customer_phone.label }}</label>
+                            {{ form.customer_phone }}
+                            {% if form.customer_phone.errors %}
+                            <div class="text-danger">
+                                {% for error in form.customer_phone.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.number_of_guests.id_for_label }}" class="form-label">{{
+                                form.number_of_guests.label }}</label>
+                            {{ form.number_of_guests }}
+                            {% if form.number_of_guests.errors %}
+                            <div class="text-danger">
+                                {% for error in form.number_of_guests.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Здесь будет выбор столика, если есть доступные -->
+                        {% if form.available_tables %}
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Выберите столик</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for table in form.available_tables %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="table_id"
+                                           id="table_{{ table.id }}" value="{{ table.id }}" {% if forloop.first
+                                           %}checked{% endif %}>
+                                    <label class="form-check-label" for="table_{{ table.id }}">
+                                        Столик №{{ table.number }} ({{ table.capacity }} чел.)
+                                        {% if table.location_description %}
+                                        - {{ table.location_description }}
+                                        {% endif %}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.special_requests.id_for_label }}" class="form-label">{{
+                            form.special_requests.label }}</label>
+                        {{ form.special_requests }}
+                        {% if form.special_requests.errors %}
+                        <div class="text-danger">
+                            {% for error in form.special_requests.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Фишка системы: Диетические предпочтения и аллергены -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-header">
+                            <h3 class="h6 fw-bold mb-0">Диетические предпочтения и аллергены</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="is_vegetarian"
+                                               id="id_is_vegetarian" {% if form.is_vegetarian.value %}checked{% endif
+                                               %}>
+                                        <label class="form-check-label" for="id_is_vegetarian">
+                                            {{ form.is_vegetarian.label }}
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="is_vegan" id="id_is_vegan"
+                                               {% if form.is_vegan.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_is_vegan">
+                                            {{ form.is_vegan.label }}
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="is_gluten_free"
+                                               id="id_is_gluten_free" {% if form.is_gluten_free.value %}checked{% endif
+                                               %}>
+                                        <label class="form-check-label" for="id_is_gluten_free">
+                                            {{ form.is_gluten_free.label }}
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="is_lactose_free"
+                                               id="id_is_lactose_free" {% if form.is_lactose_free.value %}checked{%
+                                               endif %}>
+                                        <label class="form-check-label" for="id_is_lactose_free">
+                                            {{ form.is_lactose_free.label }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">{{ form.allergens.label }}</h5>
+                                    </div>
+                                    <div class="card-body allergens-container">
+                                        <p class="text-muted small">{{ form.allergens.help_text }}</p>
+                                        <div class="row">
+                                            {% for allergen in form.allergens.field.queryset %}
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox"
+                                                           name="allergens" id="allergen_{{ allergen.id }}"
+                                                           value="{{ allergen.id }}"
+                                                           {% if allergen.id in form.allergens.value|default:''
+                                                    %}checked{% endif %}>
+                                                    <label class="form-check-label" for="allergen_{{ allergen.id }}">
+                                                        {{ allergen.name }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'public_restaurant_detail' restaurant.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i> Вернуться к ресторану
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-calendar-check me-2"></i> Забронировать столик
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Информация о ресторане</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Адрес:</strong> {{ restaurant.address }}, {{ restaurant.city }}</p>
+                <p><strong>Телефон:</strong> {{ restaurant.phone }}</p>
+                <p><strong>Email:</strong> {{ restaurant.email }}</p>
+
+                <h6 class="mt-4 mb-2">Часы работы:</h6>
+                <ul class="list-group list-group-flush">
+                    {% for day, hours in restaurant.opening_hours.items %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>{{ day|title }}</span>
+                        <span>{{ hours.open }} - {{ hours.close }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item">Информация о часах работы отсутствует</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i> Полезная информация</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-clock text-muted me-2"></i> Стандартное время бронирования - 2
+                        часа
+                    </li>
+                    <li class="mb-2"><i class="fas fa-users text-muted me-2"></i> Для групп более 10 человек,
+                        пожалуйста, звоните напрямую
+                    </li>
+                    <li class="mb-2"><i class="fas fa-ban text-muted me-2"></i> Бесплатная отмена за 24 часа до
+                        бронирования
+                    </li>
+                    <li class="mb-2"><i class="fas fa-credit-card text-muted me-2"></i> Предоплата не требуется</li>
+                </ul>
+
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-star me-2"></i> Указание аллергенов и диетических предпочтений поможет нам лучше
+                    подготовиться к вашему визиту
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if form.available_tables %}
+<div class="my-5">
+    <h3 class="mb-4">Доступные столики</h3>
+    <div class="row">
+        {% for table in form.available_tables %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 {% if forloop.first %}border-primary{% endif %}">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Столик №{{ table.number }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="me-2 badge bg-success">Доступен</span>
+                        <span><i class="fas fa-users me-1"></i> {{ table.capacity }} чел.</span>
+                    </div>
+
+                    <p><strong>Форма столика:</strong>
+                        {% if table.shape == 'ROUND' %}
+                        Круглый
+                        {% elif table.shape == 'SQUARE' %}
+                        Квадратный
+                        {% elif table.shape == 'RECTANGULAR' %}
+                        Прямоугольный
+                        {% elif table.shape == 'OVAL' %}
+                        Овальный
+                        {% else %}
+                        Нестандартный
+                        {% endif %}
+                    </p>
+
+                    {% if table.location_description %}
+                    <p><strong>Расположение:</strong> {{ table.location_description }}</p>
+                    {% endif %}
+
+                    {% if table.min_spend %}
+                    <p><strong>Минимальный чек:</strong> {{ table.min_spend }} руб.</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="form-check">
+                        <input class="form-check-input table-selector" type="radio"
+                               name="table_id" id="select_table_{{ table.id }}"
+                               value="{{ table.id }}"
+                               {% if forloop.first %}checked{% endif %}>
+                        <label class="form-check-label" for="select_table_{{ table.id }}">
+                            Выбрать этот столик
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Связывание радиокнопок на карточках столиков и в списке
+        const tableSelectors = document.querySelectorAll('.table-selector');
+
+        tableSelectors.forEach(selector => {
+            selector.addEventListener('change', function() {
+                const tableId = this.value;
+                const otherSelector = document.getElementById('table_' + tableId);
+                if (otherSelector) {
+                    otherSelector.checked = true;
+                }
+            });
+        });
+
+        // Проверка доступности столиков при изменении даты/времени
+        const dateInput = document.getElementById('{{ form.reservation_date.id_for_label }}');
+        const timeInput = document.getElementById('{{ form.reservation_time.id_for_label }}');
+
+        function checkAvailability() {
+            const date = dateInput.value;
+            const time = timeInput.value;
+
+            if (date && time) {
+                // Здесь можно добавить AJAX запрос для проверки доступности столиков
+                // без перезагрузки страницы
+                console.log('Проверка доступности на', date, time);
+            }
+        }
+
+        dateInput.addEventListener('change', checkAvailability);
+        timeInput.addEventListener('change', checkAvailability);
+    });
+</script>
+{% endblock %}

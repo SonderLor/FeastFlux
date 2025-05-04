@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<!-- Заголовок и статус ресторана -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <h1 class="display-4 fw-bold">{{ restaurant.name }}</h1>
+        <div class="d-flex align-items-center mb-2">
+            <span class="badge {% if is_open %}bg-success{% else %}bg-danger{% endif %} me-2">
+                {% if is_open %}Открыто{% else %}Закрыто{% endif %}
+            </span>
+            <p class="text-muted mb-0">{{ restaurant.city }}, {{ restaurant.address }}</p>
+        </div>
+    </div>
+    <div class="col-lg-4 d-flex justify-content-lg-end align-items-center">
+        {% if user.is_authenticated %}
+        <a href="{% url 'customer_reservation' restaurant.id %}" class="btn btn-success me-2">
+            <i class="fas fa-calendar-alt me-1"></i> Забронировать
+        </a>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn btn-success me-2">
+            <i class="fas fa-user me-1"></i> Войти для бронирования
+        </a>
+        {% endif %}
+        <a href="{% url 'public_table_view' restaurant.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-table me-1"></i> Посмотреть столики
+        </a>
+    </div>
+</div>
+
+<!-- Изображение и детальная информация -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4 mb-lg-0">
+        {% if restaurant.logo %}
+        <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.name }}" class="img-fluid rounded shadow"
+             style="max-height: 400px; width: 100%; object-fit: cover;">
+        {% else %}
+        <div class="bg-light d-flex align-items-center justify-content-center rounded shadow" style="height: 400px;">
+            <i class="fas fa-utensils fa-5x text-secondary"></i>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow h-100">
+            <div class="card-body">
+                <h3 class="card-title h5 fw-bold mb-3">О ресторане</h3>
+                <p class="mb-4">{{ restaurant.description|linebreaks }}</p>
+
+                <h3 class="h5 fw-bold mb-3">Контактная информация</h3>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item bg-transparent px-0">
+                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                        {{ restaurant.address }}, {{ restaurant.city }}, {{ restaurant.postal_code|default:"" }}
+                    </li>
+                    <li class="list-group-item bg-transparent px-0">
+                        <i class="fas fa-phone me-2 text-primary"></i>
+                        {{ restaurant.phone }}
+                    </li>
+                    <li class="list-group-item bg-transparent px-0">
+                        <i class="fas fa-envelope me-2 text-primary"></i>
+                        {{ restaurant.email }}
+                    </li>
+                    {% if restaurant.website %}
+                    <li class="list-group-item bg-transparent px-0">
+                        <i class="fas fa-globe me-2 text-primary"></i>
+                        <a href="{{ restaurant.website }}" target="_blank" rel="noopener noreferrer">{{
+                            restaurant.website }}</a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <h3 class="h5 fw-bold mb-3">Часы работы</h3>
+                <ul class="list-group list-group-flush">
+                    {% for day, hours in restaurant.opening_hours.items %}
+                    <li class="list-group-item bg-transparent px-0 d-flex justify-content-between">
+                        <span class="text-capitalize">{{ day|slice:":3" }}</span>
+                        <span>{{ hours.open }} - {{ hours.close }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item bg-transparent px-0">
+                        <em>Информация о часах работы отсутствует</em>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Карта и расположение -->
+<div class="card shadow mb-4">
+    <div class="card-header">
+        <h3 class="h5 fw-bold mb-0">Расположение</h3>
+    </div>
+    <div class="card-body p-0">
+        <div class="ratio ratio-21x9">
+            <iframe
+                    src="https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q={{ restaurant.address|urlencode }},{{ restaurant.city|urlencode }}"
+                    allowfullscreen
+                    loading="lazy">
+            </iframe>
+        </div>
+    </div>
+</div>
+
+<!-- Рекомендуемые столики -->
+{% if featured_tables %}
+<div class="mb-4">
+    <h3 class="h4 fw-bold mb-3">Рекомендуемые столики</h3>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for table in featured_tables %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h4 class="h5 card-title fw-bold">Столик №{{ table.number }}</h4>
+                    <p class="card-text">
+                        <i class="fas fa-users me-1"></i> До {{ table.capacity }} гостей<br>
+                        <i class="fas {% if table.shape == 'ROUND' %}fa-circle{% elif table.shape == 'SQUARE' %}fa-square{% elif table.shape == 'RECTANGULAR' %}fa-square-full{% else %}fa-shapes{% endif %} me-1"></i>
+                        {{ table.get_shape_display }}
+                        {% if table.location_description %}
+                        <br><i class="fas fa-map-pin me-1"></i> {{ table.location_description }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="card-footer bg-white">
+                    <a href="{% url 'customer_reservation' restaurant.id %}?table_id={{ table.id }}"
+                       class="btn btn-outline-primary btn-sm">Забронировать этот столик</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Призыв к действию -->
+<div class="card bg-light shadow-sm mb-4">
+    <div class="card-body p-4 text-center">
+        <h3 class="h4 fw-bold mb-3">Планируйте свой идеальный ужин с FeastFlux</h3>
+        <p class="mb-4">Забронируйте столик прямо сейчас и насладитесь изысканной кухней, зная точную питательную
+            ценность вашего заказа.</p>
+        <div class="d-flex justify-content-center gap-3">
+            {% if user.is_authenticated %}
+            <a href="{% url 'customer_reservation' restaurant.id %}" class="btn btn-success">
+                <i class="fas fa-calendar-alt me-1"></i> Забронировать столик
+            </a>
+            <a href="{% url 'public_table_view' restaurant.id %}" class="btn btn-outline-primary">
+                <i class="fas fa-table me-1"></i> Посмотреть столики
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}?next={% url 'customer_reservation' restaurant.id %}" class="btn btn-success">
+                <i class="fas fa-user me-1"></i> Войти для бронирования
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
