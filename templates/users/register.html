@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Регистрация | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Регистрация нового пользователя</h3>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">{{ form.username.label
+                                }}</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                            <div class="text-danger">
+                                {% for error in form.username.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Допускаются буквы, цифры и символы @/./+/-/_</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="text-danger">
+                                {% for error in form.email.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label
+                                }}</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                            <div class="text-danger">
+                                {% for error in form.first_name.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label
+                                }}</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                            <div class="text-danger">
+                                {% for error in form.last_name.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.phone_number.id_for_label }}" class="form-label">{{ form.phone_number.label
+                            }}</label>
+                        {{ form.phone_number }}
+                        {% if form.phone_number.errors %}
+                        <div class="text-danger">
+                            {% for error in form.phone_number.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label">{{ form.password1.label
+                                }}</label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                            <div class="text-danger">
+                                {% for error in form.password1.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <ul>
+                                    <li>Пароль должен содержать не менее 8 символов.</li>
+                                    <li>Пароль не должен быть слишком простым или распространенным.</li>
+                                    <li>Пароль не может состоять только из цифр.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label">{{ form.password2.label
+                                }}</label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                            <div class="text-danger">
+                                {% for error in form.password2.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            {{ form.terms_accepted }}
+                            <label class="form-check-label" for="{{ form.terms_accepted.id_for_label }}">
+                                {{ form.terms_accepted.label }}
+                            </label>
+                            {% if form.terms_accepted.errors %}
+                            <div class="text-danger">
+                                {% for error in form.terms_accepted.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">Уже есть аккаунт? <a href="{% url 'login' %}" class="text-primary">Войти</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

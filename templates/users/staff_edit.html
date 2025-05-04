@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Редактирование сотрудника | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'staff_list' %}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left"></i> Назад к списку сотрудников
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Редактирование сотрудника: {{ user_obj.get_full_name|default:user_obj.username }}</h6>
+        <span class="badge {% if user_obj.is_active %}bg-success{% else %}bg-danger{% endif %}">
+            {% if user_obj.is_active %}Активен{% else %}Неактивен{% endif %}
+        </span>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row mb-4">
+                <div class="col-md-3 text-center">
+                    {% if user_obj.profile.profile_picture %}
+                        <img src="{{ user_obj.profile.profile_picture.url }}" alt="Фото профиля" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 150px; height: 150px; margin: 0 auto;">
+                            <i class="fas fa-user fa-5x text-secondary"></i>
+                        </div>
+                    {% endif %}
+                    <div class="mt-3">
+                        <label for="{{ profile_form.profile_picture.id_for_label }}" class="btn btn-sm btn-outline-secondary">
+                            Изменить фото
+                        </label>
+                        {{ profile_form.profile_picture }}
+                        <style>
+                            input[type="file"] {
+                                position: absolute;
+                                width: 1px;
+                                height: 1px;
+                                padding: 0;
+                                margin: -1px;
+                                overflow: hidden;
+                                clip: rect(0, 0, 0, 0);
+                                white-space: nowrap;
+                                border: 0;
+                            }
+                        </style>
+                    </div>
+                </div>
+
+                <div class="col-md-9">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Роль сотрудника</label>
+                            <select name="role" class="form-select">
+                                {% for role_value, role_name in role_choices %}
+                                    <option value="{{ role_value }}" {% if user_obj.role == role_value %}selected{% endif %}>{{ role_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ресторан</label>
+                            <select name="restaurant" class="form-select">
+                                <option value="">Не указан</option>
+                                {% for restaurant in restaurants %}
+                                    <option value="{{ restaurant.id }}" {% if user_obj.restaurant.id == restaurant.id %}selected{% endif %}>{{ restaurant.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">ID сотрудника</label>
+                            <input type="text" name="employee_id" value="{{ user_obj.employee_id|default:'' }}" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Дата найма</label>
+                            <input type="date" name="hire_date" value="{{ user_obj.profile.hire_date|date:'Y-m-d' }}" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_active_employee" id="is_active_employee" class="form-check-input" {% if user_obj.is_active_employee %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active_employee">Активный сотрудник</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-top pt-4 mt-2">
+                <h5 class="mb-3">Личная информация</h5>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ user_form.first_name.id_for_label }}" class="form-label">{{ user_form.first_name.label }}</label>
+                        {{ user_form.first_name }}
+                        {% if user_form.first_name.errors %}
+                            <div class="text-danger">
+                                {% for error in user_form.first_name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ user_form.last_name.id_for_label }}" class="form-label">{{ user_form.last_name.label }}</label>
+                        {{ user_form.last_name }}
+                        {% if user_form.last_name.errors %}
+                            <div class="text-danger">
+                                {% for error in user_form.last_name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ user_form.email.id_for_label }}" class="form-label">{{ user_form.email.label }}</label>
+                        {{ user_form.email }}
+                        {% if user_form.email.errors %}
+                            <div class="text-danger">
+                                {% for error in user_form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ profile_form.phone_number.id_for_label }}" class="form-label">{{ profile_form.phone_number.label }}</label>
+                        {{ profile_form.phone_number }}
+                        {% if profile_form.phone_number.errors %}
+                            <div class="text-danger">
+                                {% for error in profile_form.phone_number.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ profile_form.address.id_for_label }}" class="form-label">{{ profile_form.address.label }}</label>
+                    {{ profile_form.address }}
+                    {% if profile_form.address.errors %}
+                        <div class="text-danger">
+                            {% for error in profile_form.address.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ profile_form.bio.id_for_label }}" class="form-label">{{ profile_form.bio.label }}</label>
+                    {{ profile_form.bio }}
+                    {% if profile_form.bio.errors %}
+                        <div class="text-danger">
+                            {% for error in profile_form.bio.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <a href="{% url 'staff_list' %}" class="btn btn-secondary me-2">Отмена</a>
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Кнопка сброса пароля -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-danger">Сброс пароля</h6>
+    </div>
+    <div class="card-body">
+        <p>Для сброса пароля сотрудника, нажмите кнопку ниже. Пользователю будет отправлена ссылка для создания нового пароля на его email.</p>
+        <form method="post" action="#" class="d-flex justify-content-end">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reset_password">
+            <button type="submit" class="btn btn-danger">Сбросить пароль</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
