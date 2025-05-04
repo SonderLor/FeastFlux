@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block title %}FeastFlux - Сеть ресторанов с аналитикой КБЖУ{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/static/images/hero-bg.jpg');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 120px 0;
+        margin-top: -24px;
+    }
+
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .restaurant-card {
+        transition: transform 0.3s;
+        height: 100%;
+    }
+
+    .restaurant-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .restaurant-card img {
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .nutrition-section {
+        background-color: #f8f9fa;
+    }
+
+    .testimonial-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Этот контент находится вне container из базового шаблона -->
+</div> <!-- Закрываем контейнер из базового шаблона -->
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">Откройте для себя новый уровень ресторанного опыта</h1>
+        <p class="lead mb-5">Изысканная кухня с полной прозрачностью пищевой ценности. <br>Знайте, что вы едите!</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'public_restaurants' %}" class="btn btn-primary btn-lg">Найти ресторан</a>
+            <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg">Присоединиться</a>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+
+    <!-- Features Section -->
+    <section class="py-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Почему стоит выбрать FeastFlux</h2>
+            <p class="lead text-muted">Мы соединяем гастрономическое наслаждение с заботой о вашем здоровье</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4 text-center">
+                <div class="feature-icon mx-auto">
+                    <i class="fas fa-chart-pie fa-2x text-primary"></i>
+                </div>
+                <h4>Анализ КБЖУ</h4>
+                <p class="text-muted">Полная информация о калориях, белках, жирах и углеводах для каждого блюда и всего
+                    заказа.</p>
+            </div>
+
+            <div class="col-md-4 text-center">
+                <div class="feature-icon mx-auto">
+                    <i class="fas fa-exclamation-triangle fa-2x text-primary"></i>
+                </div>
+                <h4>Предупреждения об аллергенах</h4>
+                <p class="text-muted">Мы предупредим вас о наличии любых аллергенов в выбранных блюдах.</p>
+            </div>
+
+            <div class="col-md-4 text-center">
+                <div class="feature-icon mx-auto">
+                    <i class="fas fa-utensils fa-2x text-primary"></i>
+                </div>
+                <h4>Изысканная кухня</h4>
+                <p class="text-muted">Меню, разработанное шеф-поварами высшего класса для незабываемого
+                    гастрономического опыта.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Restaurants -->
+    <section class="py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">Наши рестораны</h2>
+            <a href="{% url 'public_restaurants' %}" class="btn btn-outline-primary">Показать все</a>
+        </div>
+
+        <div class="row g-4">
+            {% for restaurant in featured_restaurants %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card restaurant-card shadow-sm h-100">
+                    {% if restaurant.logo %}
+                    <img src="{{ restaurant.logo.url }}" class="card-img-top" alt="{{ restaurant.name }}">
+                    {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-utensils fa-3x text-secondary"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ restaurant.name }}</h5>
+                        <address class="card-text text-muted">
+                            <i class="fas fa-map-marker-alt me-1"></i> {{ restaurant.address|truncatechars:50 }}
+                        </address>
+                        <a href="{% url 'public_restaurant_detail' restaurant.id %}"
+                           class="btn btn-sm btn-outline-primary mt-2">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <p class="text-muted">Рестораны скоро будут добавлены</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Nutrition Section -->
+    <section class="nutrition-section py-5 px-3 rounded">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h2 class="fw-bold mb-3">Подробная информация о питательной ценности</h2>
+                <p class="mb-4">FeastFlux - первая ресторанная сеть, которая предлагает полный анализ КБЖУ для каждого
+                    блюда и всего заказа. Следите за своим питанием, не отказывая себе в удовольствии.</p>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary p-2 text-white me-3">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Калории</h6>
+                                <small class="text-muted">Точный подсчет</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-success p-2 text-white me-3">
+                                <i class="fas fa-drumstick-bite"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Белки</h6>
+                                <small class="text-muted">Для роста мышц</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-warning p-2 text-white me-3">
+                                <i class="fas fa-oil-can"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Жиры</h6>
+                                <small class="text-muted">Полезные и вредные</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-info p-2 text-white me-3">
+                                <i class="fas fa-bread-slice"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Углеводы</h6>
+                                <small class="text-muted">Источник энергии</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="{% url 'about' %}" class="btn btn-primary">Узнать больше</a>
+            </div>
+
+            <div class="col-lg-6">
+                <img src="/static/images/nutrition-chart.jpg" alt="Диаграмма питательной ценности"
+                     class="img-fluid rounded shadow">
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Что говорят наши посетители</h2>
+            <p class="lead text-muted">Отзывы наших уважаемых клиентов</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="/static/images/testimonial-1.jpg" alt="Клиент" class="testimonial-avatar me-3">
+                            <div>
+                                <h5 class="mb-0">Анна Петрова</h5>
+                                <small class="text-muted">Диетолог</small>
+                            </div>
+                        </div>
+                        <p class="card-text">"Наконец-то ресторан, где я могу точно знать, что я ем! Как диетолог, я в
+                            восторге от этой инновации. Мои клиенты теперь могут наслаждаться едой вне дома, не нарушая
+                            свой план питания."</p>
+                        <div class="text-warning">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="/static/images/testimonial-2.jpg" alt="Клиент" class="testimonial-avatar me-3">
+                            <div>
+                                <h5 class="mb-0">Иван Сидоров</h5>
+                                <small class="text-muted">Фитнес-тренер</small>
+                            </div>
+                        </div>
+                        <p class="card-text">"Я впечатлен подходом FeastFlux к прозрачности питания. Теперь я рекомендую
+                            этот ресторан всем своим клиентам, которые следят за своим рационом. Вкусно и полезно -
+                            идеальное сочетание!"</p>
+                        <div class="text-warning">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="/static/images/testimonial-3.jpg" alt="Клиент" class="testimonial-avatar me-3">
+                            <div>
+                                <h5 class="mb-0">Елена Смирнова</h5>
+                                <small class="text-muted">Аллерголог</small>
+                            </div>
+                        </div>
+                        <p class="card-text">"Как врач-аллерголог, я высоко ценю внимание к аллергенам в меню FeastFlux.
+                            Мои пациенты с пищевой аллергией наконец могут безопасно наслаждаться ужином вне дома. Это
+                            огромный прогресс!"</p>
+                        <div class="text-warning">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5 text-center">
+        <h2 class="fw-bold mb-3">Готовы попробовать?</h2>
+        <p class="lead text-muted mb-4">Присоединяйтесь к тысячам довольных посетителей, которые уже оценили
+            FeastFlux</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'public_restaurants' %}" class="btn btn-primary btn-lg">Найти ресторан</a>
+            <a href="{% url 'register' %}" class="btn btn-outline-secondary btn-lg">Создать аккаунт</a>
+        </div>
+    </section>
+    {% endblock %}

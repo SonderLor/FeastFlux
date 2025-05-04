@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}О нас | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-lg-8 mx-auto text-center">
+        <h1 class="display-4 fw-bold mb-4">О компании FeastFlux</h1>
+        <p class="lead text-muted">Мы переосмысливаем ресторанный опыт с акцентом на прозрачность питания и удовольствие
+            от еды</p>
+    </div>
+</div>
+
+<!-- История компании -->
+<div class="row align-items-center mb-5">
+    <div class="col-lg-6 mb-4 mb-lg-0">
+        <img src="/static/images/about-story.jpg" alt="История компании" class="img-fluid rounded shadow">
+    </div>
+    <div class="col-lg-6">
+        <h2 class="fw-bold mb-3">Наша история</h2>
+        <p>FeastFlux была основана в 2022 году группой энтузиастов здорового питания и кулинарных профессионалов,
+            которые верили, что посещение ресторана не должно означать отказ от осознанного питания.</p>
+        <p>Наша миссия началась с простой идеи: что если бы посетители ресторанов могли точно знать, что они едят? Не
+            только ингредиенты, но и точную пищевую ценность каждого блюда.</p>
+        <p>С тех пор мы выросли из одного небольшого кафе в целую сеть ресторанов, сохраняя нашу приверженность
+            прозрачности, качеству и инновациям в каждом аспекте нашей работы.</p>
+    </div>
+</div>
+
+<!-- Наши ценности -->
+<div class="bg-light p-4 rounded-3 mb-5">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="fw-bold">Наши ценности</h2>
+            <p class="lead">Принципы, которые направляют нас каждый день</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-transparent">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-primary p-3 text-white d-inline-flex mb-3"
+                         style="width: 70px; height: 70px;">
+                        <i class="fas fa-balance-scale fa-2x m-auto"></i>
+                    </div>
+                    <h3 class="h5 fw-bold">Прозрачность</h3>
+                    <p class="card-text">Мы верим, что каждый клиент имеет право знать, что именно он потребляет. Полная
+                        информация о питательной ценности и аллергенах - наш стандарт.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-transparent">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-success p-3 text-white d-inline-flex mb-3"
+                         style="width: 70px; height: 70px;">
+                        <i class="fas fa-leaf fa-2x m-auto"></i>
+                    </div>
+                    <h3 class="h5 fw-bold">Качество</h3>
+                    <p class="card-text">Мы используем только лучшие ингредиенты от проверенных поставщиков. Наши
+                        шеф-повара с любовью готовят каждое блюдо, соблюдая высочайшие стандарты.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-transparent">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-info p-3 text-white d-inline-flex mb-3"
+                         style="width: 70px; height: 70px;">
+                        <i class="fas fa-lightbulb fa-2x m-auto"></i>
+                    </div>
+                    <h3 class="h5 fw-bold">Инновации</h3>
+                    <p class="card-text">Мы постоянно ищем новые способы улучшить клиентский опыт - от цифровых меню с
+                        анализом КБЖУ до персонализированных рекомендаций блюд.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Команда -->
+<div class="row mb-5">
+    <div class="col-12 text-center mb-4">
+        <h2 class="fw-bold">Наша команда</h2>
+        <p class="lead">Люди, создающие безупречный опыт в FeastFlux</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+                <img src="/static/images/team-1.jpg" class="card-img-top" alt="CEO">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-1">Михаил Кузнецов</h5>
+                    <p class="text-muted small">Основатель и CEO</p>
+                    <p class="card-text">Ресторатор с 15-летним опытом и страстный приверженец здорового питания.</p>
+                    <div class="social-icons mt-3">
+                        <a href="#" class="text-secondary me-2"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-secondary me-2"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-secondary"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+                <img src="/static/images/team-2.jpg" class="card-img-top" alt="Executive Chef">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-1">Анна Соколова</h5>
+                    <p class="text-muted small">Шеф-повар</p>
+                    <p class="card-text">Кулинарный гений с образованием в области пищевой химии и нутрициологии.</p>
+                    <div class="social-icons mt-3">
+                        <a href="#" class="text-secondary me-2"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-secondary me-2"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-secondary"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+                <img src="/static/images/team-3.jpg" class="card-img-top" alt="Nutritionist">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-1">Елена Волкова</h5>
+                    <p class="text-muted small">Главный нутрициолог</p>
+                    <p class="card-text">Разрабатывает и анализирует меню с точки зрения баланса питательных
+                        веществ.</p>
+                    <div class="social-icons mt-3">
+                        <a href="#" class="text-secondary me-2"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-secondary me-2"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-secondary"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+                <img src="/static/images/team-4.jpg" class="card-img-top" alt="Tech Lead">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-1">Алексей Морозов</h5>
+                    <p class="text-muted small">Директор по технологиям</p>
+                    <p class="card-text">Разрабатывает цифровые решения для клиентов и внутренних процессов.</p>
+                    <div class="social-icons mt-3">
+                        <a href="#" class="text-secondary me-2"><i class="fab fa-github"></i></a>
+                        <a href="#" class="text-secondary me-2"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-secondary"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Наш подход к КБЖУ -->
+<div class="row mb-5">
+    <div class="col-lg-6 mb-4 mb-lg-0 order-lg-2">
+        <img src="/static/images/nutrition-approach.jpg" alt="Наш подход к КБЖУ" class="img-fluid rounded shadow">
+    </div>
+    <div class="col-lg-6 order-lg-1">
+        <h2 class="fw-bold mb-3">Наш подход к КБЖУ</h2>
+        <p>В FeastFlux мы верим, что прозрачность питания не должна ограничивать вкусовой опыт. Наша уникальная
+            технология позволяет быстро и точно рассчитывать пищевую ценность каждого блюда и всего заказа в реальном
+            времени.</p>
+        <p>Вот как это работает:</p>
+        <ul class="list-group list-group-flush mb-3">
+            <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> Мы
+                анализируем каждый ингредиент в нашей базе данных
+            </li>
+            <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> Наши
+                шеф-повара точно указывают граммовку ингредиентов в каждом блюде
+            </li>
+            <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> Система в
+                реальном времени рассчитывает КБЖУ для вашего заказа
+            </li>
+            <li class="list-group-item bg-transparent"><i class="fas fa-check-circle text-success me-2"></i> Вы
+                получаете полную информацию о том, что едите
+            </li>
+        </ul>
+        <p>Благодаря этому подходу вы можете наслаждаться изысканной кухней, оставаясь в рамках своих диетических
+            целей.</p>
+    </div>
+</div>
+
+<!-- CTA -->
+<div class="bg-primary text-white p-5 rounded-3 text-center mb-4">
+    <h2 class="fw-bold mb-3">Присоединяйтесь к нашей миссии</h2>
+    <p class="mb-4">Становитесь частью ресторанной революции, где вкус и здоровье идут рука об руку</p>
+    <div class="d-flex justify-content-center gap-3">
+        <a href="{% url 'public_restaurants' %}" class="btn btn-light btn-lg">Найти ресторан</a>
+        <a href="{% url 'contact' %}" class="btn btn-outline-light btn-lg">Связаться с нами</a>
+    </div>
+</div>
+{% endblock %}
