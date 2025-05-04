@@ -11,18 +11,15 @@ urlpatterns = [
         views.reservation_confirmation,
         name="reservation_confirmation",
     ),
-
     path("", views.restaurant_list, name="restaurant_list"),
     path("<uuid:id>/", views.restaurant_detail, name="restaurant_detail"),
     path("manage/", views.restaurant_manage, name="restaurant_manage"),
     path("create/", views.restaurant_create, name="restaurant_create"),
     path("<uuid:id>/edit/", views.restaurant_edit, name="restaurant_edit"),
-
     path("<uuid:id>/tables/", views.table_layout, name="table_layout"),
     path("<uuid:restaurant_id>/tables/create/", views.table_create, name="table_create"),
     path("tables/<uuid:id>/edit/", views.table_edit, name="table_edit"),
     path("tables/<uuid:id>/delete/", views.table_delete, name="table_delete"),
-
     path("<uuid:id>/reservations/", views.reservation_list, name="reservation_list"),
     path("<uuid:id>/reservations/create/", views.reservation_create, name="reservation_create"),
     path("reservations/<uuid:id>/edit/", views.reservation_edit, name="reservation_edit"),

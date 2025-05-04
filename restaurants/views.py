@@ -7,12 +7,18 @@ from django.db.models import Q
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import Restaurant, Table, Reservation
-from .forms import ReservationForm, TableFilterForm, RestaurantFilterForm, RestaurantForm, TableForm, \
-    StaffReservationForm
+from .forms import (
+    ReservationForm,
+    TableFilterForm,
+    RestaurantFilterForm,
+    RestaurantForm,
+    TableForm,
+    StaffReservationForm,
+)
 
 
 @login_required
-@permission_required('restaurants.view_restaurant', raise_exception=True)
+@permission_required("restaurants.view_restaurant", raise_exception=True)
 def restaurant_list(request):
     """Список всех ресторанов для администраторов и менеджеров."""
     user = request.user
@@ -24,21 +30,21 @@ def restaurant_list(request):
 
     form = RestaurantFilterForm(request.GET)
     if form.is_valid():
-        city = form.cleaned_data.get('city')
-        search = form.cleaned_data.get('search')
+        city = form.cleaned_data.get("city")
+        search = form.cleaned_data.get("search")
 
         if city:
             restaurants = restaurants.filter(city__icontains=city)
 
         if search:
             restaurants = restaurants.filter(
-                Q(name__icontains=search) |
-                Q(address__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__icontains=search)
+                | Q(address__icontains=search)
+                | Q(description__icontains=search)
             )
 
     paginator = Paginator(restaurants, 10)
-    page = request.GET.get('page')
+    page = request.GET.get("page")
 
     try:
         restaurants_page = paginator.page(page)
@@ -48,29 +54,28 @@ def restaurant_list(request):
         restaurants_page = paginator.page(paginator.num_pages)
 
     context = {
-        'restaurants': restaurants_page,
-        'form': form,
+        "restaurants": restaurants_page,
+        "form": form,
     }
 
-    return render(request, 'restaurants/restaurant_list.html', context)
+    return render(request, "restaurants/restaurant_list.html", context)
 
 
 @login_required
-@permission_required('restaurants.view_restaurant', raise_exception=True)
+@permission_required("restaurants.view_restaurant", raise_exception=True)
 def restaurant_detail(request, id):
     """Детальная информация о ресторане для персонала."""
     restaurant = get_object_or_404(Restaurant, id=id)
     user = request.user
 
     if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
-        messages.error(request, _('У вас нет доступа к этому ресторану.'))
-        return redirect('restaurant_list')
+        messages.error(request, _("У вас нет доступа к этому ресторану."))
+        return redirect("restaurant_list")
 
     today = timezone.now().date()
     reservations_today = Reservation.objects.filter(
-        restaurant=restaurant,
-        reservation_date=today
-    ).order_by('reservation_time')
+        restaurant=restaurant, reservation_date=today
+    ).order_by("reservation_time")
 
     tables = Table.objects.filter(restaurant=restaurant)
     tables_free = tables.filter(status=Table.TableStatus.FREE).count()
@@ -78,94 +83,94 @@ def restaurant_detail(request, id):
     tables_reserved = tables.filter(status=Table.TableStatus.RESERVED).count()
 
     context = {
-        'restaurant': restaurant,
-        'reservations_today': reservations_today,
-        'tables_count': tables.count(),
-        'tables_free': tables_free,
-        'tables_occupied': tables_occupied,
-        'tables_reserved': tables_reserved,
-        'is_open': is_restaurant_open(restaurant),
+        "restaurant": restaurant,
+        "reservations_today": reservations_today,
+        "tables_count": tables.count(),
+        "tables_free": tables_free,
+        "tables_occupied": tables_occupied,
+        "tables_reserved": tables_reserved,
+        "is_open": is_restaurant_open(restaurant),
     }
 
-    return render(request, 'restaurants/restaurant_detail.html', context)
+    return render(request, "restaurants/restaurant_detail.html", context)
 
 
 @login_required
-@permission_required('restaurants.manage_restaurant', raise_exception=True)
+@permission_required("restaurants.manage_restaurant", raise_exception=True)
 def restaurant_manage(request):
     """Управление ресторанами (список для создания/редактирования)."""
-    restaurants = Restaurant.objects.all().order_by('name')
+    restaurants = Restaurant.objects.all().order_by("name")
 
     context = {
-        'restaurants': restaurants,
+        "restaurants": restaurants,
     }
 
-    return render(request, 'restaurants/restaurant_manage.html', context)
+    return render(request, "restaurants/restaurant_manage.html", context)
 
 
 @login_required
-@permission_required('restaurants.manage_restaurant', raise_exception=True)
+@permission_required("restaurants.manage_restaurant", raise_exception=True)
 def restaurant_create(request):
     """Создание нового ресторана."""
-    if request.method == 'POST':
+    if request.method == "POST":
         form = RestaurantForm(request.POST, request.FILES)
         if form.is_valid():
             restaurant = form.save()
-            messages.success(request, _('Ресторан успешно создан!'))
-            return redirect('restaurant_detail', id=restaurant.id)
+            messages.success(request, _("Ресторан успешно создан!"))
+            return redirect("restaurant_detail", id=restaurant.id)
     else:
         form = RestaurantForm()
 
     context = {
-        'form': form,
-        'is_create': True,
+        "form": form,
+        "is_create": True,
     }
 
-    return render(request, 'restaurants/restaurant_form.html', context)
+    return render(request, "restaurants/restaurant_form.html", context)
 
 
 @login_required
-@permission_required('restaurants.manage_restaurant', raise_exception=True)
+@permission_required("restaurants.manage_restaurant", raise_exception=True)
 def restaurant_edit(request, id):
     """Редактирование ресторана."""
     restaurant = get_object_or_404(Restaurant, id=id)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = RestaurantForm(request.POST, request.FILES, instance=restaurant)
         if form.is_valid():
             restaurant = form.save()
-            messages.success(request, _('Ресторан успешно обновлен!'))
-            return redirect('restaurant_detail', id=restaurant.id)
+            messages.success(request, _("Ресторан успешно обновлен!"))
+            return redirect("restaurant_detail", id=restaurant.id)
     else:
         form = RestaurantForm(instance=restaurant)
 
     context = {
-        'form': form,
-        'restaurant': restaurant,
-        'is_create': False,
+        "form": form,
+        "restaurant": restaurant,
+        "is_create": False,
     }
 
-    return render(request, 'restaurants/restaurant_form.html', context)
+    return render(request, "restaurants/restaurant_form.html", context)
 
 
 @login_required
-@permission_required('restaurants.view_table', raise_exception=True)
+@permission_required("restaurants.view_table", raise_exception=True)
 def table_layout(request, id):
     """Интерактивный план расположения столиков."""
     restaurant = get_object_or_404(Restaurant, id=id)
     user = request.user
 
     if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
-        messages.error(request, _('У вас нет доступа к этому ресторану.'))
-        return redirect('restaurant_list')
+        messages.error(request, _("У вас нет доступа к этому ресторану."))
+        return redirect("restaurant_list")
 
     tables = Table.objects.filter(restaurant=restaurant)
 
     form = TableFilterForm(request.GET)
     if form.is_valid():
-        status = request.GET.get('status')
-        min_capacity = form.cleaned_data.get('min_capacity')
-        max_capacity = form.cleaned_data.get('max_capacity')
+        status = request.GET.get("status")
+        min_capacity = form.cleaned_data.get("min_capacity")
+        max_capacity = form.cleaned_data.get("max_capacity")
 
         if status:
             tables = tables.filter(status=status)
@@ -176,111 +181,111 @@ def table_layout(request, id):
         if max_capacity:
             tables = tables.filter(capacity__lte=max_capacity)
 
-    edit_mode = request.GET.get('edit_mode') == '1' and (user.is_admin() or user.is_manager())
+    edit_mode = request.GET.get("edit_mode") == "1" and (user.is_admin() or user.is_manager())
 
     context = {
-        'restaurant': restaurant,
-        'tables': tables,
-        'form': form,
-        'edit_mode': edit_mode,
-        'table_statuses': Table.TableStatus.choices,
+        "restaurant": restaurant,
+        "tables": tables,
+        "form": form,
+        "edit_mode": edit_mode,
+        "table_statuses": Table.TableStatus.choices,
     }
 
-    return render(request, 'restaurants/table_layout.html', context)
+    return render(request, "restaurants/table_layout.html", context)
 
 
 @login_required
-@permission_required('restaurants.add_table', raise_exception=True)
+@permission_required("restaurants.add_table", raise_exception=True)
 def table_create(request, restaurant_id):
     """Создание нового столика."""
     restaurant = get_object_or_404(Restaurant, id=restaurant_id)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = TableForm(request.POST, user=request.user)
         if form.is_valid():
             table = form.save(commit=False)
             table.restaurant = restaurant
             table.save()
-            messages.success(request, _('Столик успешно создан!'))
-            return redirect('table_layout', id=restaurant.id)
+            messages.success(request, _("Столик успешно создан!"))
+            return redirect("table_layout", id=restaurant.id)
     else:
-        form = TableForm(user=request.user, initial={'restaurant': restaurant})
+        form = TableForm(user=request.user, initial={"restaurant": restaurant})
 
     context = {
-        'form': form,
-        'restaurant': restaurant,
-        'is_create': True,
+        "form": form,
+        "restaurant": restaurant,
+        "is_create": True,
     }
 
-    return render(request, 'restaurants/table_form.html', context)
+    return render(request, "restaurants/table_form.html", context)
 
 
 @login_required
-@permission_required('restaurants.change_table', raise_exception=True)
+@permission_required("restaurants.change_table", raise_exception=True)
 def table_edit(request, id):
     """Редактирование столика."""
     table = get_object_or_404(Table, id=id)
     restaurant = table.restaurant
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = TableForm(request.POST, instance=table, user=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, _('Столик успешно обновлен!'))
-            return redirect('table_layout', id=restaurant.id)
+            messages.success(request, _("Столик успешно обновлен!"))
+            return redirect("table_layout", id=restaurant.id)
     else:
         form = TableForm(instance=table, user=request.user)
 
     context = {
-        'form': form,
-        'table': table,
-        'restaurant': restaurant,
-        'is_create': False,
+        "form": form,
+        "table": table,
+        "restaurant": restaurant,
+        "is_create": False,
     }
 
-    return render(request, 'restaurants/table_form.html', context)
+    return render(request, "restaurants/table_form.html", context)
 
 
 @login_required
-@permission_required('restaurants.delete_table', raise_exception=True)
+@permission_required("restaurants.delete_table", raise_exception=True)
 def table_delete(request, id):
     """Удаление столика."""
     table = get_object_or_404(Table, id=id)
     restaurant = table.restaurant
 
-    if request.method == 'POST':
+    if request.method == "POST":
         table.delete()
-        messages.success(request, _('Столик успешно удален!'))
-        return redirect('table_layout', id=restaurant.id)
+        messages.success(request, _("Столик успешно удален!"))
+        return redirect("table_layout", id=restaurant.id)
 
     context = {
-        'table': table,
-        'restaurant': restaurant,
+        "table": table,
+        "restaurant": restaurant,
     }
 
-    return render(request, 'restaurants/table_confirm_delete.html', context)
+    return render(request, "restaurants/table_confirm_delete.html", context)
 
 
 @login_required
-@permission_required('restaurants.view_reservation', raise_exception=True)
+@permission_required("restaurants.view_reservation", raise_exception=True)
 def reservation_list(request, id):
     """Список бронирований ресторана."""
     restaurant = get_object_or_404(Restaurant, id=id)
     user = request.user
 
     if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
-        messages.error(request, _('У вас нет доступа к этому ресторану.'))
-        return redirect('restaurant_list')
+        messages.error(request, _("У вас нет доступа к этому ресторану."))
+        return redirect("restaurant_list")
 
-    date = request.GET.get('date')
-    status = request.GET.get('status')
-    table_id = request.GET.get('table')
+    date = request.GET.get("date")
+    status = request.GET.get("status")
+    table_id = request.GET.get("table")
 
     reservations = Reservation.objects.filter(restaurant=restaurant)
 
     if date:
         try:
-            filter_date = timezone.datetime.strptime(date, '%Y-%m-%d').date()
+            filter_date = timezone.datetime.strptime(date, "%Y-%m-%d").date()
             reservations = reservations.filter(reservation_date=filter_date)
         except ValueError:
             reservations = reservations.filter(reservation_date=timezone.now().date())
@@ -293,57 +298,57 @@ def reservation_list(request, id):
     if table_id:
         reservations = reservations.filter(table_id=table_id)
 
-    reservations = reservations.order_by('reservation_date', 'reservation_time')
+    reservations = reservations.order_by("reservation_date", "reservation_time")
 
-    tables = Table.objects.filter(restaurant=restaurant).order_by('number')
+    tables = Table.objects.filter(restaurant=restaurant).order_by("number")
 
     context = {
-        'restaurant': restaurant,
-        'reservations': reservations,
-        'tables': tables,
-        'statuses': Reservation.ReservationStatus.choices,
-        'filter_date': date or timezone.now().date().strftime('%Y-%m-%d'),
-        'filter_status': status,
-        'filter_table': table_id,
+        "restaurant": restaurant,
+        "reservations": reservations,
+        "tables": tables,
+        "statuses": Reservation.ReservationStatus.choices,
+        "filter_date": date or timezone.now().date().strftime("%Y-%m-%d"),
+        "filter_status": status,
+        "filter_table": table_id,
     }
 
-    return render(request, 'restaurants/reservation_list.html', context)
+    return render(request, "restaurants/reservation_list.html", context)
 
 
 @login_required
-@permission_required('restaurants.add_reservation', raise_exception=True)
+@permission_required("restaurants.add_reservation", raise_exception=True)
 def reservation_create(request, id):
     """Создание нового бронирования персоналом."""
     restaurant = get_object_or_404(Restaurant, id=id)
     user = request.user
 
     if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
-        messages.error(request, _('У вас нет доступа к этому ресторану.'))
-        return redirect('restaurant_list')
+        messages.error(request, _("У вас нет доступа к этому ресторану."))
+        return redirect("restaurant_list")
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = StaffReservationForm(request.POST, restaurant=restaurant, user=user)
         if form.is_valid():
             reservation = form.save(commit=False)
             reservation.restaurant = restaurant
             reservation.created_by = user
             reservation.save()
-            messages.success(request, _('Бронирование успешно создано!'))
-            return redirect('reservation_list', id=restaurant.id)
+            messages.success(request, _("Бронирование успешно создано!"))
+            return redirect("reservation_list", id=restaurant.id)
     else:
         form = StaffReservationForm(restaurant=restaurant, user=user)
 
     context = {
-        'form': form,
-        'restaurant': restaurant,
-        'is_create': True,
+        "form": form,
+        "restaurant": restaurant,
+        "is_create": True,
     }
 
-    return render(request, 'restaurants/reservation_form.html', context)
+    return render(request, "restaurants/reservation_form.html", context)
 
 
 @login_required
-@permission_required('restaurants.change_reservation', raise_exception=True)
+@permission_required("restaurants.change_reservation", raise_exception=True)
 def reservation_edit(request, id):
     """Редактирование бронирования."""
     reservation = get_object_or_404(Reservation, id=id)
@@ -351,58 +356,51 @@ def reservation_edit(request, id):
     user = request.user
 
     if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
-        messages.error(request, _('У вас нет доступа к этому ресторану.'))
-        return redirect('restaurant_list')
+        messages.error(request, _("У вас нет доступа к этому ресторану."))
+        return redirect("restaurant_list")
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = StaffReservationForm(
-            request.POST,
-            instance=reservation,
-            restaurant=restaurant,
-            user=user
+            request.POST, instance=reservation, restaurant=restaurant, user=user
         )
         if form.is_valid():
             form.save()
-            messages.success(request, _('Бронирование успешно обновлено!'))
-            return redirect('reservation_list', id=restaurant.id)
+            messages.success(request, _("Бронирование успешно обновлено!"))
+            return redirect("reservation_list", id=restaurant.id)
     else:
-        form = StaffReservationForm(
-            instance=reservation,
-            restaurant=restaurant,
-            user=user
-        )
+        form = StaffReservationForm(instance=reservation, restaurant=restaurant, user=user)
 
     context = {
-        'form': form,
-        'reservation': reservation,
-        'restaurant': restaurant,
-        'is_create': False,
+        "form": form,
+        "reservation": reservation,
+        "restaurant": restaurant,
+        "is_create": False,
     }
 
-    return render(request, 'restaurants/reservation_form.html', context)
+    return render(request, "restaurants/reservation_form.html", context)
 
 
 @login_required
-@permission_required('restaurants.delete_reservation', raise_exception=True)
+@permission_required("restaurants.delete_reservation", raise_exception=True)
 def reservation_cancel(request, id):
     """Отмена бронирования."""
     reservation = get_object_or_404(Reservation, id=id)
     restaurant = reservation.restaurant
 
-    if request.method == 'POST':
-        reason = request.POST.get('reason', '')
+    if request.method == "POST":
+        reason = request.POST.get("reason", "")
         reservation.status = Reservation.ReservationStatus.CANCELLED
         reservation.special_requests = f"{reservation.special_requests or ''}\n\nОтменено: {reason}"
         reservation.save()
-        messages.success(request, _('Бронирование успешно отменено!'))
-        return redirect('reservation_list', id=restaurant.id)
+        messages.success(request, _("Бронирование успешно отменено!"))
+        return redirect("reservation_list", id=restaurant.id)
 
     context = {
-        'reservation': reservation,
-        'restaurant': restaurant,
+        "reservation": reservation,
+        "restaurant": restaurant,
     }
 
-    return render(request, 'restaurants/reservation_cancel.html', context)
+    return render(request, "restaurants/reservation_cancel.html", context)
 
 
 def public_restaurant_list(request):
