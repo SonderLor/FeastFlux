@@ -1,8 +1,198 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
-from .models import Reservation, Table
+from .models import Reservation, Table, Restaurant
 from menu.models import Allergen
+
+
+class RestaurantForm(forms.ModelForm):
+    """Форма для создания/редактирования ресторана."""
+
+    class Meta:
+        model = Restaurant
+        fields = ['name', 'address', 'city', 'postal_code', 'country',
+                  'phone', 'email', 'website', 'description', 'logo', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.TextInput(attrs={'class': 'form-control'}),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'postal_code': forms.TextInput(attrs={'class': 'form-control'}),
+            'country': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'website': forms.URLInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'logo': forms.FileInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    monday_open = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Понедельник - открытие")
+    )
+    monday_close = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Понедельник - закрытие")
+    )
+    tuesday_open = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Вторник - открытие")
+    )
+    tuesday_close = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Вторник - закрытие")
+    )
+    wednesday_open = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Среда - открытие")
+    )
+    wednesday_close = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Среда - закрытие")
+    )
+    thursday_open = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Четверг - открытие")
+    )
+    thursday_close = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Четверг - закрытие")
+    )
+    friday_open = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Пятница - открытие")
+    )
+    friday_close = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Пятница - закрытие")
+    )
+    saturday_open = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Суббота - открытие")
+    )
+    saturday_close = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Суббота - закрытие")
+    )
+    sunday_open = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Воскресенье - открытие")
+    )
+    sunday_close = forms.TimeField(
+        required=False,
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+        label=_("Воскресенье - закрытие")
+    )
+
+    managers = forms.ModelMultipleChoiceField(
+        queryset=None,
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'list-unstyled'}),
+        label=_("Менеджеры ресторана")
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        self.fields['managers'].queryset = User.objects.filter(
+            role='MANAGER',
+            is_active=True,
+            is_active_employee=True
+        )
+
+        if self.instance.pk and self.instance.opening_hours:
+            for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
+                if day in self.instance.opening_hours:
+                    hours = self.instance.opening_hours[day]
+                    if 'open' in hours:
+                        from datetime import datetime
+                        try:
+                            time_obj = datetime.strptime(hours['open'], '%H:%M').time()
+                            self.fields[f'{day}_open'].initial = time_obj
+                        except (ValueError, TypeError):
+                            pass
+
+                    if 'close' in hours:
+                        try:
+                            time_obj = datetime.strptime(hours['close'], '%H:%M').time()
+                            self.fields[f'{day}_close'].initial = time_obj
+                        except (ValueError, TypeError):
+                            pass
+
+    def save(self, commit=True):
+        restaurant = super().save(commit=False)
+
+        opening_hours = {}
+        for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
+            open_time = self.cleaned_data.get(f'{day}_open')
+            close_time = self.cleaned_data.get(f'{day}_close')
+
+            if open_time and close_time:
+                opening_hours[day] = {
+                    'open': open_time.strftime('%H:%M'),
+                    'close': close_time.strftime('%H:%M')
+                }
+
+        restaurant.opening_hours = opening_hours
+
+        if commit:
+            restaurant.save()
+            self.save_m2m()
+
+        return restaurant
+
+
+class TableForm(forms.ModelForm):
+    """Форма для создания/редактирования столика."""
+
+    class Meta:
+        model = Table
+        fields = ['restaurant', 'number', 'capacity', 'status', 'shape',
+                  'width', 'length', 'min_spend', 'location_description',
+                  'is_active', 'position_x', 'position_y']
+        widgets = {
+            'restaurant': forms.Select(attrs={'class': 'form-select'}),
+            'number': forms.NumberInput(attrs={'class': 'form-control'}),
+            'capacity': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'shape': forms.Select(attrs={'class': 'form-select'}),
+            'width': forms.NumberInput(attrs={'class': 'form-control'}),
+            'length': forms.NumberInput(attrs={'class': 'form-control'}),
+            'min_spend': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'location_description': forms.TextInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'position_x': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'position_y': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        if user and hasattr(user, 'is_admin') and not user.is_admin():
+            if user.is_manager():
+                self.fields['restaurant'].queryset = user.managed_restaurants.all()
+            elif user.restaurant:
+                self.fields['restaurant'].queryset = Restaurant.objects.filter(id=user.restaurant.id)
+                self.fields['restaurant'].initial = user.restaurant
+                self.fields['restaurant'].widget.attrs['disabled'] = 'disabled'
+            else:
+                self.fields['restaurant'].queryset = Restaurant.objects.none()
 
 
 class ReservationForm(forms.ModelForm):
@@ -147,6 +337,62 @@ class ReservationForm(forms.ModelForm):
                 hours=self.cleaned_data["duration"]
             )
             reservation.end_time = end_datetime.time()
+
+        if commit:
+            reservation.save()
+
+        return reservation
+
+
+class StaffReservationForm(ReservationForm):
+    """Расширенная форма бронирования для персонала."""
+
+    status = forms.ChoiceField(
+        choices=Reservation.ReservationStatus.choices,
+        initial=Reservation.ReservationStatus.CONFIRMED,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label=_("Статус бронирования")
+    )
+
+    table = forms.ModelChoiceField(
+        queryset=Table.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label=_("Столик")
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.restaurant = kwargs.pop('restaurant', None)
+        super().__init__(*args, **kwargs)
+
+        if self.restaurant:
+            self.fields['table'].queryset = Table.objects.filter(
+                restaurant=self.restaurant,
+                is_active=True
+            ).order_by('number')
+
+        if self.instance.pk:
+            self.fields['table'].initial = self.instance.table
+            self.fields['status'].initial = self.instance.status
+
+            if self.instance.dietary_preferences:
+                if self.instance.dietary_preferences.get('vegetarian'):
+                    self.fields['is_vegetarian'].initial = True
+                if self.instance.dietary_preferences.get('vegan'):
+                    self.fields['is_vegan'].initial = True
+                if self.instance.dietary_preferences.get('gluten_free'):
+                    self.fields['is_gluten_free'].initial = True
+                if self.instance.dietary_preferences.get('lactose_free'):
+                    self.fields['is_lactose_free'].initial = True
+
+            if self.instance.allergy_information and 'ids' in self.instance.allergy_information:
+                allergen_ids = self.instance.allergy_information['ids']
+                self.fields['allergens'].initial = allergen_ids
+
+    def save(self, commit=True):
+        reservation = super().save(commit=False)
+
+        reservation.status = self.cleaned_data['status']
+        reservation.table = self.cleaned_data['table']
 
         if commit:
             reservation.save()
