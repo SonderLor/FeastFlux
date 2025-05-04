@@ -16,21 +16,21 @@ def public_restaurant_list(request):
     restaurants = Restaurant.objects.filter(is_active=True)
 
     if form.is_valid():
-        city = form.cleaned_data.get('city')
-        search = form.cleaned_data.get('search')
+        city = form.cleaned_data.get("city")
+        search = form.cleaned_data.get("search")
 
         if city:
             restaurants = restaurants.filter(city__icontains=city)
 
         if search:
             restaurants = restaurants.filter(
-                Q(name__icontains=search) |
-                Q(address__icontains=search) |
-                Q(description__icontains=search)
+                Q(name__icontains=search)
+                | Q(address__icontains=search)
+                | Q(description__icontains=search)
             )
 
     paginator = Paginator(restaurants, 12)
-    page = request.GET.get('page')
+    page = request.GET.get("page")
 
     try:
         restaurants_page = paginator.page(page)
@@ -39,15 +39,15 @@ def public_restaurant_list(request):
     except EmptyPage:
         restaurants_page = paginator.page(paginator.num_pages)
 
-    all_cities = Restaurant.objects.filter(is_active=True).values_list('city', flat=True).distinct()
+    all_cities = Restaurant.objects.filter(is_active=True).values_list("city", flat=True).distinct()
 
     context = {
-        'restaurants': restaurants_page,
-        'form': form,
-        'all_cities': all_cities,
+        "restaurants": restaurants_page,
+        "form": form,
+        "all_cities": all_cities,
     }
 
-    return render(request, 'restaurants/public_restaurant_list.html', context)
+    return render(request, "restaurants/public_restaurant_list.html", context)
 
 
 def public_restaurant_detail(request, id):
@@ -56,22 +56,19 @@ def public_restaurant_detail(request, id):
 
     is_open = is_restaurant_open(restaurant)
 
-    featured_tables = Table.objects.filter(
-        restaurant=restaurant,
-        is_active=True
-    ).order_by('?')[:3]
+    featured_tables = Table.objects.filter(restaurant=restaurant, is_active=True).order_by("?")[:3]
 
     context = {
-        'restaurant': restaurant,
-        'is_open': is_open,
-        'featured_tables': featured_tables,
+        "restaurant": restaurant,
+        "is_open": is_open,
+        "featured_tables": featured_tables,
     }
 
-    return render(request, 'restaurants/public_restaurant_detail.html', context)
+    return render(request, "restaurants/public_restaurant_detail.html", context)
 
 
 @login_required
-@permission_required('restaurants.view_public_tables', raise_exception=True)
+@permission_required("restaurants.view_public_tables", raise_exception=True)
 def public_table_view(request, id):
     """Представление для просмотра столиков в ресторане клиентами."""
     restaurant = get_object_or_404(Restaurant, id=id, is_active=True)
@@ -80,11 +77,11 @@ def public_table_view(request, id):
     tables = Table.objects.filter(restaurant=restaurant, is_active=True)
 
     if form.is_valid():
-        min_capacity = form.cleaned_data.get('min_capacity')
-        max_capacity = form.cleaned_data.get('max_capacity')
-        date = form.cleaned_data.get('date')
-        time = form.cleaned_data.get('time')
-        shape = form.cleaned_data.get('shape')
+        min_capacity = form.cleaned_data.get("min_capacity")
+        max_capacity = form.cleaned_data.get("max_capacity")
+        date = form.cleaned_data.get("date")
+        time = form.cleaned_data.get("time")
+        shape = form.cleaned_data.get("shape")
 
         if min_capacity:
             tables = tables.filter(capacity__gte=min_capacity)
@@ -104,27 +101,27 @@ def public_table_view(request, id):
             tables = tables.filter(id__in=available_tables)
 
     context = {
-        'restaurant': restaurant,
-        'tables': tables,
-        'form': form,
+        "restaurant": restaurant,
+        "tables": tables,
+        "form": form,
     }
 
-    return render(request, 'restaurants/public_table_view.html', context)
+    return render(request, "restaurants/public_table_view.html", context)
 
 
 @login_required
-@permission_required('restaurants.add_reservation', raise_exception=True)
+@permission_required("restaurants.add_reservation", raise_exception=True)
 def customer_reservation(request, id):
     """Представление для бронирования столика клиентом."""
     restaurant = get_object_or_404(Restaurant, id=id, is_active=True)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = ReservationForm(request.POST, restaurant=restaurant, user=request.user)
 
         if form.is_valid():
             reservation = form.save(commit=False)
 
-            table_id = request.POST.get('table_id')
+            table_id = request.POST.get("table_id")
 
             if table_id:
                 table = get_object_or_404(Table, id=table_id, restaurant=restaurant)
@@ -135,20 +132,20 @@ def customer_reservation(request, id):
             reservation.status = Reservation.ReservationStatus.PENDING
             reservation.save()
 
-            messages.success(request, _(
-                'Бронирование успешно создано! Мы свяжемся с вами для подтверждения.'
-            ))
+            messages.success(
+                request, _("Бронирование успешно создано! Мы свяжемся с вами для подтверждения.")
+            )
 
-            return redirect('reservation_confirmation', id=reservation.id)
+            return redirect("reservation_confirmation", id=reservation.id)
     else:
         form = ReservationForm(restaurant=restaurant, user=request.user)
 
     context = {
-        'restaurant': restaurant,
-        'form': form,
+        "restaurant": restaurant,
+        "form": form,
     }
 
-    return render(request, 'restaurants/customer_reservation.html', context)
+    return render(request, "restaurants/customer_reservation.html", context)
 
 
 @login_required
@@ -157,33 +154,34 @@ def reservation_confirmation(request, id):
     reservation = get_object_or_404(Reservation, id=id)
 
     if reservation.user != request.user and not request.user.is_staff:
-        messages.error(request, _('У вас нет прав для просмотра этого бронирования.'))
-        return redirect('home')
+        messages.error(request, _("У вас нет прав для просмотра этого бронирования."))
+        return redirect("home")
 
     context = {
-        'reservation': reservation,
+        "reservation": reservation,
     }
 
-    return render(request, 'restaurants/reservation_confirmation.html', context)
+    return render(request, "restaurants/reservation_confirmation.html", context)
 
 
 def is_restaurant_open(restaurant):
     """Проверяет, открыт ли ресторан в текущее время."""
     now = timezone.now()
-    today = now.strftime('%A').lower()
+    today = now.strftime("%A").lower()
 
     hours = restaurant.opening_hours.get(today)
 
     if not hours:
         return False
 
-    open_time_str = hours.get('open')
-    close_time_str = hours.get('close')
+    open_time_str = hours.get("open")
+    close_time_str = hours.get("close")
 
     if not open_time_str or not close_time_str:
         return False
 
     from datetime import datetime
+
     open_time = datetime.strptime(open_time_str, "%H:%M").time()
     close_time = datetime.strptime(close_time_str, "%H:%M").time()
 
