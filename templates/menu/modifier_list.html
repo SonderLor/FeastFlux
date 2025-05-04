@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block title %}Модификаторы | {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu_management_restaurant' restaurant.id %}">Управление меню</a></li>
+                    <li class="breadcrumb-item active">Модификаторы</li>
+                </ol>
+            </nav>
+            <h1>Модификаторы ресторана {{ restaurant.name }}</h1>
+        </div>
+        <div>
+            <a href="{% url 'menu_management_restaurant' restaurant.id %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Назад к меню
+            </a>
+            {% if perms.menu.add_modifier %}
+            <a href="{% url 'modifier_create_restaurant' restaurant.id %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> Добавить модификатор
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Боковая панель с фильтрами -->
+        <div class="col-lg-3 mb-4">
+            <div class="sticky-top" style="top: 20px;">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Фильтры</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="get">
+                            <div class="mb-3">
+                                <label for="search" class="form-label">Поиск</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="Название или описание">
+                                    <button class="btn btn-outline-primary" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="type" class="form-label">Тип модификатора</label>
+                                <select class="form-select" id="type" name="type">
+                                    <option value="">Все типы</option>
+                                    {% for type_value, type_label in modifier_types %}
+                                    <option value="{{ type_value }}" {% if modifier_type == type_value %}selected{% endif %}>{{ type_label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-1"></i> Применить фильтры
+                                </button>
+                                <a href="{% url 'modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-undo me-1"></i> Сбросить фильтры
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Быстрые действия</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'modifier_create_restaurant' restaurant.id %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i> Добавить модификатор
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Типы модификаторов</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            {% for type_value, type_label in modifier_types %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ type_label }}
+                                <a href="?type={{ type_value }}" class="badge bg-primary rounded-pill text-decoration-none">
+                                    Фильтр
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Список модификаторов -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Список модификаторов</h5>
+                        <span class="badge bg-primary">Найдено: {{ modifiers.paginator.count }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if modifiers %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Название</th>
+                                    <th>Тип</th>
+                                    <th>Изменение цены</th>
+                                    <th>Связанный ингредиент</th>
+                                    <th>Применимость</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for modifier in modifiers %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ modifier.name }}</strong>
+                                        {% if modifier.description %}
+                                        <div class="small text-muted">{{ modifier.description|truncatechars:50 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ modifier.get_modifier_type_display }}</td>
+                                    <td>
+                                        {% if modifier.price_change > 0 %}
+                                        <span class="text-success">+{{ modifier.price_change }} ₽</span>
+                                        {% elif modifier.price_change < 0 %}
+                                        <span class="text-danger">{{ modifier.price_change }} ₽</span>
+                                        {% else %}
+                                        <span class="text-muted">0 ₽</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if modifier.related_ingredient %}
+                                        {{ modifier.related_ingredient.name }}
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% with count=modifier.applicable_items.count %}
+                                        {% if count > 0 %}
+                                        <span class="badge bg-info">{{ count }} блюд</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Универсальный</span>
+                                        {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% if modifier.is_active %}
+                                        <span class="badge bg-success">Активен</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Неактивен</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% if perms.menu.change_modifier %}
+                                            <a href="{% url 'modifier_edit' modifier.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            
+                                            {% if perms.menu.delete_modifier %}
+                                            <a href="{% url 'modifier_delete' modifier.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Пагинация -->
+                    {% if modifiers.has_other_pages %}
+                    <nav aria-label="Навигация по страницам" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if modifiers.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ modifiers.previous_page_number }}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in modifiers.paginator.page_range %}
+                                {% if modifiers.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > modifiers.number|add:'-3' and num < modifiers.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if modifiers.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ modifiers.next_page_number }}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ modifiers.paginator.num_pages }}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> По вашему запросу ничего не найдено. Попробуйте изменить параметры фильтрации или
+                        <a href="{% url 'modifier_create_restaurant' restaurant.id %}" class="alert-link">добавьте новый модификатор</a>.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Инициализация тултипов
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

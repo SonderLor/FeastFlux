@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Выбор ресторана | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Выберите ресторан</h1>
+        <a href="{{ back_url }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Назад
+        </a>
+    </div>
+
+    <div class="row">
+        {% for restaurant in restaurants %}
+        <div class="col-md-4 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm">
+                {% if restaurant.logo %}
+                <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.name }}" class="card-img-top" style="height: 160px; object-fit: cover;">
+                {% else %}
+                <div class="text-center py-5 bg-light">
+                    <i class="fas fa-utensils fa-4x text-muted"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ restaurant.name }}</h5>
+                    <p class="card-text small">{{ restaurant.address }}, {{ restaurant.city }}</p>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-grid">
+                        <a href="{% if action == 'ingredients' %}{% url 'ingredient_list_restaurant' restaurant.id %}{% elif action == 'modifiers' %}{% url 'modifier_list_restaurant' restaurant.id %}{% else %}{% url 'menu_management_restaurant' restaurant.id %}{% endif %}" class="btn btn-primary">
+                            Выбрать
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> У вас нет доступных ресторанов.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

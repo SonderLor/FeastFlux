@@ -1,0 +1,477 @@
+{% extends 'base.html' %}
+
+{% block title %}Управление меню | {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu_view_restaurant' restaurant.id %}">Меню</a></li>
+                    <li class="breadcrumb-item active">Управление меню</li>
+                </ol>
+            </nav>
+            <h1>Управление меню ресторана {{ restaurant.name }}</h1>
+        </div>
+        <div>
+            <a href="{% url 'menu_view_restaurant' restaurant.id %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Назад к меню
+            </a>
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-plus-circle me-1"></i> Добавить
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{% url 'category_create_restaurant' restaurant.id %}">Новая категория</a></li>
+                    <li><a class="dropdown-item" href="{% url 'menu_item_create_restaurant' restaurant.id %}">Новое блюдо</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'ingredient_create_restaurant' restaurant.id %}">Добавить ингредиент</a></li>
+                    <li><a class="dropdown-item" href="{% url 'modifier_create_restaurant' restaurant.id %}">Добавить модификатор</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Всего позиций</h6>
+                            <h2 class="display-5">{{ total_items }}</h2>
+                        </div>
+                        <i class="fas fa-utensils fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Активные позиции</h6>
+                            <h2 class="display-5">{{ active_items }}</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Неактивные позиции</h6>
+                            <h2 class="display-5">{{ inactive_items }}</h2>
+                        </div>
+                        <i class="fas fa-ban fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Быстрые переходы</h6>
+                        </div>
+                        <i class="fas fa-link fa-3x opacity-50"></i>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{% url 'ingredient_list_restaurant' restaurant.id %}" class="btn btn-sm btn-light mb-2 me-2">
+                            <i class="fas fa-carrot me-1"></i> Ингредиенты
+                        </a>
+                        <a href="{% url 'modifier_list_restaurant' restaurant.id %}" class="btn btn-sm btn-light mb-2">
+                            <i class="fas fa-sliders-h me-1"></i> Модификаторы
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Дерево категорий и блюд -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Структура меню</h5>
+                        <a href="{% url 'category_create_restaurant' restaurant.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-folder-plus me-1"></i> Добавить категорию
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="category-tree">
+                        {% for category_data in categories_data %}
+                        <div class="category-item mb-4">
+                            <div class="category-header d-flex justify-content-between align-items-center bg-light p-2 rounded">
+                                <div>
+                                    <h5 class="mb-0 {% if not category_data.category.is_active %}text-muted{% endif %}">
+                                        <i class="fas fa-folder{% if category_data.category.is_active %} text-warning{% endif %} me-2"></i> 
+                                        {{ category_data.category.name }}
+                                    </h5>
+                                    <small class="text-muted">{{ category_data.items_count }} позиций ({{ category_data.active_count }} активных)</small>
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'menu_item_create_category' restaurant.id category_data.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Добавить блюдо в категорию">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                    <a href="{% url 'category_edit' category_data.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать категорию">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-primary toggle-category-status" data-category-id="{{ category_data.category.id }}" data-bs-toggle="tooltip" title="{% if category_data.category.is_active %}Деактивировать{% else %}Активировать{% endif %} категорию">
+                                        <i class="fas {% if category_data.category.is_active %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                    </button>
+                                    <a href="{% url 'category_delete' category_data.category.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить категорию">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <!-- Подкатегории -->
+                            {% if category_data.subcategories %}
+                            <div class="subcategories ms-4 mt-2">
+                                {% for subcategory in category_data.subcategories %}
+                                <div class="subcategory-item mb-2">
+                                    <div class="subcategory-header d-flex justify-content-between align-items-center bg-light p-2 rounded">
+                                        <div>
+                                            <h6 class="mb-0 {% if not subcategory.category.is_active %}text-muted{% endif %}">
+                                                <i class="fas fa-folder{% if subcategory.category.is_active %} text-info{% endif %} me-2"></i> 
+                                                {{ subcategory.category.name }}
+                                            </h6>
+                                            <small class="text-muted">{{ subcategory.items_count }} позиций ({{ subcategory.active_count }} активных)</small>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'menu_item_create_category' restaurant.id subcategory.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Добавить блюдо в подкатегорию">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
+                                            <a href="{% url 'category_edit' subcategory.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать подкатегорию">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-primary toggle-category-status" data-category-id="{{ subcategory.category.id }}" data-bs-toggle="tooltip" title="{% if subcategory.category.is_active %}Деактивировать{% else %}Активировать{% endif %} подкатегорию">
+                                                <i class="fas {% if subcategory.category.is_active %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                            </button>
+                                            <a href="{% url 'category_delete' subcategory.category.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить подкатегорию">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <!-- Блюда в подкатегории -->
+                                    <div class="menu-items ms-4 mt-2">
+                                        {% for item in subcategory.items %}
+                                        <div class="menu-item-row d-flex justify-content-between align-items-center p-2 {% if not item.is_active %}bg-light text-muted{% endif %} {% cycle '' 'bg-light' %} rounded mb-1">
+                                            <div>
+                                                <div class="d-flex align-items-center">
+                                                    {% if item.image %}
+                                                    <img src="{{ item.image.url }}" alt="{{ item.name }}" class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                    {% else %}
+                                                    <div class="bg-secondary rounded me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                        <i class="fas fa-utensils text-white"></i>
+                                                    </div>
+                                                    {% endif %}
+                                                    <div>
+                                                        <span class="{% if not item.is_active %}text-muted{% endif %}">{{ item.name }}</span>
+                                                        <small class="d-block text-muted">{{ item.price }} ₽</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="menu-item-actions">
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'menu_item_detail' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Просмотр">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'menu_item_edit' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-outline-primary toggle-menu-item-status" data-item-id="{{ item.id }}" data-bs-toggle="tooltip" title="{% if item.is_active %}Деактивировать{% else %}Активировать{% endif %}">
+                                                        <i class="fas {% if item.is_active %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                                    </button>
+                                                    <a href="{% url 'menu_item_delete' item.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% empty %}
+                                        <div class="alert alert-light">
+                                            <small>В этой подкатегории пока нет блюд.</small>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Блюда в основной категории -->
+                            <div class="menu-items ms-4 mt-2">
+                                {% for item in category_data.items %}
+                                <div class="menu-item-row d-flex justify-content-between align-items-center p-2 {% if not item.is_active %}bg-light text-muted{% endif %} {% cycle '' 'bg-light' %} rounded mb-1">
+                                    <div>
+                                        <div class="d-flex align-items-center">
+                                            {% if item.image %}
+                                            <img src="{{ item.image.url }}" alt="{{ item.name }}" class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="bg-secondary rounded me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-utensils text-white"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <span class="{% if not item.is_active %}text-muted{% endif %}">{{ item.name }}</span>
+                                                <small class="d-block text-muted">{{ item.price }} ₽</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="menu-item-actions">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'menu_item_detail' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Просмотр">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'menu_item_edit' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-primary toggle-menu-item-status" data-item-id="{{ item.id }}" data-bs-toggle="tooltip" title="{% if item.is_active %}Деактивировать{% else %}Активировать{% endif %}">
+                                                <i class="fas {% if item.is_active %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                            </button>
+                                            <a href="{% url 'menu_item_delete' item.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="alert alert-light">
+                                    <small>В этой категории пока нет блюд.</small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> В меню пока нет категорий.
+                            <a href="{% url 'category_create_restaurant' restaurant.id %}" class="alert-link">Добавить первую категорию</a>.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Последние изменения -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Последние изменения</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Блюдо</th>
+                                    <th>Категория</th>
+                                    <th>Обновлено</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in recent_items %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if item.image %}
+                                            <img src="{{ item.image.url }}" alt="{{ item.name }}" class="rounded me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="bg-secondary rounded me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                                <i class="fas fa-utensils text-white small"></i>
+                                            </div>
+                                            {% endif %}
+                                            <span class="{% if not item.is_active %}text-muted{% endif %}">{{ item.name|truncatechars:20 }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ item.category.name|truncatechars:15 }}</td>
+                                    <td><small>{{ item.updated_at|date:"d.m.Y H:i" }}</small></td>
+                                    <td>
+                                        <a href="{% url 'menu_item_detail' item.id %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Просмотр">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">Нет данных об изменениях</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Быстрые действия -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Быстрые действия</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'menu_item_create_restaurant' restaurant.id %}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-1"></i> Добавить блюдо
+                        </a>
+                        <a href="{% url 'category_create_restaurant' restaurant.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-folder-plus me-1"></i> Добавить категорию
+                        </a>
+                        <a href="{% url 'ingredient_list_restaurant' restaurant.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-carrot me-1"></i> Управление ингредиентами
+                        </a>
+                        <a href="{% url 'modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-sliders-h me-1"></i> Управление модификаторами
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Инициализация тултипов
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Переключение статуса блюда через AJAX
+        const menuItemStatusButtons = document.querySelectorAll('.toggle-menu-item-status');
+        menuItemStatusButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const icon = this.querySelector('i');
+
+                // AJAX запрос
+                fetch(`/menu/items/${itemId}/toggle/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Обновляем интерфейс
+                        if (data.is_active) {
+                            icon.classList.remove('fa-eye');
+                            icon.classList.add('fa-eye-slash');
+                            button.setAttribute('title', 'Деактивировать');
+                            button.parentElement.closest('.menu-item-row').classList.remove('bg-light', 'text-muted');
+                        } else {
+                            icon.classList.remove('fa-eye-slash');
+                            icon.classList.add('fa-eye');
+                            button.setAttribute('title', 'Активировать');
+                            button.parentElement.closest('.menu-item-row').classList.add('bg-light', 'text-muted');
+                        }
+
+                        // Обновляем тултип
+                        const tooltip = bootstrap.Tooltip.getInstance(button);
+                        if (tooltip) {
+                            tooltip.dispose();
+                            new bootstrap.Tooltip(button);
+                        }
+                    } else {
+                        alert('Ошибка при изменении статуса блюда');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при обновлении статуса');
+                });
+            });
+        });
+
+        // Переключение статуса категории через AJAX
+        const categoryStatusButtons = document.querySelectorAll('.toggle-category-status');
+        categoryStatusButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const categoryId = this.dataset.categoryId;
+                const icon = this.querySelector('i');
+
+                // AJAX запрос
+                fetch(`/menu/categories/${categoryId}/toggle/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Обновляем интерфейс
+                        if (data.is_active) {
+                            icon.classList.remove('fa-eye');
+                            icon.classList.add('fa-eye-slash');
+                            button.setAttribute('title', 'Деактивировать категорию');
+                        } else {
+                            icon.classList.remove('fa-eye-slash');
+                            icon.classList.add('fa-eye');
+                            button.setAttribute('title', 'Активировать категорию');
+                        }
+
+                        // Обновляем тултип
+                        const tooltip = bootstrap.Tooltip.getInstance(button);
+                        if (tooltip) {
+                            tooltip.dispose();
+                            new bootstrap.Tooltip(button);
+                        }
+
+                        // Обновляем страницу для актуализации данных
+                        setTimeout(() => {
+                            location.reload();
+                        }, 500);
+                    } else {
+                        alert('Ошибка при изменении статуса категории');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при обновлении статуса');
+                });
+            });
+        });
+
+        // Функция для получения значения CSRF-токена из cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}

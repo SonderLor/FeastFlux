@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_create %}Добавление модификатора{% else %}Редактирование модификатора{% endif %} | {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu_management_restaurant' restaurant.id %}">Управление меню</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'modifier_list_restaurant' restaurant.id %}">Модификаторы</a></li>
+                    <li class="breadcrumb-item active">{% if is_create %}Добавление модификатора{% else %}Редактирование модификатора{% endif %}</li>
+                </ol>
+            </nav>
+            <h1>{% if is_create %}Добавление модификатора{% else %}Редактирование модификатора{% endif %}</h1>
+        </div>
+        <div>
+            <a href="{% url 'modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Назад к модификаторам
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">{% if is_create %}Новый модификатор{% else %}Редактирование модификатора{% endif %}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Название модификатора *</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.modifier_type.id_for_label }}" class="form-label">Тип модификатора *</label>
+                                {{ form.modifier_type }}
+                                {% if form.modifier_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.modifier_type.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.description.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.price_change.id_for_label }}" class="form-label">Изменение цены</label>
+                                {{ form.price_change }}
+                                {% if form.price_change.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.price_change.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Положительное значение для надбавки, отрицательное для скидки</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.related_ingredient.id_for_label }}" class="form-label">Связанный ингредиент</label>
+                                {{ form.related_ingredient }}
+                                {% if form.related_ingredient.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.related_ingredient.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Если модификатор связан с конкретным ингредиентом</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Активен
+                                </label>
+                            </div>
+                            {% if form.is_active.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.is_active.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.restaurant.id_for_label }}" class="form-label">Ресторан *</label>
+                            {{ form.restaurant }}
+                            {% if form.restaurant.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.restaurant.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <h5 class="mt-4 mb-3">Применимость к блюдам</h5>
+                        <div class="mb-3">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i> Если не выбрано ни одного блюда, модификатор будет считаться универсальным и применимым ко всем блюдам ресторана.
+                            </div>
+                            
+                            <div class="applicable-items-container border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                {{ form.applicable_items }}
+                            </div>
+                            {% if form.applicable_items.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.applicable_items.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> {% if is_create %}Создать модификатор{% else %}Сохранить изменения{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Стилизация чекбоксов для блюд
+        const menuItemsElements = document.querySelectorAll('.applicable-items-container ul li');
+        menuItemsElements.forEach(item => {
+            item.classList.add('mb-2');
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            const label = item.querySelector('label');
+            
+            if (checkbox && label) {
+                checkbox.classList.add('form-check-input', 'me-2');
+                label.classList.add('form-check-label');
+            }
+        });
+        
+        // Обработка изменения ресторана (для обновления списка блюд и ингредиентов)
+        const restaurantSelect = document.getElementById('{{ form.restaurant.id_for_label }}');
+        const relatedIngredientSelect = document.getElementById('{{ form.related_ingredient.id_for_label }}');
+        const applicableItemsContainer = document.querySelector('.applicable-items-container');
+        
+        if (restaurantSelect) {
+            restaurantSelect.addEventListener('change', function() {
+                const restaurantId = this.value;
+                if (restaurantId) {
+                    // Обновление списка ингредиентов по AJAX
+                    fetch(`/api/restaurants/${restaurantId}/ingredients/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Очищаем текущие опции
+                            relatedIngredientSelect.innerHTML = '<option value="">---------</option>';
+                            
+                            // Добавляем новые опции
+                            data.ingredients.forEach(ingredient => {
+                                const option = document.createElement('option');
+                                option.value = ingredient.id;
+                                option.textContent = ingredient.name;
+                                relatedIngredientSelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => console.error('Error fetching ingredients:', error));
+                    
+                    // Обновление списка блюд по AJAX
+                    fetch(`/api/restaurants/${restaurantId}/menu-items/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Обновляем содержимое контейнера
+                            // Для этого потребуется дополнительный AJAX-endpoint, который возвращает HTML-разметку с чекбоксами
+                            // или можно создать их динамически через JavaScript
+                            console.log('Menu items loaded, implement UI update');
+                        })
+                        .catch(error => console.error('Error fetching menu items:', error));
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

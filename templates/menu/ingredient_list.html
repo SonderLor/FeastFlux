@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Ингредиенты | {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu_management_restaurant' restaurant.id %}">Управление меню</a></li>
+                    <li class="breadcrumb-item active">Ингредиенты</li>
+                </ol>
+            </nav>
+            <h1>Ингредиенты ресторана {{ restaurant.name }}</h1>
+        </div>
+        <div>
+            <a href="{% url 'menu_management_restaurant' restaurant.id %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Назад к меню
+            </a>
+            {% if perms.menu.add_ingredient %}
+            <a href="{% url 'ingredient_create_restaurant' restaurant.id %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> Добавить ингредиент
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Боковая панель с фильтрами -->
+        <div class="col-lg-3 mb-4">
+            <div class="sticky-top" style="top: 20px;">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Фильтры</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="get">
+                            <div class="mb-3">
+                                <label for="search" class="form-label">Поиск</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="Название или описание">
+                                    <button class="btn btn-outline-primary" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="allergen" class="form-label">Аллерген</label>
+                                <select class="form-select" id="allergen" name="allergen">
+                                    <option value="">Все аллергены</option>
+                                    {% for allergen in allergens %}
+                                    <option value="{{ allergen.id }}" {% if allergen_id == allergen.id|stringformat:"s" %}selected{% endif %}>{{ allergen.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="dietary" class="form-label">Диетические опции</label>
+                                <select class="form-select" id="dietary" name="dietary">
+                                    <option value="">Все ингредиенты</option>
+                                    <option value="vegetarian" {% if dietary_filter == 'vegetarian' %}selected{% endif %}>Вегетарианские</option>
+                                    <option value="vegan" {% if dietary_filter == 'vegan' %}selected{% endif %}>Веганские</option>
+                                    <option value="gluten_free" {% if dietary_filter == 'gluten_free' %}selected{% endif %}>Без глютена</option>
+                                </select>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-1"></i> Применить фильтры
+                                </button>
+                                <a href="{% url 'ingredient_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-undo me-1"></i> Сбросить фильтры
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Быстрые действия</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'ingredient_create_restaurant' restaurant.id %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i> Добавить ингредиент
+                            </a>
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="fas fa-download me-1"></i> Экспорт в CSV
+                            </a>
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="fas fa-upload me-1"></i> Импорт из CSV
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Список ингредиентов -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Список ингредиентов</h5>
+                        <span class="badge bg-primary">Найдено: {{ ingredients.paginator.count }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if ingredients %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Название</th>
+                                    <th>Аллергены</th>
+                                    <th>Калории (100г)</th>
+                                    <th>Б/Ж/У (г)</th>
+                                    <th>Диета</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ingredient in ingredients %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if ingredient.image %}
+                                            <img src="{{ ingredient.image.url }}" alt="{{ ingredient.name }}" class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="bg-secondary rounded me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-carrot text-white"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <strong>{{ ingredient.name }}</strong>
+                                                {% if ingredient.description %}
+                                                <div class="small text-muted">{{ ingredient.description|truncatechars:50 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap">
+                                            {% for allergen in ingredient.allergens.all %}
+                                            <span class="badge bg-danger me-1 mb-1">{{ allergen.name }}</span>
+                                            {% empty %}
+                                            <span class="text-muted small">Нет</span>
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                    <td>{{ ingredient.calories_per_100g }}</td>
+                                    <td>{{ ingredient.protein_per_100g }}/{{ ingredient.fat_per_100g }}/{{ ingredient.carbs_per_100g }}</td>
+                                    <td>
+                                        {% if ingredient.is_vegetarian %}
+                                        <i class="fas fa-leaf text-success" data-bs-toggle="tooltip" title="Вегетарианский"></i>
+                                        {% endif %}
+
+                                        {% if ingredient.is_vegan %}
+                                        <i class="fas fa-seedling text-success" data-bs-toggle="tooltip" title="Веганский"></i>
+                                        {% endif %}
+
+                                        {% if ingredient.is_gluten_free %}
+                                        <i class="fas fa-wheat-alt text-danger-subtle" data-bs-toggle="tooltip" title="Без глютена"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% if perms.menu.change_ingredient %}
+                                            <a href="{% url 'ingredient_edit' ingredient.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+
+                                            {% if perms.menu.delete_ingredient %}
+                                            <a href="{% url 'ingredient_delete' ingredient.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Пагинация -->
+                    {% if ingredients.has_other_pages %}
+                    <nav aria-label="Навигация по страницам" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if ingredients.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ ingredients.previous_page_number }}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in ingredients.paginator.page_range %}
+                                {% if ingredients.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > ingredients.number|add:'-3' and num < ingredients.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if ingredients.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ ingredients.next_page_number }}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ ingredients.paginator.num_pages }}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> По вашему запросу ничего не найдено. Попробуйте изменить параметры фильтрации или
+                        <a href="{% url 'ingredient_create_restaurant' restaurant.id %}" class="alert-link">добавьте новый ингредиент</a>.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Инициализация тултипов
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

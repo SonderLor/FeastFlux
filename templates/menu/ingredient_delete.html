@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление ингредиента | {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu_management_restaurant' restaurant.id %}">Управление меню</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'ingredient_list_restaurant' restaurant.id %}">Ингредиенты</a></li>
+                    <li class="breadcrumb-item active">Удаление ингредиента</li>
+                </ol>
+            </nav>
+            <h1>Удаление ингредиента "{{ ingredient.name }}"</h1>
+        </div>
+        <div>
+            <a href="{% url 'ingredient_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Назад к ингредиентам
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Внимание</h5>
+                </div>
+                <div class="card-body">
+                    <p class="fs-5">Вы собираетесь удалить ингредиент "<strong>{{ ingredient.name }}</strong>".</p>
+                    
+                    {% if menu_items_count > 0 %}
+                    <div class="alert alert-warning">
+                        <p><i class="fas fa-exclamation-triangle me-2"></i> Этот ингредиент используется в <strong>{{ menu_items_count }}</strong> блюдах:</p>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Название блюда</th>
+                                        <th>Категория</th>
+                                        <th>Количество</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for menu_item in menu_items %}
+                                    <tr>
+                                        <td>{{ menu_item.name }}</td>
+                                        <td>{{ menu_item.category.name }}</td>
+                                        <td>
+                                            {% for mi_ingredient in menu_item.menuitemingredient_set.all %}
+                                                {% if mi_ingredient.ingredient.id == ingredient.id %}
+                                                    {{ mi_ingredient.amount_grams }} г
+                                                {% endif %}
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="mb-0">Удаление ингредиента приведет к удалению его из всех блюд, что может повлиять на рецептуру и пищевую ценность.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if menu_items_count > 0 %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="confirm" value="yes" id="confirmDelete">
+                            <label class="form-check-label" for="confirmDelete">
+                                Я понимаю, что удаление ингредиента повлияет на {{ menu_items_count }} блюд
+                            </label>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'ingredient_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Отмена
+                            </a>
+                            
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash-alt me-1"></i> Удалить ингредиент
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

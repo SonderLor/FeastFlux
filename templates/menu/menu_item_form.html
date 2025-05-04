@@ -1,0 +1,514 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_create %}Создание блюда{% else %}Редактирование блюда{% endif %} | {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu_view_restaurant' restaurant.id %}">Меню</a></li>
+                    {% if is_create %}
+                    <li class="breadcrumb-item active">Создание блюда</li>
+                    {% else %}
+                    <li class="breadcrumb-item"><a href="{% url 'menu_item_detail' menu_item.id %}">{{ menu_item.name }}</a></li>
+                    <li class="breadcrumb-item active">Редактирование</li>
+                    {% endif %}
+                </ol>
+            </nav>
+            <h1>{% if is_create %}Создание нового блюда{% else %}Редактирование блюда{% endif %}</h1>
+        </div>
+        <div>
+            {% if is_create %}
+            <a href="{% url 'menu_management_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Отмена
+            </a>
+            {% else %}
+            <a href="{% url 'menu_item_detail' menu_item.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Назад к блюду
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger mb-4">
+        {% for error in form.non_field_errors %}
+        <p class="mb-0">{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" id="menu-item-form">
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- Основная информация -->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Основная информация</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Название блюда *</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">Категория *</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.category.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.description.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.price.id_for_label }}" class="form-label">Цена *</label>
+                                {{ form.price }}
+                                {% if form.price.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.price.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">Статус</label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.status.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.serving_size.id_for_label }}" class="form-label">Размер порции</label>
+                                {{ form.serving_size }}
+                                {% if form.serving_size.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.serving_size.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Например: "250г", "350мл"</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.preparation_time.id_for_label }}" class="form-label">Время приготовления (мин)</label>
+                                {{ form.preparation_time }}
+                                {% if form.preparation_time.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.preparation_time.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.image.id_for_label }}" class="form-label">Изображение</label>
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.image.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            {% if not is_create and menu_item.image %}
+                            <div class="mt-2">
+                                <p>Текущее изображение:</p>
+                                <img src="{{ menu_item.image.url }}" alt="{{ menu_item.name }}" class="img-thumbnail" style="max-height: 150px;">
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.spicy_level.id_for_label }}" class="form-label">Уровень остроты</label>
+                            {{ form.spicy_level }}
+                            {% if form.spicy_level.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.spicy_level.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Дополнительные опции</label>
+                            <div class="form-check mb-2">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Активно (отображается в меню)
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form.is_signature }}
+                                <label class="form-check-label" for="{{ form.is_signature.id_for_label }}">
+                                    Фирменное блюдо
+                                </label>
+                            </div>
+                            <div class="form-text">Фирменные блюда отображаются в специальном разделе меню и имеют приоритет</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.order_in_category.id_for_label }}" class="form-label">Порядок в категории</label>
+                            {{ form.order_in_category }}
+                            {% if form.order_in_category.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.order_in_category.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Чем меньше значение, тем выше в списке</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.restaurant.id_for_label }}" class="form-label">Ресторан *</label>
+                            {{ form.restaurant }}
+                            {% if form.restaurant.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.restaurant.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Диета и ингредиенты -->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Диетические характеристики</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.is_vegetarian }}
+                                    <label class="form-check-label" for="{{ form.is_vegetarian.id_for_label }}">
+                                        <i class="fas fa-leaf text-success me-1"></i> Вегетарианское блюдо
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    {{ form.is_vegan }}
+                                    <label class="form-check-label" for="{{ form.is_vegan.id_for_label }}">
+                                        <i class="fas fa-seedling text-success me-1"></i> Веганское блюдо
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.is_gluten_free }}
+                                    <label class="form-check-label" for="{{ form.is_gluten_free.id_for_label }}">
+                                        <i class="fas fa-ban text-danger me-1"></i> Без глютена
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    {{ form.is_lactose_free }}
+                                    <label class="form-check-label" for="{{ form.is_lactose_free.id_for_label }}">
+                                        <i class="fas fa-ban text-danger me-1"></i> Без лактозы
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i> Диетические характеристики автоматически обновятся после сохранения на основе ингредиентов.
+                            Ручные настройки будут перезаписаны.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Ингредиенты</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="add-ingredient">
+                                <i class="fas fa-plus-circle me-1"></i> Добавить
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {{ formset.management_form }}
+                        
+                        <div id="ingredient-formset">
+                            {% for form in formset.forms %}
+                            <div class="ingredient-form mb-3 pb-3 border-bottom{% if forloop.last %} empty-form{% endif %}" id="ingredient-{{ forloop.counter0 }}">
+                                {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                                {% endif %}
+                                
+                                {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                                {% endfor %}
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label for="{{ form.ingredient.id_for_label }}" class="form-label">Ингредиент *</label>
+                                        {{ form.ingredient }}
+                                        {% if form.ingredient.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.ingredient.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label for="{{ form.amount_grams.id_for_label }}" class="form-label">Количество (г) *</label>
+                                        {{ form.amount_grams }}
+                                        {% if form.amount_grams.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.amount_grams.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <label for="{{ form.order.id_for_label }}" class="form-label">Порядок</label>
+                                        {{ form.order }}
+                                        {% if form.order.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.order.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-8 mb-2">
+                                        <label for="{{ form.notes.id_for_label }}" class="form-label">Примечания</label>
+                                        {{ form.notes }}
+                                        {% if form.notes.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.notes.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="form-check">
+                                            {{ form.is_main }}
+                                            <label class="form-check-label" for="{{ form.is_main.id_for_label }}">
+                                                Основной ингредиент
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <div class="form-check">
+                                            {{ form.is_visible }}
+                                            <label class="form-check-label" for="{{ form.is_visible.id_for_label }}">
+                                                Отображать в меню
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if not forloop.last %}
+                                <div class="d-flex justify-content-end mt-2">
+                                    <div class="form-check">
+                                        {{ form.DELETE }}
+                                        <label class="form-check-label text-danger" for="{{ form.DELETE.id_for_label }}">
+                                            Удалить ингредиент
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if not is_create and nutrition %}
+                        <div class="mt-4">
+                            <h6>Расчетная пищевая ценность:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Калории</th>
+                                            <th>Белки</th>
+                                            <th>Жиры</th>
+                                            <th>Углеводы</th>
+                                            <th>Клетчатка</th>
+                                            <th>Сахар</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>{{ nutrition.calories }} ккал</td>
+                                            <td>{{ nutrition.protein }} г</td>
+                                            <td>{{ nutrition.fat }} г</td>
+                                            <td>{{ nutrition.carbs }} г</td>
+                                            <td>{{ nutrition.fiber }} г</td>
+                                            <td>{{ nutrition.sugar }} г</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if not is_create and allergens %}
+                        <div class="mt-3">
+                            <h6>Аллергены:</h6>
+                            <div class="d-flex flex-wrap">
+                                {% for allergen in allergens %}
+                                <div class="badge bg-danger me-2 mb-2 p-2">
+                                    {% if allergen.icon %}
+                                    <img src="{{ allergen.icon.url }}" alt="{{ allergen.name }}" style="width: 16px; height: 16px;" class="me-1">
+                                    {% else %}
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    {% endif %}
+                                    {{ allergen.name }}
+                                </div>
+                                {% empty %}
+                                <p class="text-muted mb-0">Аллергены не обнаружены</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between">
+            {% if is_create %}
+            <a href="{% url 'menu_management_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-1"></i> Отмена
+            </a>
+            {% else %}
+            <a href="{% url 'menu_item_detail' menu_item.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-1"></i> Отмена
+            </a>
+            {% endif %}
+            
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i> {% if is_create %}Создать блюдо{% else %}Сохранить изменения{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Управление формсетом ингредиентов
+        const formsetContainer = document.getElementById('ingredient-formset');
+        const addIngredientBtn = document.getElementById('add-ingredient');
+        const totalFormsInput = document.getElementById('id_{{ formset.prefix }}-TOTAL_FORMS');
+        const maxFormsInput = document.getElementById('id_{{ formset.prefix }}-MAX_NUM_FORMS');
+        
+        // Шаблон пустой формы
+        const emptyForm = document.querySelector('.empty-form');
+        emptyForm.style.display = 'none'; // Скрываем пустую форму
+        
+        // Добавление нового ингредиента
+        addIngredientBtn.addEventListener('click', function() {
+            const totalForms = parseInt(totalFormsInput.value);
+            const maxForms = parseInt(maxFormsInput.value);
+            
+            if (totalForms < maxForms) {
+                // Клонируем пустую форму
+                const newForm = emptyForm.cloneNode(true);
+                newForm.classList.remove('empty-form');
+                newForm.style.display = 'block';
+                
+                // Обновляем атрибуты клонированной формы
+                newForm.setAttribute('id', `ingredient-${totalForms}`);
+                
+                // Обновляем идентификаторы и имена полей
+                newForm.innerHTML = newForm.innerHTML.replace(/__prefix__/g, totalForms);
+                
+                // Добавляем новую форму в контейнер
+                formsetContainer.appendChild(newForm);
+                
+                // Увеличиваем счетчик форм
+                totalFormsInput.value = totalForms + 1;
+            } else {
+                alert(`Достигнуто максимальное количество ингредиентов (${maxForms})`);
+            }
+        });
+        
+        // Обработка изменения ресторана (для обновления категорий и ингредиентов)
+        const restaurantSelect = document.getElementById('{{ form.restaurant.id_for_label }}');
+        const categorySelect = document.getElementById('{{ form.category.id_for_label }}');
+        
+        if (restaurantSelect) {
+            restaurantSelect.addEventListener('change', function() {
+                const restaurantId = this.value;
+                if (restaurantId) {
+                    // Обновление списка категорий по AJAX
+                    fetch(`/api/restaurants/${restaurantId}/categories/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Очищаем текущие опции
+                            categorySelect.innerHTML = '';
+                            
+                            // Добавляем новые опции
+                            data.categories.forEach(category => {
+                                const option = document.createElement('option');
+                                option.value = category.id;
+                                option.textContent = category.name;
+                                categorySelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => console.error('Error fetching categories:', error));
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

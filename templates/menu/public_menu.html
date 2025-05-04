@@ -1,0 +1,519 @@
+{% extends 'base.html' %}
+
+{% block title %}Меню | {{ restaurant.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Боковая панель с фильтрами -->
+        <div class="col-lg-3 mb-4">
+            <div class="sticky-top" style="top: 20px;">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">{{ restaurant.name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            <i class="fas fa-map-marker-alt text-primary me-2"></i> {{ restaurant.address }}, {{ restaurant.city }}
+                        </p>
+                        <p>
+                            <i class="fas fa-phone text-primary me-2"></i> {{ restaurant.phone }}
+                        </p>
+                        {% if restaurant.logo %}
+                        <div class="text-center mb-3">
+                            <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.name }}" class="img-fluid rounded" style="max-height: 100px;">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Фильтры</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" id="menu-filter-form">
+                            <div class="mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">Категория</label>
+                                {{ form.category }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.search.id_for_label }}" class="form-label">Поиск</label>
+                                <div class="input-group">
+                                    {{ form.search }}
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Диетические предпочтения</label>
+                                <div class="form-check">
+                                    {{ form.is_vegetarian }}
+                                    <label class="form-check-label" for="{{ form.is_vegetarian.id_for_label }}">
+                                        <i class="fas fa-leaf text-success me-1"></i> Вегетарианское
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    {{ form.is_vegan }}
+                                    <label class="form-check-label" for="{{ form.is_vegan.id_for_label }}">
+                                        <i class="fas fa-seedling text-success me-1"></i> Веганское
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    {{ form.is_gluten_free }}
+                                    <label class="form-check-label" for="{{ form.is_gluten_free.id_for_label }}">
+                                        <i class="fas fa-ban text-danger me-1"></i> Без глютена
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    {{ form.is_lactose_free }}
+                                    <label class="form-check-label" for="{{ form.is_lactose_free.id_for_label }}">
+                                        <i class="fas fa-ban text-danger me-1"></i> Без лактозы
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.max_price.id_for_label }}" class="form-label">Максимальная цена</label>
+                                {{ form.max_price }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.spicy_level.id_for_label }}" class="form-label">Уровень остроты</label>
+                                {{ form.spicy_level }}
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-1"></i> Применить фильтры
+                                </button>
+                                <a href="{% url 'public_menu' restaurant.id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-undo me-1"></i> Сбросить фильтры
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Основное содержимое меню -->
+        <div class="col-lg-9">
+            <!-- Слайдер с фирменными блюдами -->
+            {% if signature_items %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-star me-2"></i> Фирменные блюда</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for item in signature_items %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 menu-item-card" data-item-id="{{ item.id }}">
+                                {% if item.image %}
+                                <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 180px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                                    <i class="fas fa-utensils fa-3x text-muted"></i>
+                                </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        {{ item.name }}
+                                        {% if item.is_vegetarian %}<i class="fas fa-leaf text-success" data-bs-toggle="tooltip" title="Вегетарианское"></i>{% endif %}
+                                        {% if item.is_vegan %}<i class="fas fa-seedling text-success" data-bs-toggle="tooltip" title="Веганское"></i>{% endif %}
+                                        {% if item.is_gluten_free %}<i class="fas fa-ban text-danger" data-bs-toggle="tooltip" title="Без глютена"></i>{% endif %}
+                                    </h5>
+                                    <p class="card-text text-truncate">{{ item.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fs-5 fw-bold text-primary">{{ item.price }} ₽</span>
+                                        <button class="btn btn-sm btn-outline-primary view-details-btn" data-item-id="{{ item.id }}">
+                                            <i class="fas fa-info-circle me-1"></i> Подробнее
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Категории меню -->
+            <div class="accordion mb-4" id="menuCategories">
+                {% for category, data in categories_with_items.items %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading{{ category.id|slugify }}">
+                        <button class="accordion-button {% if forloop.first %}{% else %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ category.id|slugify }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ category.id|slugify }}">
+                            {{ category.name }} <span class="badge bg-primary ms-2">{{ data.items|length }}</span>
+                        </button>
+                    </h2>
+                    <div id="collapse{{ category.id|slugify }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ category.id|slugify }}" data-bs-parent="#menuCategories">
+                        <div class="accordion-body">
+                            {% if data.subcategories %}
+                            <ul class="nav nav-pills mb-3">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-bs-toggle="pill" href="#all{{ category.id|slugify }}">Все</a>
+                                </li>
+                                {% for subcategory in data.subcategories %}
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="pill" href="#sub{{ subcategory.id|slugify }}">{{ subcategory.name }}</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+
+                            <div class="tab-content">
+                                <div class="tab-pane fade show active" id="all{{ category.id|slugify }}">
+                                    <div class="row">
+                                        {% for item in data.items %}
+                                        <div class="col-md-6 col-xl-4 mb-4">
+                                            <div class="card h-100 menu-item-card" data-item-id="{{ item.id }}">
+                                                {% if item.image %}
+                                                <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 180px; object-fit: cover;">
+                                                {% else %}
+                                                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                                                    <i class="fas fa-utensils fa-3x text-muted"></i>
+                                                </div>
+                                                {% endif %}
+                                                <div class="card-body">
+                                                    <h5 class="card-title">
+                                                        {{ item.name }}
+                                                        {% if item.is_vegetarian %}<i class="fas fa-leaf text-success" data-bs-toggle="tooltip" title="Вегетарианское"></i>{% endif %}
+                                                        {% if item.is_vegan %}<i class="fas fa-seedling text-success" data-bs-toggle="tooltip" title="Веганское"></i>{% endif %}
+                                                        {% if item.is_gluten_free %}<i class="fas fa-ban text-danger" data-bs-toggle="tooltip" title="Без глютена"></i>{% endif %}
+                                                    </h5>
+                                                    <p class="card-text small">{{ item.description|truncatechars:100 }}</p>
+
+                                                    {% if item.spicy_level > 0 %}
+                                                    <div class="mb-2">
+                                                        <span class="small text-muted">Острота: </span>
+                                                        {% for i in "12345"|slice:":item.spicy_level" %}
+                                                        <i class="fas fa-pepper-hot text-danger"></i>
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+
+                                                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                                                        <span class="fs-5 fw-bold text-primary">{{ item.price }} ₽</span>
+                                                        <button class="btn btn-sm btn-outline-primary view-details-btn" data-item-id="{{ item.id }}">
+                                                            <i class="fas fa-info-circle me-1"></i> Подробнее
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% empty %}
+                                        <div class="col-12">
+                                            <div class="alert alert-info">
+                                                <i class="fas fa-info-circle me-2"></i> В этой категории пока нет блюд.
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                {% for subcategory in data.subcategories %}
+                                <div class="tab-pane fade" id="sub{{ subcategory.id|slugify }}">
+                                    <div class="row">
+                                        {% for item in data.items %}
+                                            {% if item.category.id == subcategory.id %}
+                                            <div class="col-md-6 col-xl-4 mb-4">
+                                                <div class="card h-100 menu-item-card" data-item-id="{{ item.id }}">
+                                                    {% if item.image %}
+                                                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 180px; object-fit: cover;">
+                                                    {% else %}
+                                                    <div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                                                        <i class="fas fa-utensils fa-3x text-muted"></i>
+                                                    </div>
+                                                    {% endif %}
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">
+                                                            {{ item.name }}
+                                                            {% if item.is_vegetarian %}<i class="fas fa-leaf text-success" data-bs-toggle="tooltip" title="Вегетарианское"></i>{% endif %}
+                                                            {% if item.is_vegan %}<i class="fas fa-seedling text-success" data-bs-toggle="tooltip" title="Веганское"></i>{% endif %}
+                                                            {% if item.is_gluten_free %}<i class="fas fa-ban text-danger" data-bs-toggle="tooltip" title="Без глютена"></i>{% endif %}
+                                                        </h5>
+                                                        <p class="card-text small">{{ item.description|truncatechars:100 }}</p>
+
+                                                        {% if item.spicy_level > 0 %}
+                                                        <div class="mb-2">
+                                                            <span class="small text-muted">Острота: </span>
+                                                            {% for i in "12345"|slice:":item.spicy_level" %}
+                                                            <i class="fas fa-pepper-hot text-danger"></i>
+                                                            {% endfor %}
+                                                        </div>
+                                                        {% endif %}
+
+                                                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                                                            <span class="fs-5 fw-bold text-primary">{{ item.price }} ₽</span>
+                                                            <button class="btn btn-sm btn-outline-primary view-details-btn" data-item-id="{{ item.id }}">
+                                                                <i class="fas fa-info-circle me-1"></i> Подробнее
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        {% empty %}
+                                        <div class="col-12">
+                                            <div class="alert alert-info">
+                                                <i class="fas fa-info-circle me-2"></i> В этой подкатегории пока нет блюд.
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="row">
+                                {% for item in data.items %}
+                                <div class="col-md-6 col-xl-4 mb-4">
+                                    <div class="card h-100 menu-item-card" data-item-id="{{ item.id }}">
+                                        {% if item.image %}
+                                        <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 180px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                                            <i class="fas fa-utensils fa-3x text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h5 class="card-title">
+                                                {{ item.name }}
+                                                {% if item.is_vegetarian %}<i class="fas fa-leaf text-success" data-bs-toggle="tooltip" title="Вегетарианское"></i>{% endif %}
+                                                {% if item.is_vegan %}<i class="fas fa-seedling text-success" data-bs-toggle="tooltip" title="Веганское"></i>{% endif %}
+                                                {% if item.is_gluten_free %}<i class="fas fa-ban text-danger" data-bs-toggle="tooltip" title="Без глютена"></i>{% endif %}
+                                            </h5>
+                                            <p class="card-text small">{{ item.description|truncatechars:100 }}</p>
+
+                                            {% if item.spicy_level > 0 %}
+                                            <div class="mb-2">
+                                                <span class="small text-muted">Острота: </span>
+                                                {% for i in "12345"|slice:":item.spicy_level" %}
+                                                <i class="fas fa-pepper-hot text-danger"></i>
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
+
+                                            <div class="d-flex justify-content-between align-items-center mt-auto">
+                                                <span class="fs-5 fw-bold text-primary">{{ item.price }} ₽</span>
+                                                <button class="btn btn-sm btn-outline-primary view-details-btn" data-item-id="{{ item.id }}">
+                                                    <i class="fas fa-info-circle me-1"></i> Подробнее
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i> В этой категории пока нет блюд.
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> В меню пока нет категорий.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для детальной информации о блюде -->
+<div class="modal fade" id="menuItemModal" tabindex="-1" aria-labelledby="menuItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="menuItemModalLabel">Информация о блюде</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="menuItemModalContent">
+                <!-- Здесь будет динамически загружаемое содержимое -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                {% if user.is_authenticated %}
+                <button type="button" class="btn btn-primary" id="addToCartBtn">
+                    <i class="fas fa-cart-plus me-1"></i> Добавить в корзину
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Инициализация тултипов
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Модальное окно с информацией о блюде
+        const menuItemModal = new bootstrap.Modal(document.getElementById('menuItemModal'));
+        const modalContent = document.getElementById('menuItemModalContent');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+
+        // Кнопки открытия модального окна
+        const viewDetailsBtns = document.querySelectorAll('.view-details-btn');
+        const menuItemCards = document.querySelectorAll('.menu-item-card');
+
+        // Обработчики для кнопок и карточек
+        viewDetailsBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const itemId = this.dataset.itemId;
+                loadMenuItemDetails(itemId);
+            });
+        });
+
+        menuItemCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                loadMenuItemDetails(itemId);
+            });
+        });
+
+        // Загрузка деталей блюда в модальное окно
+        function loadMenuItemDetails(itemId) {
+            modalContent.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                </div>
+            `;
+
+            menuItemModal.show();
+
+            // AJAX запрос для получения данных
+            fetch(`/menu/items/${itemId}/modal/`)
+                .then(response => response.json())
+                .then(data => {
+                    modalContent.innerHTML = data.html;
+
+                    // Обновляем ID для кнопки добавления в корзину
+                    if (addToCartBtn) {
+                        addToCartBtn.dataset.itemId = itemId;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching menu item details:', error);
+                    modalContent.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i> Произошла ошибка при загрузке данных.
+                        </div>
+                    `;
+                });
+        }
+
+        // Обработчик добавления в корзину
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+
+                // Проверяем, есть ли выбранные модификаторы
+                const selectedModifiers = [];
+                const modifierElements = document.querySelectorAll('.modifier-checkbox:checked');
+                modifierElements.forEach(el => {
+                    selectedModifiers.push(el.value);
+                });
+
+                // AJAX запрос для добавления в корзину
+                fetch('/cart/add/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        menu_item_id: itemId,
+                        quantity: 1,
+                        modifiers: selectedModifiers
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Скрываем модальное окно
+                        menuItemModal.hide();
+
+                        // Показываем уведомление об успешном добавлении
+                        const toast = `
+                            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
+                                <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                                    <div class="toast-header bg-success text-white">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        <strong class="me-auto">Успешно!</strong>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                                    </div>
+                                    <div class="toast-body">
+                                        Блюдо добавлено в корзину.
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        const toastElement = document.createElement('div');
+                        toastElement.innerHTML = toast;
+                        document.body.appendChild(toastElement);
+
+                        // Удаляем уведомление через 3 секунды
+                        setTimeout(() => {
+                            document.body.removeChild(toastElement);
+                        }, 3000);
+
+                        // Обновляем счетчик корзины, если он есть
+                        const cartCounter = document.querySelector('.cart-counter');
+                        if (cartCounter) {
+                            cartCounter.textContent = data.cart_count;
+                        }
+                    } else {
+                        alert('Произошла ошибка при добавлении в корзину');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding to cart:', error);
+                    alert('Произошла ошибка при добавлении в корзину');
+                });
+            });
+        }
+
+        // Функция для получения CSRF-токена из cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}
