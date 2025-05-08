@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление скидки | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3">Удаление скидки</h1>
+                <a href="{% url 'discount_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> К списку скидок
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0 text-danger">Подтверждение удаления</h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning mb-4">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Вы собираетесь удалить скидку <strong>{{ discount.name }}</strong> с кодом <code>{{ discount.code }}</code>. Это действие нельзя отменить.
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h3 class="h6 mb-3">Информация о скидке</h3>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Код:</span>
+                                <code>{{ discount.code }}</code>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Название:</span>
+                                <span>{{ discount.name }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Тип:</span>
+                                <span>{{ discount.get_discount_type_display }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Значение:</span>
+                                <span>
+                                    {% if discount.discount_type == 'PERCENTAGE' %}
+                                        {{ discount.value }}%
+                                    {% elif discount.discount_type == 'FIXED' %}
+                                        ₽{{ discount.value }}
+                                    {% elif discount.discount_type == 'FREE_ITEM' %}
+                                        {{ discount.free_item.name|default:"Не указано" }}
+                                    {% endif %}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Статус:</span>
+                                <span>
+                                    {% if discount.is_active %}
+                                        <span class="badge bg-success">Активна</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Неактивна</span>
+                                    {% endif %}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h3 class="h6 mb-3">Статистика использования</h3>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <div class="p-3 bg-light rounded text-center">
+                                    <div class="h4 mb-0">{{ usage_stats.total_used }}</div>
+                                    <div class="small text-muted">Использований</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 bg-light rounded text-center">
+                                    <div class="h4 mb-0">{{ usage_stats.orders_count }}</div>
+                                    <div class="small text-muted">Заказов</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-light rounded text-center">
+                            <div class="h4 mb-0">₽{{ usage_stats.total_discount_amount|floatformat:2 }}</div>
+                            <div class="small text-muted">Общая сумма скидки</div>
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'discount_list' %}" class="btn btn-outline-secondary">Отмена</a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash-alt me-1"></i> Удалить скидку
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block title %}Скидки и промокоды | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3">Скидки и промокоды</h1>
+                <a href="{% url 'discount_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Создать скидку
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Фильтры -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                {% if restaurants.count > 1 %}
+                    <div class="col-md-3">
+                        <label for="restaurant" class="form-label">Ресторан</label>
+                        <select id="restaurant" name="restaurant" class="form-select">
+                            <option value="">Все рестораны</option>
+                            {% for r in restaurants %}
+                                <option value="{{ r.id }}" {% if selected_restaurant == r.id|stringformat:"s" %}selected{% endif %}>{{ r.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+                
+                <div class="col-md-3">
+                    <label for="is_active" class="form-label">Статус</label>
+                    <select id="is_active" name="is_active" class="form-select">
+                        <option value="">Все статусы</option>
+                        <option value="true" {% if selected_is_active == 'true' %}selected{% endif %}>Активные</option>
+                        <option value="false" {% if selected_is_active == 'false' %}selected{% endif %}>Неактивные</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="discount_type" class="form-label">Тип скидки</label>
+                    <select id="discount_type" name="discount_type" class="form-select">
+                        <option value="">Все типы</option>
+                        {% for code, name in discount_types %}
+                            <option value="{{ code }}" {% if selected_discount_type == code %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Поиск</label>
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Код, название..." value="{{ search }}">
+                </div>
+                
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-filter me-1"></i> Применить
+                    </button>
+                    <a href="{% url 'discount_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-eraser me-1"></i> Сбросить
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Таблица скидок -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Код</th>
+                            <th>Название</th>
+                            <th>Тип</th>
+                            <th>Значение</th>
+                            <th>Ресторан</th>
+                            <th>Срок действия</th>
+                            <th class="text-center">Использований</th>
+                            <th class="text-center">Статус</th>
+                            <th class="text-center">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for discount in discounts %}
+                            <tr>
+                                <td><code>{{ discount.code }}</code></td>
+                                <td>{{ discount.name }}</td>
+                                <td>
+                                    {% if discount.discount_type == 'PERCENTAGE' %}
+                                        Процент
+                                    {% elif discount.discount_type == 'FIXED' %}
+                                        Фиксированная сумма
+                                    {% elif discount.discount_type == 'FREE_ITEM' %}
+                                        Бесплатная позиция
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if discount.discount_type == 'PERCENTAGE' %}
+                                        {{ discount.value }}%
+                                        {% if discount.max_discount_amount %}
+                                            <span class="text-muted small">(макс. ₽{{ discount.max_discount_amount }})</span>
+                                        {% endif %}
+                                    {% elif discount.discount_type == 'FIXED' %}
+                                        ₽{{ discount.value }}
+                                    {% elif discount.discount_type == 'FREE_ITEM' %}
+                                        {{ discount.free_item.name|default:"Не указано" }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if discount.restaurant %}
+                                        {{ discount.restaurant.name }}
+                                    {% else %}
+                                        <span class="text-muted">Все рестораны</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if discount.valid_to %}
+                                        <span>{{ discount.valid_from|date:"d.m.Y" }} - {{ discount.valid_to|date:"d.m.Y" }}</span>
+                                    {% else %}
+                                        <span>С {{ discount.valid_from|date:"d.m.Y" }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {{ discount.times_used }}
+                                    {% if discount.usage_limit %}
+                                        <span class="text-muted small"> из {{ discount.usage_limit }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if discount.is_active %}
+                                        <span class="badge bg-success">Активна</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Неактивна</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <a href="{% url 'discount_edit' discount.id %}" class="btn btn-sm btn-outline-primary me-1">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'discount_toggle_status' discount.id %}" class="btn btn-sm {% if discount.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}" title="{{ discount.is_active|yesno:'Деактивировать,Активировать' }}">
+                                            <i class="fas {% if discount.is_active %}fa-toggle-off{% else %}fa-toggle-on{% endif %}"></i>
+                                        </a>
+                                        <a href="{% url 'discount_delete' discount.id %}" class="btn btn-sm btn-outline-danger ms-1">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-5">
+                                    <div class="empty-state">
+                                        <i class="fas fa-percent fa-3x text-muted mb-3"></i>
+                                        <h3 class="h5">Скидки и промокоды не найдены</h3>
+                                        <p class="text-muted mb-3">Создайте новую скидку или измените параметры фильтрации</p>
+                                        <a href="{% url 'discount_create' %}" class="btn btn-primary">
+                                            <i class="fas fa-plus me-1"></i> Создать скидку
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        {% if discounts.has_other_pages %}
+            <div class="card-footer bg-white">
+                <nav aria-label="Pagination">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if discounts.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ discounts.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-hidden="true">&laquo;&laquo;</span>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-hidden="true">&laquo;</span>
+                            </li>
+                        {% endif %}
+                        
+                        {% for i in discounts.paginator.page_range %}
+                            {% if discounts.number == i %}
+                                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                            {% elif i > discounts.number|add:'-3' and i < discounts.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if discounts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ discounts.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ discounts.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-hidden="true">&raquo;</span>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-hidden="true">&raquo;&raquo;</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

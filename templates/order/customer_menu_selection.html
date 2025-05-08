@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+
+{% block title %}Выбор блюд | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Левая часть с категориями и блюдами -->
+        <div class="col-lg-8 pr-lg-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">Меню - {{ order.restaurant.name }}</h1>
+                <div class="form-group mb-0">
+                    <select id="category-filter" class="form-select">
+                        <option value="all">Все категории</option>
+                        {% for cat in menu_structure %}
+                            <option value="category-{{ cat.category.id }}">{{ cat.category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="menu-filters mb-4">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary filter-btn" data-filter="all">Все</button>
+                    <button type="button" class="btn btn-outline-primary filter-btn" data-filter="vegetarian">Вегетарианские</button>
+                    <button type="button" class="btn btn-outline-primary filter-btn" data-filter="vegan">Веганские</button>
+                    <button type="button" class="btn btn-outline-primary filter-btn" data-filter="gluten-free">Без глютена</button>
+                    <button type="button" class="btn btn-outline-primary filter-btn" data-filter="low-calorie">Низкокалорийные</button>
+                </div>
+            </div>
+
+            <div class="menu-container">
+                {% for category_data in menu_structure %}
+                    <div class="category-section mb-5" id="category-{{ category_data.category.id }}">
+                        <h2 class="h4 mb-3">{{ category_data.category.name }}</h2>
+                        <div class="category-description mb-3">{{ category_data.category.description|linebreaks }}</div>
+                        
+                        <!-- Блюда в главной категории -->
+                        {% if category_data.items %}
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mb-4">
+                                {% for item in category_data.items %}
+                                    <div class="col menu-item-col" 
+                                         data-vegetarian="{{ item.is_vegetarian|lower }}" 
+                                         data-vegan="{{ item.is_vegan|lower }}" 
+                                         data-gluten-free="{{ item.is_gluten_free|lower }}"
+                                         data-low-calorie="{{ item.is_low_calorie|lower }}">
+                                        <div class="card h-100 menu-item shadow-sm" data-id="{{ item.id }}">
+                                            <img src="{{ item.image.url|default:'https://via.placeholder.com/300x200' }}" 
+                                                 class="card-img-top" alt="{{ item.name }}" style="height: 180px; object-fit: cover;">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <h5 class="card-title item-name mb-0">{{ item.name }}</h5>
+                                                    <span class="badge bg-primary item-price" data-price="{{ item.price }}">₽{{ item.price }}</span>
+                                                </div>
+                                                <p class="card-text text-muted small">{{ item.description|truncatechars:80 }}</p>
+                                                
+                                                <div class="diet-icons mt-2">
+                                                    {% if item.is_vegetarian %}
+                                                        <span class="badge bg-light text-dark me-1" title="Вегетарианское">🥗</span>
+                                                    {% endif %}
+                                                    {% if item.is_vegan %}
+                                                        <span class="badge bg-light text-dark me-1" title="Веганское">🌱</span>
+                                                    {% endif %}
+                                                    {% if item.is_gluten_free %}
+                                                        <span class="badge bg-light text-dark me-1" title="Без глютена">🌾</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-white border-top-0">
+                                                <button class="btn btn-sm btn-primary w-100 add-to-cart-btn">
+                                                    <i class="fas fa-plus-circle me-1"></i> Добавить в заказ
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Подкатегории -->
+                        {% for subcategory in category_data.subcategories %}
+                            <div class="subcategory-section mb-4">
+                                <h3 class="h5 mb-3">{{ subcategory.category.name }}</h3>
+                                <div class="subcategory-description mb-3">{{ subcategory.category.description|linebreaks }}</div>
+                                
+                                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+                                    {% for item in subcategory.items %}
+                                        <div class="col menu-item-col" 
+                                             data-vegetarian="{{ item.is_vegetarian|lower }}" 
+                                             data-vegan="{{ item.is_vegan|lower }}" 
+                                             data-gluten-free="{{ item.is_gluten_free|lower }}"
+                                             data-low-calorie="{{ item.is_low_calorie|lower }}">
+                                            <div class="card h-100 menu-item shadow-sm" data-id="{{ item.id }}">
+                                                <img src="{{ item.image.url|default:'https://via.placeholder.com/300x200' }}" 
+                                                     class="card-img-top" alt="{{ item.name }}" style="height: 180px; object-fit: cover;">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <h5 class="card-title item-name mb-0">{{ item.name }}</h5>
+                                                        <span class="badge bg-primary item-price" data-price="{{ item.price }}">₽{{ item.price }}</span>
+                                                    </div>
+                                                    <p class="card-text text-muted small">{{ item.description|truncatechars:80 }}</p>
+                                                    
+                                                    <div class="diet-icons mt-2">
+                                                        {% if item.is_vegetarian %}
+                                                            <span class="badge bg-light text-dark me-1" title="Вегетарианское">🥗</span>
+                                                        {% endif %}
+                                                        {% if item.is_vegan %}
+                                                            <span class="badge bg-light text-dark me-1" title="Веганское">🌱</span>
+                                                        {% endif %}
+                                                        {% if item.is_gluten_free %}
+                                                            <span class="badge bg-light text-dark me-1" title="Без глютена">🌾</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <div class="card-footer bg-white border-top-0">
+                                                    <button class="btn btn-sm btn-primary w-100 add-to-cart-btn">
+                                                        <i class="fas fa-plus-circle me-1"></i> Добавить в заказ
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Правая часть с корзиной -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">Ваш заказ</h2>
+                </div>
+                <div class="card-body">
+                    {% if order_items %}
+                        <div class="cart-items">
+                            {% for item in order_items %}
+                                <div class="cart-item mb-3 p-2 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="item-name fw-bold">{{ item.menu_item.name }}</div>
+                                            <div class="item-quantity text-muted small">x{{ item.quantity }}</div>
+                                            {% if item.notes %}
+                                                <div class="item-notes small text-muted">{{ item.notes }}</div>
+                                            {% endif %}
+                                            
+                                            {% for modifier in item.order_item_modifiers.all %}
+                                                <div class="item-modifier small">
+                                                    + {{ modifier.modifier.name }} x{{ modifier.quantity }}
+                                                    {% if modifier.modifier.price_change != 0 %}
+                                                        ({% if modifier.modifier.price_change > 0 %}+{% endif %}₽{{ modifier.modifier.price_change }})
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="item-price text-end">
+                                            ₽{{ item.get_total_price }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="cart-totals mt-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Сумма:</span>
+                                <span>₽{{ order.subtotal }}</span>
+                            </div>
+                            {% if order.discount_amount > 0 %}
+                                <div class="d-flex justify-content-between mb-2 text-success">
+                                    <span>Скидка:</span>
+                                    <span>-₽{{ order.discount_amount }}</span>
+                                </div>
+                            {% endif %}
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Налог:</span>
+                                <span>₽{{ order.tax_amount }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between fw-bold mt-2 pt-2 border-top">
+                                <span>Итого:</span>
+                                <span id="cart-total">₽{{ order.total_amount }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="cart-actions mt-4">
+                            <a href="{% url 'customer_cart' %}" class="btn btn-success w-100 mb-2">
+                                <i class="fas fa-shopping-cart me-1"></i> Перейти к оформлению
+                            </a>
+                            <a href="{% url 'customer_order_create' %}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-cog me-1"></i> Изменить параметры заказа
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="empty-cart text-center py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-shopping-cart fa-3x text-muted"></i>
+                            </div>
+                            <h3 class="h5">Ваша корзина пуста</h3>
+                            <p class="text-muted">Выберите блюда из меню</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для добавления блюда в корзину -->
+<div class="modal fade" id="item-modal" tabindex="-1" aria-labelledby="itemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="itemModalLabel">Добавить в заказ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-to-cart-form" method="post" action="{% url 'customer_add_to_cart' %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="modal-item-id" name="menu_item_id" value="">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <img id="modal-item-image" src="" alt="" class="img-fluid rounded">
+                        </div>
+                        <div class="col-md-8">
+                            <h5 id="modal-item-name" class="mb-2"></h5>
+                            <p id="modal-item-price" class="text-primary fw-bold mb-2"></p>
+                            <p id="modal-item-description" class="text-muted small mb-2"></p>
+                            
+                            <div class="nutrition-info small">
+                                <div id="modal-item-nutrition" class="d-flex flex-wrap gap-2">
+                                    <!-- Данные по КБЖУ будут заполнены через JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="item-quantity" class="form-label">Количество</label>
+                        <input type="number" id="item-quantity" name="quantity" class="form-control" min="1" value="1">
+                    </div>
+                    
+                    <div id="modifiers-container">
+                        <!-- Модификаторы будут заполнены через JavaScript -->
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="item-notes" class="form-label">Примечание</label>
+                        <textarea id="item-notes" name="notes" class="form-control" rows="2" placeholder="Специальные пожелания к блюду"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" id="add-to-cart-btn" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i> Добавить в заказ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Фильтрация по категориям
+        $("#category-filter").change(function() {
+            const categoryId = $(this).val();
+            if (categoryId === "all") {
+                $(".category-section").show();
+            } else {
+                $(".category-section").hide();
+                $("#" + categoryId).show();
+            }
+        });
+        
+        // Фильтрация по диетическим предпочтениям
+        $(".filter-btn").click(function() {
+            $(".filter-btn").removeClass("active");
+            $(this).addClass("active");
+            
+            const filter = $(this).data("filter");
+            if (filter === "all") {
+                $(".menu-item-col").show();
+            } else {
+                $(".menu-item-col").hide();
+                $(`.menu-item-col[data-${filter}="true"]`).show();
+            }
+        });
+        
+        // Открытие модального окна при клике на блюдо
+        $(".menu-item").click(function() {
+            const itemId = $(this).data("id");
+            const itemName = $(this).find(".item-name").text();
+            const itemPrice = $(this).find(".item-price").data("price");
+            const itemImage = $(this).find("img").attr("src");
+            const itemDescription = $(this).find("p").text();
+            
+            $("#modal-item-id").val(itemId);
+            $("#modal-item-name").text(itemName);
+            $("#modal-item-price").text(`₽${itemPrice}`);
+            $("#modal-item-image").attr("src", itemImage);
+            $("#modal-item-description").text(itemDescription);
+            
+            // Загрузка информации о блюде и модификаторах через AJAX
+            $.ajax({
+                url: `/api/menu-items/${itemId}/details/`,
+                method: "GET",
+                success: function(data) {
+                    // Заполнение информации о питательной ценности
+                    $("#modal-item-nutrition").empty();
+                    if (data.nutrition) {
+                        $("#modal-item-nutrition").append(`
+                            <span class="badge bg-light text-dark me-1">🔥 ${data.nutrition.calories} ккал</span>
+                            <span class="badge bg-light text-dark me-1">🥩 ${data.nutrition.protein} г</span>
+                            <span class="badge bg-light text-dark me-1">🧈 ${data.nutrition.fat} г</span>
+                            <span class="badge bg-light text-dark me-1">🍚 ${data.nutrition.carbs} г</span>
+                        `);
+                    }
+                    
+                    // Заполнение модификаторов
+                    $("#modifiers-container").empty();
+                    if (data.modifiers && data.modifiers.length > 0) {
+                        const modifiersHtml = `
+                            <div class="modifiers-section mb-3">
+                                <h6 class="mb-2">Модификаторы</h6>
+                                <div class="modifiers-list">
+                                    ${data.modifiers.map(mod => `
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="modifier_${mod.id}" name="modifier_${mod.id}">
+                                            <label class="form-check-label" for="modifier_${mod.id}">
+                                                ${mod.name} ${mod.price_change != 0 ? `(${mod.price_change > 0 ? '+' : ''}₽${mod.price_change})` : ''}
+                                            </label>
+                                            ${mod.modifier_type === 'ADDITION' || mod.modifier_type === 'REMOVAL' ? `
+                                                <div class="modifier-quantity mt-2 ps-4" style="display: none;">
+                                                    <label for="modifier_${mod.id}_quantity" class="form-label">Количество</label>
+                                                    <input type="number" class="form-control form-control-sm" 
+                                                           id="modifier_${mod.id}_quantity" 
+                                                           name="modifier_${mod.id}_quantity" 
+                                                           min="1" value="1">
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                        $("#modifiers-container").html(modifiersHtml);
+                        
+                        // Показать/скрыть количество модификатора при выборе
+                        $(".form-check-input").change(function() {
+                            const modifierId = $(this).attr('id');
+                            if ($(this).is(':checked')) {
+                                $(`#${modifierId}_quantity`).closest('.modifier-quantity').show();
+                            } else {
+                                $(`#${modifierId}_quantity`).closest('.modifier-quantity').hide();
+                            }
+                        });
+                    }
+                },
+                error: function() {
+                    console.error("Ошибка при загрузке данных о блюде");
+                }
+            });
+            
+            $('#item-modal').modal('show');
+        });
+        
+        // Добавление блюда в корзину
+        $("#add-to-cart-btn").click(function() {
+            const form = $("#add-to-cart-form");
+            
+            $.ajax({
+                url: form.attr('action'),
+                method: "POST",
+                data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        // Обновление корзины
+                        location.reload();
+                        
+                        // Закрытие модального окна
+                        $('#item-modal').modal('hide');
+                        
+                        // Уведомление
+                        showNotification("Блюдо добавлено в заказ", "success");
+                    } else {
+                        showNotification(response.error || "Ошибка при добавлении блюда", "error");
+                    }
+                },
+                error: function() {
+                    showNotification("Ошибка при добавлении блюда", "error");
+                }
+            });
+        });
+        
+        // Функция отображения уведомлений
+        function showNotification(message, type) {
+            const notification = $(`<div class="toast ${type === 'error' ? 'bg-danger text-white' : 'bg-success text-white'} position-fixed top-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">${type === 'error' ? 'Ошибка' : 'Успешно'}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>`);
+            
+            $("body").append(notification);
+            const toast = new bootstrap.Toast(notification);
+            toast.show();
+            
+            setTimeout(() => {
+                toast.hide();
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+
+{% block title %}Корзина | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Корзина</h1>
+    
+    <div class="row">
+        <!-- Список позиций заказа -->
+        <div class="col-lg-8">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="h5 mb-0">Ваш заказ</h2>
+                        <div class="badge bg-primary">{{ order.get_order_type_display }}</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if order_items %}
+                        <div class="table-responsive">
+                            <table class="table table-borderless" id="cart-items-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Наименование</th>
+                                        <th class="text-center">Цена</th>
+                                        <th class="text-center">Количество</th>
+                                        <th class="text-end">Сумма</th>
+                                        <th class="text-center" width="50"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order_items %}
+                                        <tr class="cart-item" data-id="{{ item.id }}">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="{{ item.menu_item.image.url|default:'https://via.placeholder.com/60x60' }}" 
+                                                         alt="{{ item.menu_item.name }}" 
+                                                         class="cart-item-image me-3" 
+                                                         style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                                                    <div>
+                                                        <div class="fw-bold">{{ item.menu_item.name }}</div>
+                                                        {% if item.notes %}
+                                                            <div class="small text-muted">{{ item.notes }}</div>
+                                                        {% endif %}
+                                                        
+                                                        {% for modifier in item.order_item_modifiers.all %}
+                                                            <div class="small">
+                                                                + {{ modifier.modifier.name }} x{{ modifier.quantity }}
+                                                                {% if modifier.modifier.price_change != 0 %}
+                                                                    ({% if modifier.modifier.price_change > 0 %}+{% endif %}₽{{ modifier.modifier.price_change }})
+                                                                {% endif %}
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">₽{{ item.unit_price }}</td>
+                                            <td class="text-center">
+                                                <div class="quantity-control d-flex align-items-center justify-content-center">
+                                                    <button class="btn btn-sm btn-outline-secondary quantity-btn" data-action="decrease">-</button>
+                                                    <input type="number" min="1" value="{{ item.quantity }}" class="form-control form-control-sm mx-2 quantity-input" style="width: 50px; text-align: center;">
+                                                    <button class="btn btn-sm btn-outline-secondary quantity-btn" data-action="increase">+</button>
+                                                </div>
+                                            </td>
+                                            <td class="text-end item-total">₽{{ item.get_total_price }}</td>
+                                            <td class="text-center">
+                                                <a href="{% url 'customer_remove_cart_item' item.id %}" class="btn btn-sm btn-outline-danger remove-item-btn">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Информация о питательной ценности и аллергенах -->
+                        <div class="nutrition-allergens-info mt-4 p-3 bg-light rounded">
+                            <h3 class="h6 mb-3">Пищевая ценность заказа</h3>
+                            <div class="row mb-3">
+                                <div class="col-md-3 col-6 mb-2">
+                                    <div class="nutrition-item text-center p-2 bg-white rounded shadow-sm">
+                                        <div class="fw-bold">{{ order_nutrition.calories }} ккал</div>
+                                        <div class="small text-muted">Калории</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6 mb-2">
+                                    <div class="nutrition-item text-center p-2 bg-white rounded shadow-sm">
+                                        <div class="fw-bold">{{ order_nutrition.protein }} г</div>
+                                        <div class="small text-muted">Белки</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6 mb-2">
+                                    <div class="nutrition-item text-center p-2 bg-white rounded shadow-sm">
+                                        <div class="fw-bold">{{ order_nutrition.fat }} г</div>
+                                        <div class="small text-muted">Жиры</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6 mb-2">
+                                    <div class="nutrition-item text-center p-2 bg-white rounded shadow-sm">
+                                        <div class="fw-bold">{{ order_nutrition.carbs }} г</div>
+                                        <div class="small text-muted">Углеводы</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if order_allergens %}
+                                <div class="allergens-info">
+                                    <h3 class="h6 mb-2">Аллергены</h3>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for allergen in order_allergens %}
+                                            <span class="badge bg-warning text-dark">{{ allergen }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="cart-actions mt-4 d-flex justify-content-between">
+                            <a href="{% url 'customer_menu_selection' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left me-1"></i> Вернуться к меню
+                            </a>
+                            <a href="{% url 'customer_checkout' %}" class="btn btn-success">
+                                Оформить заказ <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="empty-cart text-center py-5">
+                            <div class="mb-3">
+                                <i class="fas fa-shopping-cart fa-4x text-muted"></i>
+                            </div>
+                            <h3 class="h4 mb-3">Ваша корзина пуста</h3>
+                            <p class="text-muted mb-4">Добавьте блюда из меню в свой заказ</p>
+                            <a href="{% url 'customer_menu_selection' %}" class="btn btn-primary">
+                                <i class="fas fa-utensils me-1"></i> Перейти к меню
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Сводка заказа и скидки -->
+        <div class="col-lg-4">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Сводка заказа</h2>
+                </div>
+                <div class="card-body">
+                    <div class="order-totals">
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="text-muted">Подытог</span>
+                            <span id="subtotal">₽{{ order.subtotal }}</span>
+                        </div>
+
+                        {% if order.discount %}
+                            <div class="discount-info mb-3">
+                                <div class="d-flex justify-content-between text-success">
+                                    <span>Скидка ({{ order.discount.name }})</span>
+                                    <span id="discount-amount">-₽{{ order.discount_amount }}</span>
+                                </div>
+                                <div class="text-end mt-1">
+                                    <a href="#" id="remove-discount-btn" class="text-danger small">
+                                        <i class="fas fa-times-circle me-1"></i>Удалить скидку
+                                    </a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="discount-form mb-3">
+                                <h5 class="h6 mb-2">Применить промокод</h5>
+                                <form method="post" action="" class="d-flex">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="apply_discount" value="1">
+                                    <div class="input-group">
+                                        {{ discount_form.discount_code }}
+                                        <button type="submit" class="btn btn-primary">Применить</button>
+                                    </div>
+                                </form>
+                            </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="text-muted">Налог (13%)</span>
+                            <span id="tax-amount">₽{{ order.tax_amount }}</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between fw-bold border-top pt-3 mt-3">
+                            <h4 class="h5 mb-0">Итого</h4>
+                            <h4 class="h5 mb-0" id="cart-total-display">₽{{ order.total_amount }}</h4>
+                        </div>
+
+                        <div class="checkout-btn mt-4">
+                            <a href="{% url 'customer_checkout' %}" class="btn btn-success w-100">
+                                <i class="fas fa-check-circle me-1"></i> Оформить заказ
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="order-info mt-4 pt-4 border-top">
+                        <h3 class="h6 mb-3">Информация о заказе</h3>
+
+                        <div class="info-items">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Тип заказа:</span>
+                                <span class="text-end">{{ order.get_order_type_display }}</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Ресторан:</span>
+                                <span class="text-end">{{ order.restaurant.name }}</span>
+                            </div>
+
+                            {% if order.table %}
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Столик:</span>
+                                    <span class="text-end">№{{ order.table.number }} ({{ order.table.capacity }} чел.)</span>
+                                </div>
+                            {% endif %}
+
+                            {% if order.delivery_address %}
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Адрес доставки:</span>
+                                    <span class="text-end small">{{ order.delivery_address }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="edit-order-btn mt-3">
+                            <a href="{% url 'customer_order_create' %}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-edit me-1"></i> Изменить параметры заказа
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Обновление количества товара
+        $('.quantity-btn').click(function() {
+            const action = $(this).data('action');
+            const input = $(this).siblings('.quantity-input');
+            let value = parseInt(input.val());
+
+            if (action === 'decrease') {
+                if (value > 1) value -= 1;
+            } else {
+                value += 1;
+            }
+
+            input.val(value);
+            updateCartItem(input);
+        });
+
+        $('.quantity-input').change(function() {
+            updateCartItem($(this));
+        });
+
+        function updateCartItem(input) {
+            const row = input.closest('.cart-item');
+            const itemId = row.data('id');
+            const quantity = parseInt(input.val());
+
+            if (quantity < 1) {
+                input.val(1);
+                return;
+            }
+
+            $.ajax({
+                url: '{% url "customer_update_cart_item" "0000" %}'.replace('0000', itemId),
+                method: 'POST',
+                data: {
+                    'quantity': quantity,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Обновляем итоговую сумму позиции
+                        row.find('.item-total').text('₽' + response.item_total.toFixed(2));
+
+                        // Обновляем итоговые суммы заказа
+                        $('#subtotal').text('₽' + response.subtotal.toFixed(2));
+                        $('#discount-amount').text('-₽' + response.discount_amount.toFixed(2));
+                        $('#tax-amount').text('₽' + response.tax_amount.toFixed(2));
+                        $('#cart-total, #cart-total-display').text('₽' + response.cart_total.toFixed(2));
+                    }
+                },
+                error: function() {
+                    alert('Ошибка при обновлении корзины');
+                }
+            });
+        }
+
+        // Удаление скидки
+        $('#remove-discount-btn').click(function(e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: '{% url "customer_remove_discount" %}',
+                method: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function() {
+                    location.reload();
+                },
+                error: function() {
+                    alert('Ошибка при удалении скидки');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

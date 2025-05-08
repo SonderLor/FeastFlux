@@ -1,0 +1,406 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ is_create|yesno:'Создание,Редактирование' }} скидки | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3">{{ is_create|yesno:'Создание,Редактирование' }} скидки</h1>
+                <a href="{% url 'discount_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> К списку скидок
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Информация о скидке</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h3 class="h6 mb-3">Основная информация</h3>
+                                <div class="mb-3">
+                                    <label for="{{ form.code.id_for_label }}" class="form-label">Код скидки/промокод</label>
+                                    {{ form.code }}
+                                    {% if form.code.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.code.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">Название</label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.description.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h3 class="h6 mb-3">Настройки скидки</h3>
+                                <div class="mb-3">
+                                    <label for="{{ form.discount_type.id_for_label }}" class="form-label">Тип скидки</label>
+                                    {{ form.discount_type }}
+                                    {% if form.discount_type.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.discount_type.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3 value-field">
+                                    <label for="{{ form.value.id_for_label }}" class="form-label">Значение скидки</label>
+                                    {{ form.value }}
+                                    {% if form.value.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.value.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3 free-item-field" style="display: none;">
+                                    <label for="{{ form.free_item.id_for_label }}" class="form-label">Бесплатная позиция</label>
+                                    {{ form.free_item }}
+                                    {% if form.free_item.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.free_item.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3 percentage-field">
+                                    <label for="{{ form.max_discount_amount.id_for_label }}" class="form-label">Максимальная сумма скидки</label>
+                                    {{ form.max_discount_amount }}
+                                    <div class="form-text">Оставьте пустым, если нет ограничения</div>
+                                    {% if form.max_discount_amount.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.max_discount_amount.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.min_order_value.id_for_label }}" class="form-label">Минимальная сумма заказа</label>
+                                    {{ form.min_order_value }}
+                                    {% if form.min_order_value.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.min_order_value.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h3 class="h6 mb-3">Срок действия</h3>
+                                <div class="mb-3">
+                                    <label for="{{ form.valid_from.id_for_label }}" class="form-label">Действует с</label>
+                                    {{ form.valid_from }}
+                                    {% if form.valid_from.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.valid_from.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.valid_to.id_for_label }}" class="form-label">Действует до</label>
+                                    {{ form.valid_to }}
+                                    <div class="form-text">Оставьте пустым, если скидка бессрочная</div>
+                                    {% if form.valid_to.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.valid_to.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.usage_limit.id_for_label }}" class="form-label">Ограничение использований</label>
+                                    {{ form.usage_limit }}
+                                    <div class="form-text">Оставьте пустым, если нет ограничения</div>
+                                    {% if form.usage_limit.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.usage_limit.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h3 class="h6 mb-3">Применимость</h3>
+                                <div class="mb-3">
+                                    <label for="{{ form.restaurant.id_for_label }}" class="form-label">Ресторан</label>
+                                    {{ form.restaurant }}
+                                    <div class="form-text">Оставьте пустым, если скидка действует во всех ресторанах</div>
+                                    {% if form.restaurant.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.restaurant.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.applicable_categories.id_for_label }}" class="form-label">Применимо к категориям</label>
+                                    {{ form.applicable_categories }}
+                                    <div class="form-text">Оставьте пустым, если применимо ко всем категориям</div>
+                                    {% if form.applicable_categories.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.applicable_categories.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.applicable_items.id_for_label }}" class="form-label">Применимо к блюдам</label>
+                                    {{ form.applicable_items }}
+                                    <div class="form-text">Оставьте пустым, если применимо ко всем блюдам</div>
+                                    {% if form.applicable_items.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.applicable_items.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                Активна
+                            </label>
+                            {% if form.is_active.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.is_active.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'discount_list' %}" class="btn btn-outline-secondary me-2">Отмена</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Сохранить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Подсказка</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h3 class="h6 mb-2">Типы скидок</h3>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <b>Процент</b> - скидка в процентах от суммы заказа
+                            </li>
+                            <li class="mb-2">
+                                <b>Фиксированная сумма</b> - скидка определенной суммы
+                            </li>
+                            <li>
+                                <b>Бесплатная позиция</b> - предоставляет бесплатное блюдо
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="h6 mb-2">Важно</h3>
+                        <ul class="mb-0">
+                            <li>Для процентной скидки можно установить максимальную сумму</li>
+                            <li>Минимальная сумма заказа должна быть больше или равна 0</li>
+                            <li>Если выбран ресторан, то категории и блюда будут из этого ресторана</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {% if not is_create %}
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h2 class="h5 mb-0">Статистика использования</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h3 class="h6 mb-3">Создана</h3>
+                            <p class="mb-1">{{ discount.created_at|date:"d.m.Y H:i" }}</p>
+                            {% if discount.created_by %}
+                                <p class="mb-0 text-muted small">{{ discount.created_by.get_full_name|default:discount.created_by.username }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="stat-card p-3 bg-light rounded">
+                                    <div class="text-muted small">Использований</div>
+                                    <div class="h4 mb-0">{{ usage_stats.total_used }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="stat-card p-3 bg-light rounded">
+                                    <div class="text-muted small">Заказов</div>
+                                    <div class="h4 mb-0">{{ usage_stats.orders_count }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-light rounded mb-3">
+                            <div class="text-muted small">Общая сумма скидки</div>
+                            <div class="h4 mb-0">₽{{ usage_stats.total_discount_amount|floatformat:2 }}</div>
+                        </div>
+
+                        <div class="text-center">
+                            <a href="{% url 'discount_toggle_status' discount.id %}" class="btn btn-outline-{{ discount.is_active|yesno:'danger,success' }}">
+                                <i class="fas fa-toggle-{{ discount.is_active|yesno:'off,on' }} me-1"></i> {{ discount.is_active|yesno:'Деактивировать,Активировать' }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Показывать/скрывать поля в зависимости от типа скидки
+        function updateFieldVisibility() {
+            const discountType = $('#{{ form.discount_type.id_for_label }}').val();
+
+            if (discountType === 'PERCENTAGE') {
+                $('.value-field').show();
+                $('.percentage-field').show();
+                $('.free-item-field').hide();
+            } else if (discountType === 'FIXED') {
+                $('.value-field').show();
+                $('.percentage-field').hide();
+                $('.free-item-field').hide();
+            } else if (discountType === 'FREE_ITEM') {
+                $('.value-field').hide();
+                $('.percentage-field').hide();
+                $('.free-item-field').show();
+            }
+        }
+
+        $('#{{ form.discount_type.id_for_label }}').change(updateFieldVisibility);
+
+        // Инициализация при загрузке страницы
+        updateFieldVisibility();
+
+        // Подсказка по форматированию даты и времени
+        $('#{{ form.valid_from.id_for_label }}, #{{ form.valid_to.id_for_label }}').on('focus', function() {
+            if (!$(this).val()) {
+                $(this).val('{% now "Y-m-d\TH:i" %}');
+            }
+        });
+
+        // Загрузка категорий и блюд при выборе ресторана
+        $('#{{ form.restaurant.id_for_label }}').change(function() {
+            const restaurantId = $(this).val();
+
+            if (restaurantId) {
+                // Загрузка категорий
+                $.ajax({
+                    url: `/api/restaurants/${restaurantId}/categories/`,
+                    method: 'GET',
+                    success: function(data) {
+                        $('#{{ form.applicable_categories.id_for_label }}').empty();
+
+                        if (data.categories && data.categories.length > 0) {
+                            data.categories.forEach(function(category) {
+                                $('#{{ form.applicable_categories.id_for_label }}').append(
+                                    $('<option></option>').val(category.id).text(category.name)
+                                );
+                            });
+                        }
+                    }
+                });
+
+                // Загрузка блюд
+                $.ajax({
+                    url: `/api/restaurants/${restaurantId}/menu-items/`,
+                    method: 'GET',
+                    success: function(data) {
+                        $('#{{ form.applicable_items.id_for_label }}, #{{ form.free_item.id_for_label }}').empty();
+
+                        $('#{{ form.free_item.id_for_label }}').append(
+                            $('<option></option>').val('').text('Выберите блюдо')
+                        );
+
+                        if (data.items && data.items.length > 0) {
+                            data.items.forEach(function(item) {
+                                $('#{{ form.applicable_items.id_for_label }}').append(
+                                    $('<option></option>').val(item.id).text(item.name)
+                                );
+
+                                $('#{{ form.free_item.id_for_label }}').append(
+                                    $('<option></option>').val(item.id).text(item.name)
+                                );
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

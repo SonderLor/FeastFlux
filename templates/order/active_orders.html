@@ -1,0 +1,442 @@
+{% extends 'base.html' %}
+
+{% block title %}Активные заказы | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Активные заказы - {{ restaurant.name }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{% url 'create_order' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Новый заказ
+            </a>
+            <button id="refresh-orders" class="btn btn-outline-secondary">
+                <i class="fas fa-sync-alt me-1"></i> Обновить
+            </button>
+        </div>
+    </div>
+    
+    <!-- Информационная панель -->
+    <div class="row mb-4">
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card h-100 border-primary">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Всего активных</div>
+                            <h3 class="mb-0">{{ order_stats.total }}</h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-clipboard-list text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card h-100 border-info">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Размещено</div>
+                            <h3 class="mb-0">{{ order_stats.placed }}</h3>
+                        </div>
+                        <div class="bg-info bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-file-alt text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card h-100 border-primary">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Готовятся</div>
+                            <h3 class="mb-0">{{ order_stats.preparing }}</h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-utensils text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card h-100 border-success">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Готовы</div>
+                            <h3 class="mb-0">{{ order_stats.ready }}</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-check-circle text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card h-100 border-success">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Поданы</div>
+                            <h3 class="mb-0">{{ order_stats.served }}</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-thumbs-up text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Средний чек</div>
+                            <h3 class="mb-0">₽{{ order_stats.avg_order_value|floatformat:0 }}</h3>
+                        </div>
+                        <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                            <i class="fas fa-ruble-sign text-secondary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Фильтры -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Статус заказа</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">Все статусы</option>
+                        {% for status_code, status_name in status_choices %}
+                            <option value="{{ status_code }}" {% if selected_status == status_code %}selected{% endif %}>{{ status_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="waiter" class="form-label">Официант</label>
+                    <select id="waiter" name="waiter" class="form-select">
+                        <option value="">Все официанты</option>
+                        {% for waiter in waiters %}
+                            <option value="{{ waiter.id }}" {% if selected_waiter == waiter.id|stringformat:"s" %}selected{% endif %}>{{ waiter.get_full_name|default:waiter.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="order_type" class="form-label">Тип заказа</label>
+                    <select id="order_type" name="order_type" class="form-select">
+                        <option value="">Все типы</option>
+                        <option value="DINE_IN" {% if request.GET.order_type == 'DINE_IN' %}selected{% endif %}>В ресторане</option>
+                        <option value="TAKEAWAY" {% if request.GET.order_type == 'TAKEAWAY' %}selected{% endif %}>На вынос</option>
+                        <option value="DELIVERY" {% if request.GET.order_type == 'DELIVERY' %}selected{% endif %}>Доставка</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="order_number" class="form-label">Номер заказа</label>
+                    <input type="text" class="form-control" id="order_number" name="order_number" placeholder="Введите номер заказа" value="{{ request.GET.order_number|default:'' }}">
+                </div>
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-filter me-1"></i> Применить
+                    </button>
+                    <a href="{% url 'active_orders' %}?restaurant={{ restaurant.id }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-eraser me-1"></i> Сбросить
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Список заказов -->
+    <div class="row">
+        {% for order in orders %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 shadow-sm {% if order.status == 'PLACED' %}border-info{% elif order.status == 'PREPARING' %}border-primary{% elif order.status == 'READY' %}border-success{% elif order.status == 'SERVED' %}border-success{% endif %}">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Заказ #{{ order.order_number }}</h5>
+                            {% if order.status == 'PLACED' %}
+                                <span class="badge bg-info">Размещен</span>
+                            {% elif order.status == 'PREPARING' %}
+                                <span class="badge bg-primary">Готовится</span>
+                            {% elif order.status == 'READY' %}
+                                <span class="badge bg-success">Готов</span>
+                            {% elif order.status == 'SERVED' %}
+                                <span class="badge bg-success">Подан</span>
+                            {% elif order.status == 'COMPLETED' %}
+                                <span class="badge bg-secondary">Выполнен</span>
+                            {% elif order.status == 'CANCELLED' %}
+                                <span class="badge bg-danger">Отменен</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <div class="text-muted small">Время заказа</div>
+                                <div>{{ order.created_at|date:"H:i" }}</div>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Тип заказа</div>
+                                <div>{{ order.get_order_type_display }}</div>
+                            </div>
+                            <div>
+                                <div class="text-muted small">Столик</div>
+                                <div>{% if order.table %}№{{ order.table.number }}{% else %}-{% endif %}</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="text-muted small">Клиент</div>
+                            <div class="d-flex align-items-center">
+                                {% if order.customer %}
+                                    <i class="fas fa-user-circle me-2"></i>
+                                    {{ order.customer.get_full_name|default:order.customer.username }}
+                                {% elif order.customer_name %}
+                                    <i class="fas fa-user me-2"></i>
+                                    {{ order.customer_name }}
+                                {% else %}
+                                    <i class="fas fa-user me-2"></i>
+                                    Гость
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="text-muted small">Официант</div>
+                            <div class="d-flex align-items-center">
+                                {% if order.waiter %}
+                                    <i class="fas fa-id-badge me-2"></i>
+                                    {{ order.waiter.get_full_name|default:order.waiter.username }}
+                                {% else %}
+                                    <i class="fas fa-question-circle me-2"></i>
+                                    Не назначен
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="order-items mb-3">
+                            <div class="text-muted small mb-2">Состав заказа ({{ order.items.count }} поз.)</div>
+                            <div class="order-items-list" style="max-height: 150px; overflow-y: auto;">
+                                {% for item in order.items.all|slice:":5" %}
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-light text-dark me-2">{{ item.quantity }}x</span>
+                                            <span>{{ item.menu_item.name }}</span>
+                                        </div>
+                                        <span class="text-end">₽{{ item.get_total_price }}</span>
+                                    </div>
+                                {% endfor %}
+                                {% if order.items.count > 5 %}
+                                    <div class="text-center mt-2">
+                                        <span class="text-muted small">...и еще {{ order.items.count|add:"-5" }} позиций</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="fw-bold">Итого:</span>
+                            <span class="fw-bold">₽{{ order.total_amount }}</span>
+                        </div>
+
+                        <div class="mt-3">
+                            {% if order.special_requests %}
+                                <div class="alert alert-warning p-2">
+                                    <i class="fas fa-info-circle me-1"></i> {{ order.special_requests|truncatechars:100 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'order_details' order.id %}" class="btn btn-primary">
+                                <i class="fas fa-eye me-1"></i> Подробнее
+                            </a>
+                            <div class="btn-group">
+                                {% if order.status == 'PLACED' %}
+                                    <form method="post" action="{% url 'update_order_status' order.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="PREPARING">
+                                        <button type="submit" class="btn btn-success me-2">
+                                            <i class="fas fa-utensils me-1"></i> Принять
+                                        </button>
+                                    </form>
+                                {% elif order.status == 'PREPARING' %}
+                                    <form method="post" action="{% url 'update_order_status' order.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="READY">
+                                        <button type="submit" class="btn btn-success me-2">
+                                            <i class="fas fa-check me-1"></i> Готов
+                                        </button>
+                                    </form>
+                                {% elif order.status == 'READY' %}
+                                    <form method="post" action="{% url 'update_order_status' order.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="SERVED">
+                                        <button type="submit" class="btn btn-success me-2">
+                                            <i class="fas fa-thumbs-up me-1"></i> Подан
+                                        </button>
+                                    </form>
+                                {% elif order.status == 'SERVED' %}
+                                    <a href="{% url 'order_payment' order.id %}" class="btn btn-primary me-2">
+                                        <i class="fas fa-cash-register me-1"></i> Оплата
+                                    </a>
+                                {% endif %}
+
+                                <a href="{% url 'edit_order' order.id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body py-5">
+                        <div class="text-center">
+                            <i class="fas fa-clipboard-check fa-4x text-muted mb-3"></i>
+                            <h4>Нет активных заказов</h4>
+                            <p class="text-muted">На данный момент нет активных заказов, соответствующих выбранным критериям</p>
+                            <a href="{% url 'create_order' %}" class="btn btn-primary mt-3">
+                                <i class="fas fa-plus me-1"></i> Создать новый заказ
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Пагинация -->
+    {% if orders.has_other_pages %}
+        <nav aria-label="Pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if orders.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ orders.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&laquo;&laquo;</span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&laquo;</span>
+                    </li>
+                {% endif %}
+
+                {% for i in orders.paginator.page_range %}
+                    {% if orders.number == i %}
+                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                    {% elif i > orders.number|add:'-3' and i < orders.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if orders.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ orders.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ orders.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&raquo;</span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&raquo;&raquo;</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Автоматическое обновление списка заказов каждые 30 секунд
+        let refreshInterval = setInterval(function() {
+            refreshOrders();
+        }, 30000);
+
+        // Ручное обновление по кнопке
+        $('#refresh-orders').click(function() {
+            refreshOrders();
+        });
+
+        function refreshOrders() {
+            const url = window.location.href;
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'html',
+                success: function(data) {
+                    // Обновляем только содержимое страницы, избегая перезагрузки всей страницы
+                    const newContent = $(data).find('.container-fluid');
+                    $('.container-fluid').html(newContent.html());
+
+                    // Показываем уведомление
+                    showNotification("Список заказов обновлен", "success");
+                },
+                error: function() {
+                    showNotification("Ошибка при обновлении списка заказов", "error");
+                }
+            });
+        }
+
+        // Функция отображения уведомлений
+        function showNotification(message, type) {
+            const toast = $(`<div class="toast ${type === 'error' ? 'bg-danger text-white' : 'bg-success text-white'}" role="alert" aria-live="assertive" aria-atomic="true" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                <div class="toast-header">
+                    <strong class="me-auto">${type === 'error' ? 'Ошибка' : 'Уведомление'}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>`);
+
+            $('body').append(toast);
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 3000
+            });
+            bsToast.show();
+
+            // Удаляем элемент после скрытия
+            toast.on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
+    });
+</script>
+{% endblock %}

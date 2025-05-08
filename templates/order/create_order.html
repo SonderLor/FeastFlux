@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Создание заказа | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Создание заказа</h1>
+        <div class="d-flex">
+            <a href="{% url 'active_orders' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> К списку заказов
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Информация о заказе</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="create-order-form">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h3 class="h6 mb-3">Ресторан</h3>
+                            <div class="d-flex align-items-center mb-3">
+                                {% if restaurant.logo %}
+                                    <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.name }}" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">
+                                {% else %}
+                                    <div class="me-3 d-flex justify-content-center align-items-center bg-light rounded-circle" style="width: 50px; height: 50px;">
+                                        <i class="fas fa-utensils fa-lg"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h4 class="h6 mb-1">{{ restaurant.name }}</h4>
+                                    <p class="text-muted small mb-0">{{ restaurant.address }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h3 class="h6 mb-3">Тип заказа</h3>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card order-type-card h-100">
+                                        <div class="card-body">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="order_type" id="order_type_DINE_IN" value="DINE_IN" checked>
+                                                <label class="form-check-label w-100" for="order_type_DINE_IN">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="me-3 p-2 bg-primary bg-opacity-10 rounded">
+                                                            <i class="fas fa-chair fa-lg text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h5 class="h6 mb-1">В ресторане</h5>
+                                                            <p class="text-muted small mb-0">Обслуживание за столиком</p>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card order-type-card h-100">
+                                        <div class="card-body">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="order_type" id="order_type_TAKEAWAY" value="TAKEAWAY">
+                                                <label class="form-check-label w-100" for="order_type_TAKEAWAY">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="me-3 p-2 bg-success bg-opacity-10 rounded">
+                                                            <i class="fas fa-shopping-bag fa-lg text-success"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h5 class="h6 mb-1">На вынос</h5>
+                                                            <p class="text-muted small mb-0">Заберёт клиент</p>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4" id="table_container">
+                            <h3 class="h6 mb-3">Выбор столика</h3>
+                            {% if tables %}
+                                <div class="row">
+                                    {% for table in tables %}
+                                        <div class="col-md-3 col-sm-6 mb-3">
+                                            <div class="card table-card h-100 {% if selected_table.id == table.id %}border-primary{% endif %}" data-table-id="{{ table.id }}">
+                                                <div class="card-body p-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input table-radio" type="radio" name="table" id="table_{{ table.id }}" value="{{ table.id }}" {% if selected_table.id == table.id %}checked{% endif %}>
+                                                        <label class="form-check-label w-100" for="table_{{ table.id }}">
+                                                            <div class="text-center">
+                                                                <div class="table-icon mb-2">
+                                                                    {% if table.shape == 'ROUND' %}
+                                                                        <i class="fas fa-circle fa-2x {% if table.status == 'FREE' %}text-success{% elif table.status == 'RESERVED' %}text-warning{% else %}text-danger{% endif %}"></i>
+                                                                    {% elif table.shape == 'RECTANGULAR' %}
+                                                                        <i class="fas fa-square fa-2x {% if table.status == 'FREE' %}text-success{% elif table.status == 'RESERVED' %}text-warning{% else %}text-danger{% endif %}"></i>
+                                                                    {% else %}
+                                                                        <i class="fas fa-table fa-2x {% if table.status == 'FREE' %}text-success{% elif table.status == 'RESERVED' %}text-warning{% else %}text-danger{% endif %}"></i>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <h6 class="mb-1">Столик №{{ table.number }}</h6>
+                                                                <p class="mb-0 small">{{ table.capacity }} мест</p>
+                                                                <div class="table-status small mt-1">
+                                                                    {% if table.status == 'FREE' %}
+                                                                        <span class="badge bg-success">Свободен</span>
+                                                                    {% elif table.status == 'RESERVED' %}
+                                                                        <span class="badge bg-warning text-dark">Забронирован</span>
+                                                                    {% elif table.status == 'OCCUPIED' %}
+                                                                        <span class="badge bg-danger">Занят</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i> Нет доступных столиков
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h3 class="h6 mb-3">Информация о клиенте</h3>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="customer_name" class="form-label">Имя клиента</label>
+                                    <input type="text" class="form-control" id="customer_name" name="customer_name" placeholder="Введите имя клиента">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="customer_phone" class="form-label">Телефон клиента</label>
+                                    <input type="text" class="form-control" id="customer_phone" name="customer_phone" placeholder="Введите телефон клиента">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h3 class="h6 mb-3">Дополнительная информация</h3>
+                            <div class="mb-3">
+                                <label for="special_requests" class="form-label">Особые пожелания</label>
+                                <textarea class="form-control" id="special_requests" name="special_requests" rows="3" placeholder="Введите особые пожелания к заказу"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'active_orders' %}" class="btn btn-outline-secondary me-2">Отмена</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i> Создать заказ
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Подсказки</h2>
+                </div>
+                <div class="card-body">
+                    <div class="guide-item mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="guide-icon me-3 p-2 bg-primary bg-opacity-10 rounded">
+                                <i class="fas fa-info-circle text-primary"></i>
+                            </div>
+                            <h3 class="h6 mb-0">О создании заказа</h3>
+                        </div>
+                        <p class="text-muted small mt-2">Создание заказа состоит из нескольких шагов. Сначала выберите тип заказа и столик (если необходимо), затем добавьте позиции меню.</p>
+                    </div>
+                    
+                    <div class="guide-item mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="guide-icon me-3 p-2 bg-success bg-opacity-10 rounded">
+                                <i class="fas fa-lightbulb text-success"></i>
+                            </div>
+                            <h3 class="h6 mb-0">Совет по столикам</h3>
+                        </div>
+                        <p class="text-muted small mt-2">Зелёным цветом отмечены свободные столики, жёлтым - забронированные, красным - занятые. Для заказа в ресторане необходимо выбрать столик.</p>
+                    </div>
+                    
+                    <div class="guide-item">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="guide-icon me-3 p-2 bg-warning bg-opacity-10 rounded">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                            </div>
+                            <h3 class="h6 mb-0">Важно</h3>
+                        </div>
+                        <p class="text-muted small mt-2">После создания заказа вы сможете добавить блюда из меню. Следуйте инструкциям на следующем экране.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Обработка выбора типа заказа
+        $('input[name="order_type"]').change(function() {
+            const orderType = $(this).val();
+            
+            if (orderType === 'DINE_IN') {
+                $('#table_container').show();
+            } else {
+                $('#table_container').hide();
+                $('.table-radio').prop('checked', false);
+            }
+            
+            // Подсветка выбранной карточки
+            $('.order-type-card').removeClass('border-primary');
+            $(this).closest('.order-type-card').addClass('border-primary');
+        });
+
+        // Обработка выбора столика
+        $('.table-radio').change(function() {
+            $('.table-card').removeClass('border-primary');
+            $(this).closest('.table-card').addClass('border-primary');
+        });
+
+        // Инициализация при загрузке страницы
+        if ($('input[name="order_type"]:checked').val() !== 'DINE_IN') {
+            $('#table_container').hide();
+        }
+
+        // Валидация формы перед отправкой
+        $('#create-order-form').submit(function(e) {
+            const orderType = $('input[name="order_type"]:checked').val();
+
+            if (orderType === 'DINE_IN' && !$('.table-radio:checked').length) {
+                e.preventDefault();
+                alert('Для заказа в ресторане необходимо выбрать столик');
+                return false;
+            }
+
+            return true;
+        });
+
+        // Инициализация подсветки карточек при загрузке
+        $('input[name="order_type"]:checked').closest('.order-type-card').addClass('border-primary');
+    });
+</script>
+{% endblock %}

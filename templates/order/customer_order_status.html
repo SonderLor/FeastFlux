@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+
+{% block title %}Статус заказа #{{ order.order_number }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3">Статус заказа #{{ order.order_number }}</h1>
+                <a href="{% url 'customer_orders_history' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-list me-1"></i> Все заказы
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Основная информация о заказе -->
+        <div class="col-lg-8">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="h5 mb-0">Информация о заказе</h2>
+                        <div class="order-status">
+                            {% if order.status == 'PLACED' %}
+                                <span class="badge bg-info">Размещен</span>
+                            {% elif order.status == 'PREPARING' %}
+                                <span class="badge bg-primary">Готовится</span>
+                            {% elif order.status == 'READY' %}
+                                <span class="badge bg-success">Готов</span>
+                            {% elif order.status == 'SERVED' %}
+                                <span class="badge bg-success">Подан</span>
+                            {% elif order.status == 'COMPLETED' %}
+                                <span class="badge bg-secondary">Выполнен</span>
+                            {% elif order.status == 'CANCELLED' %}
+                                <span class="badge bg-danger">Отменен</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h3 class="h6 mb-3">Детали заказа</h3>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><strong>Дата заказа:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</li>
+                                <li class="mb-2"><strong>Тип заказа:</strong> {{ order.get_order_type_display }}</li>
+                                <li class="mb-2"><strong>Ресторан:</strong> {{ order.restaurant.name }}</li>
+                                {% if order.table %}
+                                    <li class="mb-2"><strong>Столик:</strong> №{{ order.table.number }}</li>
+                                {% endif %}
+                                {% if order.delivery_address %}
+                                    <li class="mb-2"><strong>Адрес доставки:</strong> {{ order.delivery_address }}</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h3 class="h6 mb-3">Контактная информация</h3>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><strong>Имя:</strong> {{ order.customer_name }}</li>
+                                <li class="mb-2"><strong>Телефон:</strong> {{ order.customer_phone }}</li>
+                                {% if order.special_requests %}
+                                    <li class="mb-2">
+                                        <strong>Примечание:</strong> 
+                                        <p class="text-muted small mt-1">{{ order.special_requests }}</p>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Трекер статуса заказа -->
+                    <div class="order-tracker mb-4">
+                        <h3 class="h6 mb-3">Статус выполнения</h3>
+                        <div class="order-progress mb-3">
+                            <div class="progress" style="height: 5px;">
+                                {% if order.status == 'PLACED' %}
+                                    <div class="progress-bar bg-primary" style="width: 25%"></div>
+                                {% elif order.status == 'PREPARING' %}
+                                    <div class="progress-bar bg-primary" style="width: 50%"></div>
+                                {% elif order.status == 'READY' %}
+                                    <div class="progress-bar bg-primary" style="width: 75%"></div>
+                                {% elif order.status == 'SERVED' or order.status == 'COMPLETED' %}
+                                    <div class="progress-bar bg-primary" style="width: 100%"></div>
+                                {% elif order.status == 'CANCELLED' %}
+                                    <div class="progress-bar bg-danger" style="width: 100%"></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="status-steps d-flex justify-content-between">
+                            <div class="status-step text-center">
+                                <div class="step-icon mb-2 {% if order.status != 'CANCELLED' %}text-primary{% endif %}">
+                                    <i class="fas fa-file-alt fa-2x"></i>
+                                </div>
+                                <div class="step-text small">Размещен</div>
+                                {% if order.placed_at %}
+                                    <div class="step-time text-muted tiny">{{ order.placed_at|date:"H:i" }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="status-step text-center">
+                                <div class="step-icon mb-2 {% if order.status == 'PREPARING' or order.status == 'READY' or order.status == 'SERVED' or order.status == 'COMPLETED' %}text-primary{% endif %}">
+                                    <i class="fas fa-utensils fa-2x"></i>
+                                </div>
+                                <div class="step-text small">Готовится</div>
+                            </div>
+                            
+                            <div class="status-step text-center">
+                                <div class="step-icon mb-2 {% if order.status == 'READY' or order.status == 'SERVED' or order.status == 'COMPLETED' %}text-primary{% endif %}">
+                                    <i class="fas fa-check-circle fa-2x"></i>
+                                </div>
+                                <div class="step-text small">Готов</div>
+                            </div>
+
+                            <div class="status-step text-center">
+                                <div class="step-icon mb-2 {% if order.status == 'SERVED' or order.status == 'COMPLETED' %}text-primary{% endif %}">
+                                    <i class="fas fa-thumbs-up fa-2x"></i>
+                                </div>
+                                <div class="step-text small">
+                                    {% if order.order_type == 'DELIVERY' %}
+                                        Доставлен
+                                    {% elif order.order_type == 'TAKEAWAY' %}
+                                        Получен
+                                    {% else %}
+                                        Подан
+                                    {% endif %}
+                                </div>
+                                {% if order.completed_at %}
+                                    <div class="step-time text-muted tiny">{{ order.completed_at|date:"H:i" }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if order.status == 'CANCELLED' %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i> Заказ был отменен
+                        </div>
+                    {% endif %}
+
+                    <!-- Детали заказа -->
+                    <div class="order-items">
+                        <h3 class="h6 mb-3">Состав заказа</h3>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Наименование</th>
+                                        <th class="text-center">Цена</th>
+                                        <th class="text-center">Кол-во</th>
+                                        <th class="text-end">Сумма</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order_items %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div>
+                                                        <div class="fw-bold">{{ item.menu_item.name }}</div>
+                                                        {% if item.notes %}
+                                                            <div class="text-muted small">{{ item.notes }}</div>
+                                                        {% endif %}
+
+                                                        {% for modifier in item.order_item_modifiers.all %}
+                                                            <div class="small">
+                                                                + {{ modifier.modifier.name }} x{{ modifier.quantity }}
+                                                                {% if modifier.modifier.price_change != 0 %}
+                                                                    ({% if modifier.modifier.price_change > 0 %}+{% endif %}₽{{ modifier.modifier.price_change }})
+                                                                {% endif %}
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">₽{{ item.unit_price }}</td>
+                                            <td class="text-center">{{ item.quantity }}</td>
+                                            <td class="text-end">₽{{ item.get_total_price }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="3" class="text-end">Сумма:</td>
+                                        <td class="text-end">₽{{ order.subtotal }}</td>
+                                    </tr>
+                                    {% if order.discount_amount > 0 %}
+                                        <tr>
+                                            <td colspan="3" class="text-end">Скидка:</td>
+                                            <td class="text-end text-success">-₽{{ order.discount_amount }}</td>
+                                        </tr>
+                                    {% endif %}
+                                    <tr>
+                                        <td colspan="3" class="text-end">Налог (13%):</td>
+                                        <td class="text-end">₽{{ order.tax_amount }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-bold">Итого:</td>
+                                        <td class="text-end fw-bold">₽{{ order.total_amount }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки действий -->
+                    <div class="order-actions mt-4">
+                        {% if order.status == 'COMPLETED' %}
+                            <a href="#" class="btn btn-outline-primary me-2" id="reviewOrderBtn">
+                                <i class="fas fa-star me-1"></i> Оставить отзыв
+                            </a>
+                            <a href="{% url 'customer_repeat_order' order.id %}" class="btn btn-outline-success me-2">
+                                <i class="fas fa-redo me-1"></i> Повторить заказ
+                            </a>
+                        {% endif %}
+
+                        {% if order.status == 'PLACED' %}
+                            <a href="{% url 'customer_cancel_order' order.id %}" class="btn btn-outline-danger" onclick="return confirm('Вы уверены, что хотите отменить заказ?');">
+                                <i class="fas fa-times-circle me-1"></i> Отменить заказ
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Боковая информация -->
+        <div class="col-lg-4">
+            <!-- Информация о ресторане -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Информация о ресторане</h2>
+                </div>
+                <div class="card-body">
+                    <div class="restaurant-info">
+                        <div class="d-flex align-items-center mb-3">
+                            {% if order.restaurant.logo %}
+                                <img src="{{ order.restaurant.logo.url }}" alt="{{ order.restaurant.name }}" class="restaurant-logo me-3" style="width: 60px; height: 60px; object-fit: cover; border-radius: 50%;">
+                            {% else %}
+                                <div class="restaurant-logo-placeholder me-3 d-flex justify-content-center align-items-center bg-light rounded-circle" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-utensils fa-lg"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <h3 class="h6 mb-1">{{ order.restaurant.name }}</h3>
+                                <p class="text-muted mb-0 small"><i class="fas fa-map-marker-alt me-1"></i> {{ order.restaurant.address }}</p>
+                            </div>
+                        </div>
+
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-phone me-2 text-primary"></i> {{ order.restaurant.phone }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-clock me-2 text-primary"></i> {{ order.restaurant.get_working_hours }}
+                            </li>
+                            <li>
+                                <a href="{% url 'public_restaurant_detail' order.restaurant.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-info-circle me-1"></i> Подробнее о ресторане
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Информация о платежах -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Информация об оплате</h2>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for payment in payments %}
+                            <li class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-bold">
+                                            {{ payment.get_payment_method_display }}
+                                            {% if payment.status == 'COMPLETED' %}
+                                                <span class="badge bg-success ms-2">Оплачен</span>
+                                            {% elif payment.status == 'PENDING' %}
+                                                <span class="badge bg-warning text-dark ms-2">Ожидает</span>
+                                            {% elif payment.status == 'FAILED' %}
+                                                <span class="badge bg-danger ms-2">Ошибка</span>
+                                            {% elif payment.status == 'REFUNDED' %}
+                                                <span class="badge bg-info ms-2">Возврат</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-muted small">{{ payment.payment_date|date:"d.m.Y H:i" }}</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold">₽{{ payment.amount }}</div>
+                                        {% if payment.transaction_id %}
+                                            <div class="text-muted small">ID: {{ payment.transaction_id }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item px-0">
+                                <div class="text-center py-3">
+                                    <i class="fas fa-receipt fa-2x text-muted mb-2"></i>
+                                    <p class="mb-0">Информация о платежах недоступна</p>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Пищевая ценность заказа -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Пищевая ценность заказа</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <div class="h4 mb-0">{{ order_nutrition.calories }} ккал</div>
+                                <div class="small text-muted">Калории</div>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <div class="h4 mb-0">{{ order_nutrition.protein }} г</div>
+                                <div class="small text-muted">Белки</div>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <div class="h4 mb-0">{{ order_nutrition.fat }} г</div>
+                                <div class="small text-muted">Жиры</div>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <div class="h4 mb-0">{{ order_nutrition.carbs }} г</div>
+                                <div class="small text-muted">Углеводы</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if order_allergens %}
+                        <div class="allergens-info mt-3">
+                            <h3 class="h6 mb-2">Аллергены в заказе</h3>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for allergen in order_allergens %}
+                                    <span class="badge bg-warning text-dark">{{ allergen }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для отзыва -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reviewModalLabel">Оставить отзыв о заказе</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm" method="post" action="{% url 'customer_add_review' order.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Ваша оценка</label>
+                        <div class="rating-stars d-flex justify-content-center mb-3">
+                            <div class="rating-container">
+                                <input type="radio" id="star5" name="rating" value="5" />
+                                <label for="star5" title="5 звезд"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star4" name="rating" value="4" />
+                                <label for="star4" title="4 звезды"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star3" name="rating" value="3" />
+                                <label for="star3" title="3 звезды"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star2" name="rating" value="2" />
+                                <label for="star2" title="2 звезды"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star1" name="rating" value="1" />
+                                <label for="star1" title="1 звезда"><i class="fas fa-star"></i></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reviewText" class="form-label">Комментарий</label>
+                        <textarea class="form-control" id="reviewText" name="review_text" rows="4" placeholder="Расскажите о вашем опыте..."></textarea>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="anonymousReview" name="anonymous">
+                        <label class="form-check-label" for="anonymousReview">
+                            Оставить отзыв анонимно
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="submitReviewBtn">Отправить отзыв</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Открытие модального окна для отзыва
+        $('#reviewOrderBtn').click(function(e) {
+            e.preventDefault();
+            $('#reviewModal').modal('show');
+        });
+
+        // Отправка формы отзыва
+        $('#submitReviewBtn').click(function() {
+            $('#reviewForm').submit();
+        });
+
+        // Стилизация звездочек рейтинга
+        $('.rating-stars input[type="radio"]').change(function() {
+            var value = $(this).val();
+            $('.rating-stars label').removeClass('active');
+            $(this).siblings('label').addClass('active');
+            $(this).parent().prevAll().children('label').addClass('active');
+        });
+    });
+</script>
+{% endblock %}

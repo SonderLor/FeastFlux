@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block title %}Создание заказа | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h3 mb-0">Создание заказа</h1>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}<br>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <h5>Выберите тип заказа</h5>
+                            <div class="row">
+                                {% for value, label in form.fields.order_type.choices %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 {% if form.order_type.value == value %}border-primary{% else %}border{% endif %}">
+                                        <div class="card-body text-center">
+                                            <div class="form-check">
+                                                <input class="form-check-input order-type-radio" type="radio" name="order_type" 
+                                                       id="order_type_{{ value }}" value="{{ value }}" 
+                                                       {% if form.order_type.value == value %}checked{% endif %}
+                                                       data-order-type="{{ value }}">
+                                                <label class="form-check-label w-100" for="order_type_{{ value }}">
+                                                    {% if value == 'DINE_IN' %}
+                                                    <i class="fas fa-utensils fa-3x mb-3 text-primary"></i>
+                                                    {% elif value == 'TAKEAWAY' %}
+                                                    <i class="fas fa-shopping-bag fa-3x mb-3 text-primary"></i>
+                                                    {% elif value == 'DELIVERY' %}
+                                                    <i class="fas fa-motorcycle fa-3x mb-3 text-primary"></i>
+                                                    {% endif %}
+                                                    <h5>{{ label }}</h5>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5>Выберите ресторан</h5>
+                            <div class="mb-3" id="restaurant_container">
+                                <label for="{{ form.restaurant.id_for_label }}" class="form-label">Ресторан</label>
+                                {{ form.restaurant }}
+                                {% if form.restaurant.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.restaurant.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div id="table_container" class="mb-4" style="display: none;">
+                            <h5>Выберите столик</h5>
+                            <div class="mb-3">
+                                <label for="{{ form.table.id_for_label }}" class="form-label">Столик</label>
+                                {{ form.table }}
+                                {% if form.table.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.table.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div id="delivery_container" class="mb-4" style="display: none;">
+                            <h5>Укажите адрес доставки</h5>
+                            
+                            {% if form.fields.saved_address %}
+                            <div class="mb-3">
+                                <label for="{{ form.saved_address.id_for_label }}" class="form-label">Выберите сохраненный адрес</label>
+                                {{ form.saved_address }}
+                                {% if form.saved_address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.saved_address.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <p class="text-muted">Или укажите новый адрес:</p>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.delivery_address.id_for_label }}" class="form-label">Адрес доставки</label>
+                                {{ form.delivery_address }}
+                                {% if form.delivery_address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.delivery_address.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-arrow-right me-2"></i> Продолжить
+                            </button>
+                            <a href="{% url 'home' %}" class="btn btn-outline-secondary">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Рестораны</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for restaurant in restaurants %}
+                        <a href="#" class="list-group-item list-group-item-action select-restaurant" data-restaurant-id="{{ restaurant.id }}">
+                            <div class="d-flex align-items-center">
+                                {% if restaurant.logo %}
+                                <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.name }}" class="me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-utensils text-muted"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0">{{ restaurant.name }}</h6>
+                                    <small class="text-muted">{{ restaurant.address }}, {{ restaurant.city }}</small>
+                                </div>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">Нет доступных ресторанов</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderTypeRadios = document.querySelectorAll('.order-type-radio');
+        const tableContainer = document.getElementById('table_container');
+        const deliveryContainer = document.getElementById('delivery_container');
+        const restaurantSelect = document.getElementById('{{ form.restaurant.id_for_label }}');
+        const tableSelect = document.getElementById('{{ form.table.id_for_label }}');
+        const selectRestaurantBtns = document.querySelectorAll('.select-restaurant');
+        
+        // Обработка выбора типа заказа
+        function handleOrderTypeChange() {
+            orderTypeRadios.forEach(radio => {
+                if (radio.checked) {
+                    const orderType = radio.dataset.orderType;
+                    
+                    // Показываем/скрываем контейнеры в зависимости от типа заказа
+                    if (orderType === 'DINE_IN') {
+                        tableContainer.style.display = 'block';
+                        deliveryContainer.style.display = 'none';
+                    } else if (orderType === 'DELIVERY') {
+                        tableContainer.style.display = 'none';
+                        deliveryContainer.style.display = 'block';
+                    } else {
+                        tableContainer.style.display = 'none';
+                        deliveryContainer.style.display = 'none';
+                    }
+                    
+                    // Подсвечиваем выбранную карточку
+                    document.querySelectorAll('.order-type-radio').forEach(r => {
+                        const card = r.closest('.card');
+                        if (r.checked) {
+                            card.classList.add('border-primary');
+                        } else {
+                            card.classList.remove('border-primary');
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Инициализация при загрузке страницы
+        handleOrderTypeChange();
+        
+        // Обработчики событий
+        orderTypeRadios.forEach(radio => {
+            radio.addEventListener('change', handleOrderTypeChange);
+        });
+        
+        // При выборе ресторана из списка заполняем селект
+        selectRestaurantBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const restaurantId = this.dataset.restaurantId;
+                restaurantSelect.value = restaurantId;
+                restaurantSelect.dispatchEvent(new Event('change'));
+                
+                // Подсвечиваем выбранный ресторан
+                selectRestaurantBtns.forEach(b => {
+                    b.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Прокручиваем к форме
+                document.querySelector('.card-header').scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+        
+        // Загрузка столиков при выборе ресторана
+        restaurantSelect.addEventListener('change', function() {
+            const restaurantId = this.value;
+            
+            if (restaurantId) {
+                // Очищаем текущий список столиков
+                tableSelect.innerHTML = '<option value="">Выберите столик</option>';
+                
+                // Загружаем столики для выбранного ресторана
+                fetch(`/api/restaurants/${restaurantId}/tables/?status=FREE,RESERVED`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.tables && data.tables.length > 0) {
+                            data.tables.forEach(table => {
+                                const option = document.createElement('option');
+                                option.value = table.id;
+                                option.textContent = `Столик №${table.number} (${table.capacity} чел.)`;
+                                tableSelect.appendChild(option);
+                            });
+                        } else {
+                            const option = document.createElement('option');
+                            option.value = "";
+                            option.textContent = "Нет доступных столиков";
+                            tableSelect.appendChild(option);
+                        }
+                    })
+                    .catch(error => console.error('Error loading tables:', error));
+            }
+        });
+        
+        // Если есть сохраненные адреса, обрабатываем их выбор
+        const savedAddressSelect = document.getElementById('{{ form.saved_address.id_for_label }}');
+        const deliveryAddressTextarea = document.getElementById('{{ form.delivery_address.id_for_label }}');
+        
+        if (savedAddressSelect) {
+            savedAddressSelect.addEventListener('change', function() {
+                const selectedAddress = this.value;
+                if (selectedAddress) {
+                    deliveryAddressTextarea.value = selectedAddress;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

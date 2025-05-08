@@ -1,0 +1,535 @@
+{% extends 'base.html' %}
+
+{% block title %}Оплата заказа #{{ order.order_number }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3">Оплата заказа #{{ order.order_number }}</h1>
+                <a href="{% url 'order_details' order.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> К деталям заказа
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Форма оплаты -->
+        <div class="col-lg-8">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Оформление оплаты</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="payment-summary p-3 bg-light rounded">
+                                <h3 class="h6 mb-3">Сводка платежа</h3>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Сумма заказа:</span>
+                                    <span class="fw-bold">₽{{ order.total_amount }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Уже оплачено:</span>
+                                    <span class="fw-bold {% if total_paid > 0 %}text-success{% endif %}">₽{{ total_paid }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Осталось оплатить:</span>
+                                    <span class="fw-bold {% if remaining > 0 %}text-danger{% else %}text-success{% endif %}">₽{{ remaining }}</span>
+                                </div>
+                                
+                                <div class="progress mt-3" style="height: 10px;">
+                                    {% if remaining <= 0 %}
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                    {% elif total_paid > 0 %}
+                                        {% with percentage=total_paid|floatformat:2|stringformat:"s"|add:"/"|add:order.total_amount|floatformat:2|stringformat:"s"|safe %}
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: calc({{ percentage }} * 100%);" aria-valuenow="{{ total_paid }}" aria-valuemin="0" aria-valuemax="{{ order.total_amount }}"></div>
+                                        {% endwith %}
+                                    {% else %}
+                                        <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="text-center mt-3">
+                                    {% if remaining <= 0 %}
+                                        <div class="alert alert-success mb-0">
+                                            <i class="fas fa-check-circle me-1"></i> Заказ полностью оплачен
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="client-info p-3 bg-light rounded h-100">
+                                <h3 class="h6 mb-3">Информация о клиенте</h3>
+                                <ul class="list-unstyled mb-0">
+                                    {% if order.customer %}
+                                        <li class="mb-2">
+                                            <strong>Клиент:</strong> 
+                                            {{ order.customer.get_full_name|default:order.customer.username }}
+                                        </li>
+                                    {% endif %}
+                                    <li class="mb-2"><strong>Имя:</strong> {{ order.customer_name|default:"-" }}</li>
+                                    <li class="mb-2"><strong>Телефон:</strong> {{ order.customer_phone|default:"-" }}</li>
+                                    <li class="mb-2"><strong>Тип заказа:</strong> {{ order.get_order_type_display }}</li>
+                                    {% if order.table %}
+                                        <li class="mb-2"><strong>Столик:</strong> №{{ order.table.number }} ({{ order.table.capacity }} чел.)</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if remaining > 0 %}
+                        <form method="post" id="payment-form">
+                            {% csrf_token %}
+                            
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {% for error in form.non_field_errors %}
+                                        {{ error }}<br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="mb-4">
+                                <h3 class="h6 mb-3">Способ оплаты</h3>
+                                <div class="row row-cols-1 row-cols-md-3 g-3">
+                                    {% for value, label in form.payment_method.field.choices %}
+                                        <div class="col">
+                                            <div class="card payment-method-card h-100">
+                                                <div class="card-body">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="payment_method" id="payment_method_{{ value }}" value="{{ value }}" {% if form.payment_method.value == value or forloop.first %}checked{% endif %}>
+                                                        <label class="form-check-label w-100" for="payment_method_{{ value }}">
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="payment-icon me-3">
+                                                                    {% if value == 'CASH' %}
+                                                                        <i class="fas fa-money-bill-wave fa-2x text-success"></i>
+                                                                    {% elif value == 'CREDIT_CARD' %}
+                                                                        <i class="fas fa-credit-card fa-2x text-primary"></i>
+                                                                    {% elif value == 'DEBIT_CARD' %}
+                                                                        <i class="fas fa-credit-card fa-2x text-info"></i>
+                                                                    {% elif value == 'BANK_TRANSFER' %}
+                                                                        <i class="fas fa-university fa-2x text-dark"></i>
+                                                                    {% elif value == 'MOBILE_PAYMENT' %}
+                                                                        <i class="fas fa-mobile-alt fa-2x text-primary"></i>
+                                                                    {% elif value == 'GIFT_CARD' %}
+                                                                        <i class="fas fa-gift fa-2x text-danger"></i>
+                                                                    {% else %}
+                                                                        <i class="fas fa-wallet fa-2x text-secondary"></i>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div>
+                                                                    <h4 class="h6 mb-1">{{ label }}</h4>
+                                                                    <div class="small text-muted">
+                                                                        {% if value == 'CASH' %}
+                                                                            Наличный расчет
+                                                                        {% elif value == 'CREDIT_CARD' %}
+                                                                            Оплата кредитной картой
+                                                                        {% elif value == 'DEBIT_CARD' %}
+                                                                            Оплата дебетовой картой
+                                                                        {% elif value == 'BANK_TRANSFER' %}
+                                                                            Банковский перевод
+                                                                        {% elif value == 'MOBILE_PAYMENT' %}
+                                                                            Мобильный платеж
+                                                                        {% elif value == 'GIFT_CARD' %}
+                                                                            Подарочная карта
+                                                                        {% else %}
+                                                                            Другой способ оплаты
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                {% if form.payment_method.errors %}
+                                    <div class="text-danger small mt-2">
+                                        {% for error in form.payment_method.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-4">
+                                <h3 class="h6 mb-3">Сумма к оплате</h3>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.amount.id_for_label }}" class="form-label">Сумма оплаты</label>
+                                            {{ form.amount }}
+                                            {% if form.amount.errors %}
+                                                <div class="text-danger small mt-1">
+                                                    {% for error in form.amount.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="cash-calculator mt-md-0 mt-3">
+                                            <label class="form-label">Вносимая сумма (для наличных)</label>
+                                            <div class="input-group mb-2">
+                                                <span class="input-group-text">₽</span>
+                                                <input type="number" class="form-control" id="cash-amount" placeholder="Внесено наличными">
+                                            </div>
+                                            <div class="change-display bg-light p-2 rounded">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Сдача:</span>
+                                                    <span id="change-amount">₽0.00</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h3 class="h6 mb-3">Дополнительная информация</h3>
+                                <div class="form-group">
+                                    <label for="{{ form.notes.id_for_label }}" class="form-label">Примечания к оплате</label>
+                                    {{ form.notes }}
+                                    {% if form.notes.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.notes.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <a href="{% url 'order_details' order.id %}" class="btn btn-outline-secondary me-2">Отмена</a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check-circle me-1"></i> Подтвердить оплату
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <div class="mb-3">
+                                <i class="fas fa-check-circle fa-4x text-success"></i>
+                            </div>
+                            <h3 class="h4 mb-3">Заказ полностью оплачен</h3>
+                            <p class="text-muted mb-4">Все платежи по заказу #{{ order.order_number }} успешно проведены</p>
+
+                            <div class="d-flex justify-content-center gap-3">
+                                <a href="{% url 'order_details' order.id %}" class="btn btn-primary">
+                                    <i class="fas fa-file-alt me-1"></i> Детали заказа
+                                </a>
+                                <a href="{% url 'active_orders' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-list me-1"></i> К списку заказов
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Сводка заказа и история платежей -->
+        <div class="col-lg-4">
+            <!-- Сводка заказа -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Сводка заказа</h2>
+                </div>
+                <div class="card-body">
+                    <div class="order-items-list">
+                        {% for item in order.items.all %}
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <span>{{ item.quantity }}x {{ item.menu_item.name }}</span>
+
+                                    {% if item.order_item_modifiers.count > 0 %}
+                                        <div class="small text-muted">
+                                            {% for modifier in item.order_item_modifiers.all %}
+                                                + {{ modifier.modifier.name }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">₽{{ item.get_total_price }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="order-totals">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Сумма:</span>
+                            <span>₽{{ order.subtotal }}</span>
+                        </div>
+
+                        {% if order.discount_amount > 0 %}
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Скидка:</span>
+                                <span>-₽{{ order.discount_amount }}</span>
+                            </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Налог (13%):</span>
+                            <span>₽{{ order.tax_amount }}</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between fw-bold pt-2 border-top mt-2">
+                            <span>Итого:</span>
+                            <span>₽{{ order.total_amount }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- История платежей -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">История платежей</h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for payment in payments %}
+                            <div class="list-group-item py-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-bold">
+                                            {{ payment.get_payment_method_display }}
+                                            {% if payment.status == 'COMPLETED' %}
+                                                <span class="badge bg-success ms-2">Выполнен</span>
+                                            {% elif payment.status == 'PENDING' %}
+                                                <span class="badge bg-warning text-dark ms-2">Ожидает</span>
+                                            {% elif payment.status == 'FAILED' %}
+                                                <span class="badge bg-danger ms-2">Ошибка</span>
+                                            {% elif payment.status == 'REFUNDED' %}
+                                                <span class="badge bg-info ms-2">Возврат</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-muted small">{{ payment.payment_date|date:"d.m.Y H:i" }}</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold">₽{{ payment.amount }}</div>
+                                        {% if payment.processed_by %}
+                                            <div class="text-muted small">Принял: {{ payment.processed_by.get_full_name|default:payment.processed_by.username }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                {% if payment.notes %}
+                                    <div class="text-muted small mt-2">
+                                        <i class="fas fa-info-circle me-1"></i> {{ payment.notes }}
+                                    </div>
+                                {% endif %}
+
+                                {% if payment.status == 'COMPLETED' and payment.transaction_id %}
+                                    <div class="text-muted small mt-1">
+                                        <i class="fas fa-fingerprint me-1"></i> Транзакция: {{ payment.transaction_id }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% empty %}
+                            <div class="list-group-item py-4 text-center">
+                                <i class="fas fa-receipt fa-2x text-muted mb-2"></i>
+                                <p class="mb-0">Платежи отсутствуют</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if payments %}
+                    <div class="card-footer bg-white text-center">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#printReceiptModal">
+                            <i class="fas fa-print me-1"></i> Печать чека
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для печати чека -->
+<div class="modal fade" id="printReceiptModal" tabindex="-1" aria-labelledby="printReceiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="printReceiptModalLabel">Печать чека</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-print fa-3x text-primary mb-3"></i>
+                    <h4 class="h5 mb-3">Выберите действие для чека</h4>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary" id="printReceiptBtn">
+                        <i class="fas fa-print me-1"></i> Печать чека
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="emailReceiptBtn">
+                        <i class="fas fa-envelope me-1"></i> Отправить на email
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="smsReceiptBtn">
+                        <i class="fas fa-sms me-1"></i> Отправить по SMS
+                    </button>
+                </div>
+
+                <div id="email-form" class="mt-3" style="display: none;">
+                    <div class="form-group">
+                        <label for="receipt-email" class="form-label">Email для отправки</label>
+                        <input type="email" id="receipt-email" class="form-control" placeholder="Введите email">
+                    </div>
+                    <div class="d-grid mt-2">
+                        <button type="button" class="btn btn-success" id="send-email-btn">
+                            <i class="fas fa-paper-plane me-1"></i> Отправить
+                        </button>
+                    </div>
+                </div>
+
+                <div id="sms-form" class="mt-3" style="display: none;">
+                    <div class="form-group">
+                        <label for="receipt-phone" class="form-label">Номер телефона</label>
+                        <input type="tel" id="receipt-phone" class="form-control" placeholder="Введите номер телефона">
+                    </div>
+                    <div class="d-grid mt-2">
+                        <button type="button" class="btn btn-success" id="send-sms-btn">
+                            <i class="fas fa-paper-plane me-1"></i> Отправить
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Подсветка выбранного способа оплаты
+        $('input[name="payment_method"]').change(function() {
+            $('.payment-method-card').removeClass('border-primary');
+            $(this).closest('.payment-method-card').addClass('border-primary');
+
+            // Показать/скрыть калькулятор сдачи для наличных
+            if ($(this).val() === 'CASH') {
+                $('.cash-calculator').show();
+            } else {
+                $('.cash-calculator').hide();
+            }
+        });
+
+        // Инициализация - подсветить выбранный способ оплаты
+        $('input[name="payment_method"]:checked').closest('.payment-method-card').addClass('border-primary');
+
+        // Показать/скрыть калькулятор сдачи для наличных при загрузке страницы
+        if ($('input[name="payment_method"]:checked').val() === 'CASH') {
+            $('.cash-calculator').show();
+        } else {
+            $('.cash-calculator').hide();
+        }
+
+        // Расчет сдачи
+        $('#cash-amount').on('input', function() {
+            const cashAmount = parseFloat($(this).val()) || 0;
+            const paymentAmount = parseFloat($('#{{ form.amount.id_for_label }}').val()) || 0;
+            const change = Math.max(0, cashAmount - paymentAmount);
+
+            $('#change-amount').text('₽' + change.toFixed(2));
+
+            // Автоматически заполнить сумму оплаты, если внесенная сумма больше
+            if (cashAmount > {{ remaining }}) {
+                $('#{{ form.amount.id_for_label }}').val({{ remaining }}.toFixed(2));
+            } else if (cashAmount > 0) {
+                $('#{{ form.amount.id_for_label }}').val(cashAmount.toFixed(2));
+            }
+        });
+
+        // Обработка печати чека
+        $('#printReceiptBtn').click(function() {
+            // Здесь будет отправка запроса на печать чека
+            alert('Отправка на печать...');
+            // Можно реализовать через window.print() или через API для печати
+        });
+
+        // Показать форму отправки по email
+        $('#emailReceiptBtn').click(function() {
+            $('#email-form').show();
+            $('#sms-form').hide();
+        });
+
+        // Показать форму отправки по SMS
+        $('#smsReceiptBtn').click(function() {
+            $('#sms-form').show();
+            $('#email-form').hide();
+        });
+
+        // Отправка чека на email
+        $('#send-email-btn').click(function() {
+            const email = $('#receipt-email').val();
+            if (!email) {
+                alert('Пожалуйста, введите email');
+                return;
+            }
+
+            $.ajax({
+                url: '{% url "send_receipt_email" %}',
+                method: 'POST',
+                data: {
+                    'email': email,
+                    'order_id': '{{ order.id }}',
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    alert('Чек успешно отправлен на ' + email);
+                    $('#printReceiptModal').modal('hide');
+                },
+                error: function() {
+                    alert('Ошибка при отправке чека');
+                }
+            });
+        });
+
+        // Отправка чека по SMS
+        $('#send-sms-btn').click(function() {
+            const phone = $('#receipt-phone').val();
+            if (!phone) {
+                alert('Пожалуйста, введите номер телефона');
+                return;
+            }
+
+            $.ajax({
+                url: '{% url "send_receipt_sms" %}',
+                method: 'POST',
+                data: {
+                    'phone': phone,
+                    'order_id': '{{ order.id }}',
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    alert('Чек успешно отправлен на ' + phone);
+                    $('#printReceiptModal').modal('hide');
+                },
+                error: function() {
+                    alert('Ошибка при отправке чека');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}Оформление заказа | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Оформление заказа</h1>
+    
+    <div class="row">
+        <!-- Форма оформления заказа -->
+        <div class="col-lg-8">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Информация для заказа</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger mb-4">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}<br>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <div class="mb-3">
+                                <h3 class="h6 mb-3">Контактная информация</h3>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="{{ form.customer_name.id_for_label }}" class="form-label">Ваше имя</label>
+                                        {{ form.customer_name }}
+                                        {% if form.customer_name.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.customer_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                
+                                    <div class="col-md-6">
+                                        <label for="{{ form.customer_phone.id_for_label }}" class="form-label">Телефон</label>
+                                        {{ form.customer_phone }}
+                                        {% if form.customer_phone.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.customer_phone.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                {% if order.order_type == 'DELIVERY' %}
+                                <div class="mb-3">
+                                    <label for="{{ form.delivery_address.id_for_label }}" class="form-label">Адрес доставки</label>
+                                    {{ form.delivery_address }}
+                                    {% if form.delivery_address.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.delivery_address.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" name="save_delivery_address" id="save_delivery_address">
+                                        <label class="form-check-label" for="save_delivery_address">
+                                            Сохранить этот адрес для будущих заказов
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h3 class="h6 mb-3">Особые пожелания к заказу</h3>
+                                <div class="mb-3">
+                                    <label for="{{ form.special_requests.id_for_label }}" class="form-label">Примечание к заказу</label>
+                                    {{ form.special_requests }}
+                                    {% if form.special_requests.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.special_requests.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h3 class="h6 mb-3">Способ оплаты</h3>
+                                <div class="payment-methods">
+                                    {% for value, label in form.payment_method.field.choices %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="payment_method_{{ value }}" value="{{ value }}" {% if form.payment_method.value == value %}checked{% endif %}>
+                                        <label class="form-check-label" for="payment_method_{{ value }}">
+                                            {% if value == 'CASH' %}
+                                                <i class="fas fa-money-bill-wave me-2"></i>
+                                            {% elif value == 'CREDIT_CARD' %}
+                                                <i class="fas fa-credit-card me-2"></i>
+                                            {% elif value == 'DEBIT_CARD' %}
+                                                <i class="fas fa-credit-card me-2"></i>
+                                            {% elif value == 'BANK_TRANSFER' %}
+                                                <i class="fas fa-university me-2"></i>
+                                            {% elif value == 'MOBILE_PAYMENT' %}
+                                                <i class="fas fa-mobile-alt me-2"></i>
+                                            {% elif value == 'GIFT_CARD' %}
+                                                <i class="fas fa-gift me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-wallet me-2"></i>
+                                            {% endif %}
+                                            {{ label }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                    
+                                    {% if form.payment_method.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.payment_method.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="terms_accepted" id="terms_accepted" required>
+                                    <label class="form-check-label" for="terms_accepted">
+                                        Я согласен с <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">условиями обслуживания</a> и <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">политикой конфиденциальности</a>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'customer_cart' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Вернуться в корзину
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check-circle me-1"></i> Подтвердить заказ
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Сводка заказа -->
+        <div class="col-lg-4">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Ваш заказ</h2>
+                </div>
+                <div class="card-body">
+                    <div class="order-items mb-4">
+                        {% for item in order_items %}
+                            <div class="order-item d-flex justify-content-between py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                                <div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="item-quantity me-2">{{ item.quantity }}x</span>
+                                        <span class="item-name">{{ item.menu_item.name }}</span>
+                                    </div>
+                                    {% for modifier in item.order_item_modifiers.all %}
+                                        <div class="item-modifier small text-muted ms-4">
+                                            + {{ modifier.modifier.name }} x{{ modifier.quantity }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="item-price text-end">
+                                    ₽{{ item.get_total_price }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="order-totals">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Подытог</span>
+                            <span>₽{{ order.subtotal }}</span>
+                        </div>
+                        
+                        {% if order.discount_amount > 0 %}
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Скидка</span>
+                                <span>-₽{{ order.discount_amount }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Налог (13%)</span>
+                            <span>₽{{ order.tax_amount }}</span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between fw-bold border-top pt-3 mt-2">
+                            <h4 class="h5 mb-0">Итого</h4>
+                            <h4 class="h5 mb-0">₽{{ order.total_amount }}</h4>
+                        </div>
+                    </div>
+                    
+                    <!-- Информация о питательной ценности -->
+                    <div class="nutrition-info mt-4 p-3 bg-light rounded">
+                        <h3 class="h6 mb-3">Пищевая ценность заказа</h3>
+                        <div class="row">
+                            <div class="col-6 mb-2">
+                                <div class="text-center p-2 bg-white rounded shadow-sm">
+                                    <div class="fw-bold">{{ order_nutrition.calories }} ккал</div>
+                                    <div class="small text-muted">Калории</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <div class="text-center p-2 bg-white rounded shadow-sm">
+                                    <div class="fw-bold">{{ order_nutrition.protein }} г</div>
+                                    <div class="small text-muted">Белки</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <div class="text-center p-2 bg-white rounded shadow-sm">
+                                    <div class="fw-bold">{{ order_nutrition.fat }} г</div>
+                                    <div class="small text-muted">Жиры</div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <div class="text-center p-2 bg-white rounded shadow-sm">
+                                    <div class="fw-bold">{{ order_nutrition.carbs }} г</div>
+                                    <div class="small text-muted">Углеводы</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if order_allergens %}
+                            <div class="allergens-info mt-3">
+                                <h3 class="h6 mb-2">Аллергены</h3>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for allergen in order_allergens %}
+                                        <span class="badge bg-warning text-dark">{{ allergen }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно с условиями обслуживания -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Условия обслуживания</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Общие положения</h6>
+                <p>Настоящие Условия обслуживания определяют правила и условия использования сервиса FeastFlux для заказа блюд и услуг ресторана.</p>
+                
+                <h6>2. Оформление заказа</h6>
+                <p>Заказ считается размещенным после подтверждения и оплаты. Время доставки или приготовления является ориентировочным.</p>
+                
+                <h6>3. Отмена заказа</h6>
+                <p>Вы можете отменить заказ до его приготовления. После начала приготовления отмена невозможна.</p>
+                
+                <h6>4. Оплата</h6>
+                <p>Доступны различные способы оплаты. При онлайн-оплате средства будут списаны после подтверждения заказа.</p>
+                
+                <h6>5. Доставка</h6>
+                <p>Для заказов с доставкой указывается приблизительное время доставки. Фактическое время может отличаться в зависимости от загруженности.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Понятно</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно с политикой конфиденциальности -->
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="privacyModalLabel">Политика конфиденциальности</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Сбор информации</h6>
+                <p>Мы собираем персональные данные, необходимые для обработки заказов и улучшения качества обслуживания.</p>
+                
+                <h6>2. Использование информации</h6>
+                <p>Ваши данные используются для обработки заказов, доставки, оплаты и связи с вами.</p>
+                
+                <h6>3. Защита информации</h6>
+                <p>Мы принимаем необходимые меры для защиты ваших персональных данных от несанкционированного доступа.</p>
+                
+                <h6>4. Передача данных третьим лицам</h6>
+                <p>Мы не передаем ваши данные третьим лицам, кроме случаев, необходимых для выполнения заказа (доставка, платежные системы).</p>
+                
+                <h6>5. Cookies</h6>
+                <p>Мы используем cookies для улучшения работы сайта и персонализации вашего опыта.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Понятно</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
