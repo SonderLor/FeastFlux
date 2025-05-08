@@ -1,0 +1,256 @@
+{% extends 'analytics/base.html' %}
+{% load static %}
+
+{% block analytics_title %}Загруженность столиков{% endblock %}
+
+{% block analytics_controls %}
+    <form method="get" class="filter-form">
+        <div class="form-row">
+            {{ form.restaurant }}
+            {{ form.start_date }}
+            {{ form.end_date }}
+        </div>
+        <div class="form-row">
+            {{ form.view_mode }}
+            {{ form.display_by }}
+            <button type="submit" class="btn btn-primary">Применить</button>
+        </div>
+    </form>
+{% endblock %}
+
+{% block analytics_content %}
+    <div class="analytics-summary">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Средняя загруженность</h3>
+                    <div class="widget-value">{{ summary.avg_occupancy|floatformat:2 }}%</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Выручка</h3>
+                    <div class="widget-value">{{ summary.total_revenue|floatformat:2 }} ₽</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Выручка на час</h3>
+                    <div class="widget-value">{{ summary.revenue_per_hour|floatformat:2 }} ₽</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Выручка на гостя</h3>
+                    <div class="widget-value">{{ summary.revenue_per_guest|floatformat:2 }} ₽</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if view_mode == 'heatmap' %}
+    <div class="analytics-heatmap-container mt-4">
+        <h3>Тепловая карта загруженности столиков</h3>
+        <div class="heatmap-legend">
+            <div class="legend-item"><span class="color" style="background-color: rgba(54, 162, 235, 0.1)"></span> Низкая</div>
+            <div class="legend-item"><span class="color" style="background-color: rgba(54, 162, 235, 0.5)"></span> Средняя</div>
+            <div class="legend-item"><span class="color" style="background-color: rgba(54, 162, 235, 0.9)"></span> Высокая</div>
+        </div>
+        <div id="heatmapContainer" class="heatmap-chart-container">
+            <canvas id="heatmapChart"></canvas>
+        </div>
+    </div>
+    {% elif view_mode == 'chart' %}
+    <div class="analytics-chart-container mt-4">
+        <h3>График загруженности</h3>
+        <canvas id="occupancyChart"></canvas>
+    </div>
+    {% elif view_mode == 'table' %}
+    <div class="analytics-table-container mt-4">
+        <h3>Данные по столикам</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Столик</th>
+                    <th>Ср. загруженность</th>
+                    <th>Ср. выручка</th>
+                    <th>Ср. гостей</th>
+                    <th>Общее время (мин)</th>
+                    <th>Выручка на час</th>
+                    <th>Выручка на гостя</th>
+                    <th>Всего заказов</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for table in table_data %}
+                <tr>
+                    <td>№{{ table.table__number }}</td>
+                    <td>{{ table.avg_occupancy|floatformat:2 }}%</td>
+                    <td>{{ table.avg_revenue|floatformat:2 }} ₽</td>
+                    <td>{{ table.avg_guests|floatformat:1 }}</td>
+                    <td>{{ table.total_usage }}</td>
+                    <td>{{ table.revenue_per_hour|floatformat:2 }} ₽</td>
+                    <td>{{ table.revenue_per_guest|floatformat:2 }} ₽</td>
+                    <td>{{ table.total_orders }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center">Нет данных для отображения</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <div class="analytics-recommendations mt-4">
+        <h3>Рекомендации по оптимизации</h3>
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Оптимизация расстановки столиков</h5>
+                        <ul>
+                            {% if summary.avg_occupancy > 80 %}
+                            <li>Высокая загруженность указывает на необходимость увеличения количества столиков</li>
+                            {% elif summary.avg_occupancy < 30 %}
+                            <li>Низкая загруженность предполагает возможность оптимизации пространства</li>
+                            {% endif %}
+                            <li>Столики с наименьшей загруженностью можно перемещать ближе к центру или окнам</li>
+                            <li>Для столиков с высокой выручкой рекомендуется увеличить комфорт</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Управление бронированием</h5>
+                        <ul>
+                            <li>Оптимальное время для бронирования: {{ display_by }} часа</li>
+                            <li>В часы пиковой нагрузки рекомендуется сократить время бронирования</li>
+                            <li>Для столиков с высокой выручкой стоит предлагать дополнительные услуги</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if view_mode == 'heatmap' %}
+        // Подготовка данных для тепловой карты
+        const heatmapConfig = {{ heatmap_config|safe }};
+        
+        const heatmapCtx = document.getElementById('heatmapChart').getContext('2d');
+        
+        new Chart(heatmapCtx, {
+            type: 'heatmap',
+            data: {
+                labels: heatmapConfig.y_labels,
+                datasets: heatmapConfig.x_labels.map((label, i) => ({
+                    label: `Столик №${label}`,
+                    data: heatmapConfig.data.map((row, j) => ({
+                        x: i,
+                        y: j,
+                        v: row[i]
+                    }))
+                }))
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Тепловая карта загруженности столиков'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                const dataset = context[0].dataset;
+                                const dataIndex = context[0].dataIndex;
+                                const yValue = dataset.data[dataIndex].y;
+                                
+                                return `Столик №${heatmapConfig.x_labels[context[0].dataIndex]} - ${heatmapConfig.y_labels[yValue]}`;
+                            },
+                            label: function(context) {
+                                if ('{{ display_by }}' === 'hour' || '{{ display_by }}' === 'week') {
+                                    return `Занятость: ${context.raw.v} раз`;
+                                } else {
+                                    return `Загруженность: ${context.raw.v.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'category',
+                        labels: heatmapConfig.x_labels.map(label => `№${label}`),
+                        title: {
+                            display: true,
+                            text: 'Столики'
+                        }
+                    },
+                    y: {
+                        type: 'category',
+                        labels: heatmapConfig.y_labels,
+                        title: {
+                            display: true,
+                            text: '{{ display_by|capfirst }}'
+                        }
+                    }
+                }
+            }
+        });
+        {% elif view_mode == 'chart' %}
+        // Подготовка данных для графика загруженности
+        const chartData = {{ chart_data|safe }};
+        
+        const chartCtx = document.getElementById('occupancyChart').getContext('2d');
+        
+        new Chart(chartCtx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Загруженность (%)',
+                    data: chartData.occupancy,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'График загруженности столиков'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Загруженность: ${context.raw.toFixed(2)}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Загруженность (%)'
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}

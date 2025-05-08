@@ -1,0 +1,256 @@
+/* Стили для аналитического приложения */
+
+.analytics-container {
+    display: flex;
+    height: calc(100vh - 70px);
+    background-color: #f9f9f9;
+}
+
+.analytics-sidebar {
+    width: 250px;
+    background-color: #343a40;
+    color: white;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.analytics-sidebar h4 {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.analytics-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.analytics-nav li {
+    margin-bottom: 10px;
+}
+
+.analytics-nav li a {
+    display: block;
+    padding: 10px;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.analytics-nav li a:hover,
+.analytics-nav li.active a {
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.analytics-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.analytics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.analytics-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.analytics-controls {
+    display: flex;
+    align-items: center;
+}
+
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-field label {
+    font-size: 0.85rem;
+    margin-bottom: 3px;
+    color: #666;
+}
+
+.form-field select,
+.form-field input {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    min-width: 150px;
+}
+
+.metrics-field .checkbox-group {
+    display: flex;
+    gap: 15px;
+}
+
+.metrics-field .checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.analytics-widgets {
+    margin-bottom: 25px;
+}
+
+.analytics-widget {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 15px;
+}
+
+.analytics-widget h3 {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    color: #666;
+}
+
+.widget-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.widget-description {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 5px;
+}
+
+.analytics-chart-container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    min-height: 300px;
+}
+
+.analytics-table-container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.analytics-table-container h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.heatmap-chart-container {
+    height: 500px;
+    position: relative;
+}
+
+.heatmap-legend {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+    justify-content: center;
+}
+
+.heatmap-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.heatmap-legend .color {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+}
+
+.analytics-recommendations .card {
+    border-left: 4px solid #4caf50;
+}
+
+.analytics-abc-analysis .card {
+    height: 100%;
+}
+
+.analytics-abc-analysis .list-group-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.analytics-segment-details .analytics-widget {
+    height: 100%;
+}
+
+.progress {
+    height: 10px;
+}
+
+@media (max-width: 992px) {
+    .analytics-container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .analytics-sidebar {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .analytics-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .analytics-nav li {
+        margin-bottom: 0;
+    }
+
+    .analytics-nav li a {
+        padding: 5px 10px;
+        font-size: 0.9rem;
+    }
+
+    .analytics-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .analytics-controls {
+        margin-top: 15px;
+        width: 100%;
+    }
+
+    .filter-form {
+        width: 100%;
+    }
+}

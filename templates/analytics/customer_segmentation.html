@@ -1,0 +1,474 @@
+{% extends 'analytics/base.html' %}
+{% load static %}
+
+{% block analytics_title %}Сегментация клиентов{% endblock %}
+
+{% block analytics_controls %}
+    <form method="get" class="filter-form">
+        <div class="form-row">
+            {{ form.restaurant }}
+            {{ form.segment }}
+            {{ form.period }}
+            <button type="submit" class="btn btn-primary">Применить</button>
+        </div>
+    </form>
+{% endblock %}
+
+{% block analytics_content %}
+    <div class="analytics-segments-overview">
+        <h3>Обзор клиентских сегментов</h3>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="analytics-chart-container">
+                    <canvas id="segmentsCustomersChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="analytics-chart-container">
+                    <canvas id="segmentsRevenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="analytics-table-container mt-4">
+            <h4>Сравнение сегментов</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Сегмент</th>
+                        <th>Клиентов</th>
+                        <th>Заказов</th>
+                        <th>Заказов на клиента</th>
+                        <th>Средний чек</th>
+                        <th>Выручка на клиента</th>
+                        <th>Индекс лояльности</th>
+                        <th>Риск оттока</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for segment in segments %}
+                    <tr>
+                        <td>
+                            <a href="?{% if form.restaurant.value %}restaurant={{ form.restaurant.value }}&{% endif %}segment={{ segment.id }}&period={{ form.period.value|default:'90' }}">
+                                {{ segment.name }}
+                            </a>
+                        </td>
+                        <td>{{ segment.customer_count }}</td>
+                        <td>{{ segment.total_orders }}</td>
+                        <td>{{ segment.avg_orders_per_customer|floatformat:2 }}</td>
+                        <td>{{ segment.avg_check|floatformat:2 }} ₽</td>
+                        <td>{{ segment.avg_revenue_per_customer|floatformat:2 }} ₽</td>
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar bg-{% if segment.loyalty_index >= 70 %}success{% elif segment.loyalty_index >= 40 %}warning{% else %}danger{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ segment.loyalty_index }}%" 
+                                     aria-valuenow="{{ segment.loyalty_index }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ segment.loyalty_index }}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar bg-{% if segment.churn_risk <= 0.3 %}success{% elif segment.churn_risk <= 0.6 %}warning{% else %}danger{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ segment.churn_risk|mul:100 }}%" 
+                                     aria-valuenow="{{ segment.churn_risk|mul:100 }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ segment.churn_risk|mul:100|floatformat:0 }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">Нет данных о сегментах</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    {% if selected_segment %}
+    <div class="analytics-segment-details mt-5">
+        <h3>Детальный анализ сегмента: {{ selected_segment.name }}</h3>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="analytics-widget">
+                    <h4>Описание</h4>
+                    <p>{{ selected_segment.description }}</p>
+                    
+                    <h4 class="mt-3">Характеристики</h4>
+                    <ul>
+                        <li><strong>Лояльность:</strong> {{ selected_segment.loyalty_index }}/100</li>
+                        <li><strong>Риск оттока:</strong> {{ selected_segment.churn_risk|mul:100|floatformat:0 }}%</li>
+                        <li><strong>Средний чек:</strong> {{ selected_segment.avg_check|floatformat:2 }} ₽</li>
+                        <li><strong>Частота посещений:</strong> {{ selected_segment.visit_frequency|floatformat:1 }} раз/месяц</li>
+                    </ul>
+                    
+                    <h4 class="mt-3">Диетические предпочтения</h4>
+                    <ul>
+                        {% for pref, value in selected_segment.dietary_preferences.items %}
+                        <li><strong>{{ pref }}:</strong> {{ value|yesno:"Да,Нет" }}</li>
+                        {% empty %}
+                        <li>Нет данных</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="analytics-chart-container">
+                            <h4>Диетические предпочтения</h4>
+                            <canvas id="dietaryPreferencesChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="analytics-chart-container">
+                            <h4>Предпочитаемые категории</h4>
+                            <canvas id="categoriesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="analytics-chart-container">
+                            <h4>Дни недели посещений</h4>
+                            <canvas id="weekdaysChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="analytics-chart-container">
+                            <h4>Время посещений</h4>
+                            <canvas id="hoursChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="analytics-segment-recommendations mt-4">
+            <h4>Рекомендации по работе с сегментом</h4>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Маркетинговые рекомендации</h5>
+                            <ul>
+                                {% if selected_segment.loyalty_index >= 70 %}
+                                <li>Высокий индекс лояльности - используйте этих клиентов для рекомендаций</li>
+                                <li>Предложите программу "Приведи друга" со специальными бонусами</li>
+                                {% elif selected_segment.loyalty_index >= 40 %}
+                                <li>Средний индекс лояльности - разработайте программу повышения лояльности</li>
+                                <li>Предложите персонализированные специальные предложения</li>
+                                {% else %}
+                                <li>Низкий индекс лояльности - необходимо срочно улучшить опыт взаимодействия</li>
+                                <li>Проведите опрос для выявления проблем и болевых точек</li>
+                                {% endif %}
+                                
+                                {% if selected_segment.churn_risk >= 0.6 %}
+                                <li>Высокий риск оттока - предложите особые условия для удержания</li>
+                                {% endif %}
+                                
+                                <li>Предпочтительное время для акций: {{ segment_charts.hours.labels|first }}</li>
+                                <li>Предпочтительные дни для акций: {{ segment_charts.weekdays.labels|first }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Рекомендации по меню</h5>
+                            <ul>
+                                {% if dietary_prefs.vegetarian >= 50 %}
+                                <li>Высокий процент вегетарианцев - расширьте вегетарианское меню</li>
+                                {% endif %}
+                                
+                                {% if dietary_prefs.vegan >= 30 %}
+                                <li>Значительная доля веганов - добавьте веганские опции</li>
+                                {% endif %}
+                                
+                                {% if dietary_prefs.gluten_free >= 20 %}
+                                <li>Спрос на безглютеновые блюда - отметьте их в меню</li>
+                                {% endif %}
+                                
+                                {% if dietary_prefs.lactose_free >= 20 %}
+                                <li>Спрос на безлактозные блюда - предложите альтернативы</li>
+                                {% endif %}
+                                
+                                <li>Популярные категории для сегмента: 
+                                    {% for category in segment_charts.categories.labels|slice:":3" %}
+                                    {{ category }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </li>
+                                <li>Рекомендуется разработать специальные предложения в этих категориях</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if customer_insights %}
+        <div class="analytics-customer-list mt-4">
+            <h4>Клиенты в сегменте ({{ customer_insights.count }})</h4>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Клиент</th>
+                        <th>Первый визит</th>
+                        <th>Последний визит</th>
+                        <th>Всего визитов</th>
+                        <th>Выручка</th>
+                        <th>Средний чек</th>
+                        <th>Рейтинг</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for insight in customer_insights %}
+                    <tr>
+                        <td>{{ insight.customer.get_full_name }}</td>
+                        <td>{{ insight.first_visit_date|date:"d.m.Y" }}</td>
+                        <td>{{ insight.last_visit_date|date:"d.m.Y" }}</td>
+                        <td>{{ insight.total_visits }}</td>
+                        <td>{{ insight.total_spend|floatformat:2 }} ₽</td>
+                        <td>{{ insight.avg_order_value|floatformat:2 }} ₽</td>
+                        <td>{{ insight.feedback_rating_avg|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">Нет данных о клиентах</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Данные для обзора сегментов
+        const segmentsData = {{ segments_comparison|safe }};
+
+        // График количества клиентов по сегментам
+        const customersCtx = document.getElementById('segmentsCustomersChart').getContext('2d');
+        new Chart(customersCtx, {
+            type: 'bar',
+            data: {
+                labels: segmentsData.labels,
+                datasets: [{
+                    label: 'Количество клиентов',
+                    data: segmentsData.customer_counts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Распределение клиентов по сегментам'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Количество клиентов'
+                        }
+                    }
+                }
+            }
+        });
+
+        // График выручки на клиента по сегментам
+        const revenueCtx = document.getElementById('segmentsRevenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: segmentsData.labels,
+                datasets: [
+                    {
+                        label: 'Средний чек (₽)',
+                        data: segmentsData.avg_check,
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Выручка на клиента (₽)',
+                        data: segmentsData.avg_revenue,
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Финансовые показатели по сегментам'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Рубли (₽)'
+                        }
+                    }
+                }
+            }
+        });
+
+        {% if selected_segment %}
+        // Данные для детального анализа сегмента
+        const segmentCharts = {{ segment_charts|safe }};
+
+        // График диетических предпочтений
+        const dietaryCtx = document.getElementById('dietaryPreferencesChart').getContext('2d');
+        new Chart(dietaryCtx, {
+            type: 'pie',
+            data: {
+                labels: segmentCharts.dietary.labels,
+                datasets: [{
+                    data: segmentCharts.dietary.values,
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 205, 86, 0.7)',
+                        'rgba(255, 99, 132, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 205, 86, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                return `${label}: ${value.toFixed(1)}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // График предпочитаемых категорий
+        const categoriesCtx = document.getElementById('categoriesChart').getContext('2d');
+        new Chart(categoriesCtx, {
+            type: 'doughnut',
+            data: {
+                labels: segmentCharts.categories.labels,
+                datasets: [{
+                    data: segmentCharts.categories.values,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 205, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)',
+                        'rgba(199, 199, 199, 0.7)',
+                        'rgba(83, 102, 255, 0.7)',
+                        'rgba(40, 159, 64, 0.7)',
+                        'rgba(210, 99, 132, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+
+        // График по дням недели
+        const weekdaysCtx = document.getElementById('weekdaysChart').getContext('2d');
+        new Chart(weekdaysCtx, {
+            type: 'bar',
+            data: {
+                labels: segmentCharts.weekdays.labels,
+                datasets: [{
+                    label: 'Количество посещений',
+                    data: segmentCharts.weekdays.values,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Количество'
+                        }
+                    }
+                }
+            }
+        });
+
+        // График по часам
+        const hoursCtx = document.getElementById('hoursChart').getContext('2d');
+        new Chart(hoursCtx, {
+            type: 'line',
+            data: {
+                labels: segmentCharts.hours.labels,
+                datasets: [{
+                    label: 'Количество посещений',
+                    data: segmentCharts.hours.values,
+                    backgroundColor: 'rgba(255, 205, 86, 0.5)',
+                    borderColor: 'rgba(255, 205, 86, 1)',
+                    borderWidth: 2,
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Количество'
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}

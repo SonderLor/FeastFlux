@@ -1,0 +1,193 @@
+{% extends 'analytics/base.html' %}
+{% load static %}
+
+{% block analytics_title %}Аналитическая панель{% endblock %}
+
+{% block analytics_controls %}
+    <form method="get" class="filter-form">
+        <div class="form-row">
+            {{ form.restaurant }}
+            {{ form.start_date }}
+            {{ form.end_date }}
+            <button type="submit" class="btn btn-primary">Применить</button>
+        </div>
+    </form>
+{% endblock %}
+
+{% block analytics_content %}
+    <div class="analytics-widgets">
+        <!-- Ключевые метрики -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Выручка</h3>
+                    <div class="widget-value">{{ total_sales.total_revenue|floatformat:2 }} ₽</div>
+                    <div class="widget-description">За выбранный период</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Заказы</h3>
+                    <div class="widget-value">{{ total_sales.total_orders }}</div>
+                    <div class="widget-description">Выполненные заказы</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Средний чек</h3>
+                    <div class="widget-value">{{ total_sales.avg_order_value|floatformat:2 }} ₽</div>
+                    <div class="widget-description">За период</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Выручка на столик</h3>
+                    <div class="widget-value">
+                        {% if table_occupancy %}
+                            {{ table_occupancy.0.total_revenue|floatformat:2 }} ₽
+                        {% else %}
+                            0 ₽
+                        {% endif %}
+                    </div>
+                    <div class="widget-description">Лучший столик</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- График продаж -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="analytics-chart-container">
+                    <h3>Динамика продаж</h3>
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Популярные блюда и загруженность столиков -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="analytics-table-container">
+                    <h3>Топ популярных блюд</h3>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Блюдо</th>
+                                <th>Категория</th>
+                                <th>Заказов</th>
+                                <th>Выручка</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in top_items %}
+                            <tr>
+                                <td>{{ item.menu_item.name }}</td>
+                                <td>{{ item.menu_item.category.name }}</td>
+                                <td>{{ item.total_orders }}</td>
+                                <td>{{ item.total_revenue|floatformat:2 }} ₽</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">Нет данных</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="analytics-table-container">
+                    <h3>Загруженность столиков</h3>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Столик</th>
+                                <th>Загрузка</th>
+                                <th>Выручка</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for table in table_occupancy %}
+                            <tr>
+                                <td>Столик №{{ table.table__number }}</td>
+                                <td>{{ table.avg_occupancy|floatformat:2 }}%</td>
+                                <td>{{ table.total_revenue|floatformat:2 }} ₽</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">Нет данных</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Подготовка данных из контекста
+        const salesData = {{ sales_data|safe }};
+        
+        // График продаж
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: salesData.labels,
+                datasets: [
+                    {
+                        label: 'Чистые продажи',
+                        data: salesData.net_sales,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderWidth: 2,
+                        fill: true
+                    },
+                    {
+                        label: 'Валовые продажи',
+                        data: salesData.gross_sales,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderWidth: 2,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Динамика продаж'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.raw.toLocaleString('ru-RU') + ' ₽';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('ru-RU') + ' ₽';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

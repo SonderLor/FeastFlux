@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'analytics/css/analytics.css' %}">
+    <!-- Chart.js для графиков -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Для тепловых карт -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-heatmap"></script>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+    <div class="analytics-sidebar">
+        <h4>Аналитика</h4>
+        <ul class="analytics-nav">
+            <li {% if request.path == '/analytics/dashboard/' %}class="active"{% endif %}>
+                <a href="{% url 'analytics:dashboard' %}">Панель управления</a>
+            </li>
+            <li {% if request.path == '/analytics/sales/' %}class="active"{% endif %}>
+                <a href="{% url 'analytics:sales_report' %}">Отчет по продажам</a>
+            </li>
+            <li {% if request.path == '/analytics/menu/' %}class="active"{% endif %}>
+                <a href="{% url 'analytics:menu_analysis' %}">Анализ меню</a>
+            </li>
+            <li {% if request.path == '/analytics/staff/' %}class="active"{% endif %}>
+                <a href="{% url 'analytics:staff_performance' %}">Эффективность персонала</a>
+            </li>
+            <li {% if request.path == '/analytics/tables/' %}class="active"{% endif %}>
+                <a href="{% url 'analytics:table_occupancy' %}">Загруженность столиков</a>
+            </li>
+            <li {% if request.path == '/analytics/nutrition/' %}class="active"{% endif %}>
+                <a href="{% url 'analytics:nutritional_analytics' %}">Анализ КБЖУ</a>
+            </li>
+            <li {% if request.path == '/analytics/customers/' %}class="active"{% endif %}>
+                <a href="{% url 'analytics:customer_segmentation' %}">Сегментация клиентов</a>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="analytics-content">
+        <div class="analytics-header">
+            <h1>{% block analytics_title %}Аналитика{% endblock %}</h1>
+            
+            <div class="analytics-controls">
+                {% block analytics_controls %}{% endblock %}
+            </div>
+        </div>
+        
+        <div class="analytics-body">
+            {% block analytics_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'analytics/js/analytics.js' %}"></script>
+{% endblock %}

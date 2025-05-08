@@ -1,0 +1,267 @@
+{% extends 'analytics/base.html' %}
+{% load static %}
+
+{% block analytics_title %}Эффективность персонала{% endblock %}
+
+{% block analytics_controls %}
+    <form method="get" class="filter-form">
+        <div class="form-row">
+            {{ form.restaurant }}
+            {{ form.start_date }}
+            {{ form.end_date }}
+        </div>
+        <div class="form-row">
+            {{ form.staff_member }}
+            {{ form.staff_role }}
+        </div>
+        <div class="form-row">
+            <div class="form-field metrics-field">
+                <label>{{ form.metrics.label }}</label>
+                <div class="checkbox-group">
+                    {{ form.metrics }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Применить</button>
+        </div>
+    </form>
+{% endblock %}
+
+{% block analytics_content %}
+    <div class="analytics-summary">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Сотрудников</h3>
+                    <div class="widget-value">{{ total_staff }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Общая выручка</h3>
+                    <div class="widget-value">{{ total_sales|floatformat:2 }} ₽</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Всего заказов</h3>
+                    <div class="widget-value">{{ total_orders }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Отработано часов</h3>
+                    <div class="widget-value">{{ total_hours|floatformat:1 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="analytics-chart-container mt-4">
+        <h3>Рейтинг эффективности персонала</h3>
+        <canvas id="staffPerformanceChart"></canvas>
+    </div>
+    
+    <div class="analytics-table-container mt-4">
+        <h3>Показатели персонала</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Сотрудник</th>
+                    <th>Позиция</th>
+                    <th>Заказы</th>
+                    <th>Выполнено</th>
+                    <th>Отменено</th>
+                    <th>Выручка</th>
+                    <th>Часов</th>
+                    <th>Выручка/час</th>
+                    <th>Ср. чек</th>
+                    {% if 'chef' in selected_metrics or 'bartender' in selected_metrics %}
+                    <th>Блюд</th>
+                    <th>Ср. время</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for staff in staff_list %}
+                <tr>
+                    <td>{{ staff.staff.get_full_name }}</td>
+                    <td>
+                        {% if staff.staff.waiter_profile %}
+                        Официант
+                        {% elif staff.staff.chef_profile %}
+                        Повар
+                        {% elif staff.staff.bartender_profile %}
+                        Бармен
+                        {% elif staff.staff.restaurant_manager %}
+                        Менеджер
+                        {% else %}
+                        Сотрудник
+                        {% endif %}
+                    </td>
+                    <td>{{ staff.total_orders }}</td>
+                    <td>{{ staff.completed_orders }}</td>
+                    <td>{{ staff.cancelled_orders }}</td>
+                    <td>{{ staff.total_sales|floatformat:2 }} ₽</td>
+                    <td>{{ staff.hours_worked|floatformat:1 }}</td>
+                    <td>{{ staff.sales_per_hour|floatformat:2 }} ₽</td>
+                    <td>{{ staff.average_order_value|floatformat:2 }} ₽</td>
+                    {% if 'chef' in selected_metrics or 'bartender' in selected_metrics %}
+                    <td>{{ staff.items_prepared }}</td>
+                    <td>{{ staff.average_preparation_time }} мин</td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{% if 'chef' in selected_metrics or 'bartender' in selected_metrics %}11{% else %}9{% endif %}" class="text-center">Нет данных для отображения</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Подготовка данных из контекста
+        const chartData = {{ chart_data|safe }};
+        
+        // График производительности персонала
+        const chartCtx = document.getElementById('staffPerformanceChart').getContext('2d');
+        
+        let datasets = [];
+        
+        // Добавляем выбранные метрики
+        if (chartData.orders) {
+            datasets.push({
+                label: 'Заказы',
+                data: chartData.orders,
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+                yAxisID: 'y-orders'
+            });
+        }
+        
+        if (chartData.sales) {
+            datasets.push({
+                label: 'Продажи (₽)',
+                data: chartData.sales,
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                yAxisID: 'y-sales'
+            });
+        }
+        
+        if (chartData.avg_time) {
+            datasets.push({
+                label: 'Среднее время (мин)',
+                data: chartData.avg_time,
+                backgroundColor: 'rgba(255, 205, 86, 0.5)',
+                borderColor: 'rgba(255, 205, 86, 1)',
+                borderWidth: 1,
+                yAxisID: 'y-time'
+            });
+        }
+        
+        if (chartData.avg_check) {
+            datasets.push({
+                label: 'Средний чек (₽)',
+                data: chartData.avg_check,
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+                yAxisID: 'y-check'
+            });
+        }
+        
+        // Конфигурация шкал в зависимости от выбранных метрик
+        let scales = {};
+        let yAxes = [];
+        
+        if (chartData.orders) {
+            scales['y-orders'] = {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Количество заказов'
+                }
+            };
+            yAxes.push('y-orders');
+        }
+        
+        if (chartData.sales) {
+            scales['y-sales'] = {
+                type: 'linear',
+                display: true,
+                position: yAxes.length > 0 ? 'right' : 'left',
+                title: {
+                    display: true,
+                    text: 'Продажи (₽)'
+                },
+                grid: {
+                    drawOnChartArea: yAxes.length === 0
+                }
+            };
+            yAxes.push('y-sales');
+        }
+        
+        if (chartData.avg_time) {
+            scales['y-time'] = {
+                type: 'linear',
+                display: true,
+                position: yAxes.length % 2 === 0 ? 'left' : 'right',
+                title: {
+                    display: true,
+                    text: 'Среднее время (мин)'
+                },
+                grid: {
+                    drawOnChartArea: yAxes.length === 0
+                }
+            };
+            yAxes.push('y-time');
+        }
+        
+        if (chartData.avg_check) {
+            scales['y-check'] = {
+                type: 'linear',
+                display: true,
+                position: yAxes.length % 2 === 0 ? 'left' : 'right',
+                title: {
+                    display: true,
+                    text: 'Средний чек (₽)'
+                },
+                grid: {
+                    drawOnChartArea: yAxes.length === 0
+                }
+            };
+        }
+        
+        new Chart(chartCtx, {
+            type: 'bar',
+            data: {
+                labels: chartData.staff_names,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Рейтинг эффективности персонала'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: scales
+            }
+        });
+    });
+</script>
+{% endblock %}

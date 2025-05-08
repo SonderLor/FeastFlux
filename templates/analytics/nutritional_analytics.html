@@ -1,0 +1,421 @@
+{% extends 'analytics/base.html' %}
+{% load static %}
+
+{% block analytics_title %}Анализ КБЖУ и диетических предпочтений{% endblock %}
+
+{% block analytics_controls %}
+    <form method="get" class="filter-form">
+        <div class="form-row">
+            {{ form.restaurant }}
+            {{ form.start_date }}
+            {{ form.end_date }}
+        </div>
+        <div class="form-row">
+            {{ form.chart_type }}
+            <div class="form-field">
+                <label>{{ form.dietary_focus.label }}</label>
+                <div class="checkbox-group">
+                    {{ form.dietary_focus }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Применить</button>
+        </div>
+    </form>
+{% endblock %}
+
+{% block analytics_content %}
+    <div class="analytics-summary">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Всего заказов</h3>
+                    <div class="widget-value">{{ total_orders }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Средние калории</h3>
+                    <div class="widget-value">{{ avg_calories|floatformat:0 }} ккал</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Белки/Жиры/Углеводы</h3>
+                    <div class="widget-value">{{ avg_protein|floatformat:1 }}/{{ avg_fat|floatformat:1 }}/{{ avg_carbs|floatformat:1 }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="analytics-widget">
+                    <h3>Вегетарианские</h3>
+                    <div class="widget-value">
+                        {% if total_orders > 0 %}
+                            {{ vegetarian_orders|floatformat:0 }} ({{ vegetarian_orders|floatformat:0|default:0|add:0|mul:100|floatformat:0|div:total_orders }}%)
+                        {% else %}
+                            0 (0%)
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="analytics-chart-container mt-4">
+        <h3>
+            {% if chart_type == 'nutrients' %}
+                Распределение КБЖУ в заказах
+            {% elif chart_type == 'dietary' %}
+                Диетические предпочтения клиентов
+            {% elif chart_type == 'allergens' %}
+                Распространенность аллергенов
+            {% endif %}
+        </h3>
+        
+        <canvas id="nutritionChart"></canvas>
+    </div>
+    
+    {% if chart_type == 'nutrients' %}
+    <div class="analytics-nutrition-details mt-4">
+        <h3>Детальный анализ питательной ценности</h3>
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Соотношение нутриентов</h5>
+                        <p>
+                            Средняя пищевая ценность заказа: <strong>{{ avg_calories|floatformat:0 }} ккал</strong>
+                        </p>
+                        <ul>
+                            <li>Белки: {{ avg_protein|floatformat:1 }} г 
+                                {% if avg_calories > 0 %}
+                                ({{ avg_protein|mul:4|div:avg_calories|mul:100|floatformat:1 }}% от калорийности)
+                                {% endif %}
+                            </li>
+                            <li>Жиры: {{ avg_fat|floatformat:1 }} г 
+                                {% if avg_calories > 0 %}
+                                ({{ avg_fat|mul:9|div:avg_calories|mul:100|floatformat:1 }}% от калорийности)
+                                {% endif %}
+                            </li>
+                            <li>Углеводы: {{ avg_carbs|floatformat:1 }} г 
+                                {% if avg_calories > 0 %}
+                                ({{ avg_carbs|mul:4|div:avg_calories|mul:100|floatformat:1 }}% от калорийности)
+                                {% endif %}
+                            </li>
+                        </ul>
+                        <p>
+                            {% if avg_protein|mul:4|div:avg_calories|mul:100 > 25 %}
+                            <span class="badge bg-success">Высокое содержание белка</span>
+                            {% elif avg_protein|mul:4|div:avg_calories|mul:100 < 15 %}
+                            <span class="badge bg-warning">Низкое содержание белка</span>
+                            {% endif %}
+                            
+                            {% if avg_fat|mul:9|div:avg_calories|mul:100 > 40 %}
+                            <span class="badge bg-warning">Высокое содержание жиров</span>
+                            {% endif %}
+                            
+                            {% if avg_carbs|mul:4|div:avg_calories|mul:100 > 65 %}
+                            <span class="badge bg-warning">Высокое содержание углеводов</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Рекомендации по меню</h5>
+                        <ul>
+                            {% if avg_protein|mul:4|div:avg_calories|mul:100 < 15 %}
+                            <li>Добавьте больше блюд с высоким содержанием белка (мясо, рыба, творог)</li>
+                            {% endif %}
+                            
+                            {% if avg_fat|mul:9|div:avg_calories|mul:100 > 40 %}
+                            <li>Рассмотрите более легкие варианты популярных блюд</li>
+                            {% endif %}
+                            
+                            {% if avg_carbs|mul:4|div:avg_calories|mul:100 > 65 %}
+                            <li>Добавьте больше низкоуглеводных опций в меню</li>
+                            {% endif %}
+                            
+                            <li>Оптимальное соотношение КБЖУ: белки 20-25%, жиры 30-35%, углеводы 45-50%</li>
+                            <li>Укажите информацию о калорийности в меню - это ценится клиентами</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif chart_type == 'dietary' %}
+    <div class="analytics-dietary-details mt-4">
+        <h3>Анализ диетических предпочтений</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Статистика по диетическим заказам
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Тип</th>
+                                    <th>Заказов</th>
+                                    <th>% от общего</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Вегетарианские</td>
+                                    <td>{{ vegetarian_orders }}</td>
+                                    <td>
+                                        {% if total_orders > 0 %}
+                                            {{ vegetarian_orders|mul:100|div:total_orders|floatformat:1 }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Веганские</td>
+                                    <td>{{ vegan_orders }}</td>
+                                    <td>
+                                        {% if total_orders > 0 %}
+                                            {{ vegan_orders|mul:100|div:total_orders|floatformat:1 }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Безглютеновые</td>
+                                    <td>{{ gluten_free_orders }}</td>
+                                    <td>
+                                        {% if total_orders > 0 %}
+                                            {{ gluten_free_orders|mul:100|div:total_orders|floatformat:1 }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Безлактозные</td>
+                                    <td>{{ lactose_free_orders }}</td>
+                                    <td>
+                                        {% if total_orders > 0 %}
+                                            {{ lactose_free_orders|mul:100|div:total_orders|floatformat:1 }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Рекомендации по диетическому меню
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            {% if vegetarian_orders|mul:100|div:total_orders > 20 %}
+                            <li><strong>Высокий спрос на вегетарианские блюда</strong> - расширьте ассортимент</li>
+                            {% elif vegetarian_orders|mul:100|div:total_orders > 10 %}
+                            <li><strong>Умеренный спрос на вегетарианские блюда</strong> - поддерживайте текущий ассортимент</li>
+                            {% endif %}
+                            
+                            {% if vegan_orders|mul:100|div:total_orders > 10 %}
+                            <li><strong>Заметный спрос на веганские блюда</strong> - стоит добавить новые опции</li>
+                            {% endif %}
+                            
+                            {% if gluten_free_orders|mul:100|div:total_orders > 5 %}
+                            <li><strong>Спрос на безглютеновые опции</strong> - отметьте безглютеновые блюда в меню</li>
+                            {% endif %}
+                            
+                            {% if lactose_free_orders|mul:100|div:total_orders > 5 %}
+                            <li><strong>Спрос на безлактозные опции</strong> - предложите альтернативные молочные продукты</li>
+                            {% endif %}
+                            
+                            <li>Позиционирование ресторана как friendly к различным диетическим предпочтениям повышает лояльность клиентов</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif chart_type == 'allergens' %}
+    <div class="analytics-allergens-details mt-4">
+        <h3>Распространенные аллергены</h3>
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Топ аллергенов</h5>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Аллерген</th>
+                                    <th>Частота в заказах</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for allergen, count in allergens %}
+                                <tr>
+                                    <td>{{ allergen }}</td>
+                                    <td>{{ count }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center">Нет данных</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Рекомендации по аллергенам</h5>
+                        <ul>
+                            <li>Всегда четко отмечайте аллергены в меню - это требование безопасности</li>
+                            <li>Для популярных блюд разработайте версии без распространенных аллергенов</li>
+                            <li>Обучите персонал работе с запросами об аллергенах</li>
+                            <li>Предусмотрите меры против перекрестного загрязнения на кухне</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Подготовка данных из контекста
+        const chartData = {{ chart_data|safe }};
+        
+        // График распределения нутриентов/предпочтений/аллергенов
+        const chartCtx = document.getElementById('nutritionChart').getContext('2d');
+        
+        let chartType, chartConfig, chartOptions;
+        
+        if ('{{ chart_type }}' === 'nutrients') {
+            // Для КБЖУ используем пончиковую диаграмму
+            chartType = 'doughnut';
+            chartConfig = {
+                labels: chartData.labels,
+                datasets: [{
+                    data: chartData.values,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(255, 205, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(255, 205, 86)',
+                        'rgb(75, 192, 192)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            
+            chartOptions = {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Распределение КБЖУ в заказах'
+                    },
+                    subtitle: {
+                        display: true,
+                        text: `Средняя калорийность: ${chartData.calories} ккал`
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value}г (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            };
+        } else if ('{{ chart_type }}' === 'dietary') {
+            // Для диетических предпочтений используем бар-диаграмму
+            chartType = 'bar';
+            chartConfig = {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Количество заказов',
+                    data: chartData.values,
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(255, 205, 86, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(54, 162, 235)',
+                        'rgb(75, 192, 192)',
+                        'rgb(255, 99, 132)',
+                        'rgb(255, 205, 86)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            
+            chartOptions = {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Диетические предпочтения клиентов'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const percentage = chartData.percents[context.dataIndex];
+                                return `${label}: ${value} заказов (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            };
+        } else if ('{{ chart_type }}' === 'allergens') {
+            // Для аллергенов используем горизонтальную бар-диаграмму
+            chartType = 'bar';
+            chartConfig = {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Частота в заказах',
+                    data: chartData.values,
+                    backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    borderWidth: 1
+                }]
+            };
+            
+            chartOptions = {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Распространенность аллергенов в заказах'
+                    }
+                }
+            };
+        }
+        
+        new Chart(chartCtx, {
+            type: chartType,
+            data: chartConfig,
+            options: chartOptions
+        });
+    });
+</script>
+{% endblock %}
