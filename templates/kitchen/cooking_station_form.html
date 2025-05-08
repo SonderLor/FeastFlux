@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ is_create|yesno:'Создание,Редактирование' }} кухонной станции | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">{{ is_create|yesno:'Создание,Редактирование' }} кухонной станции</h1>
+        <a href="{% url 'cooking_stations' %}?restaurant={{ restaurant.id }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> К списку станций
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Информация о станции</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mb-4">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}<br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Название станции</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Укажите уникальное название для кухонной станции</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Опишите назначение и функции станции</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.queue.id_for_label }}" class="form-label">Очередь</label>
+                            {{ form.queue }}
+                            {% if form.queue.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.queue.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Выберите очередь, к которой относится станция</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.responsible_roles.id_for_label }}" class="form-label">Ответственные роли</label>
+                            {{ form.responsible_roles }}
+                            {% if form.responsible_roles.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.responsible_roles.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Укажите роли персонала, ответственного за станцию (в формате JSON-массива, например: ["CHEF", "COOK"])</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.average_prep_time.id_for_label }}" class="form-label">Среднее время приготовления (мин)</label>
+                            {{ form.average_prep_time }}
+                            {% if form.average_prep_time.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.average_prep_time.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Укажите среднее время приготовления блюд на этой станции в минутах</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Активная станция
+                                </label>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.is_active.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Если отключено, станция не будет использоваться при приготовлении</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'cooking_stations' %}?restaurant={{ restaurant.id }}" class="btn btn-outline-secondary me-2">Отмена</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Сохранить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Подсказки</h2>
+                </div>
+                <div class="card-body">
+                    <div class="tip-item mb-3">
+                        <h3 class="h6 mb-2">Что такое кухонная станция?</h3>
+                        <p class="text-muted small">Кухонная станция - это рабочее место или зона на кухне, предназначенная для приготовления определенных типов блюд (например, гриль, фритюр, салаты).</p>
+                    </div>
+                    
+                    <div class="tip-item mb-3">
+                        <h3 class="h6 mb-2">Как выбирать очередь?</h3>
+                        <p class="text-muted small">Выберите очередь, в которой будут обрабатываться заказы, поступающие на эту станцию. Если станция обслуживает несколько очередей, лучше выбрать основную.</p>
+                    </div>
+                    
+                    <div class="tip-item">
+                        <h3 class="h6 mb-2">Работа с ответственными ролями</h3>
+                        <p class="text-muted small">В поле "Ответственные роли" укажите массив JSON с ролями персонала:</p>
+                        <pre class="bg-light p-2 rounded small">["CHEF", "COOK"]</pre>
+                        <p class="text-muted small">Доступные роли: CHEF (шеф-повар), COOK (повар), BARTENDER (бармен)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

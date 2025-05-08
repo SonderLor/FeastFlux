@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Кухонные станции | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Кухонные станции - {{ restaurant.name }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{% url 'cooking_station_create' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Добавить станцию
+            </a>
+            <a href="{% url 'kitchen_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-tachometer-alt me-1"></i> К панели кухни
+            </a>
+        </div>
+    </div>
+    
+    <!-- Фильтры -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="is_active" class="form-label">Статус</label>
+                    <select id="is_active" name="is_active" class="form-select">
+                        <option value="">Все статусы</option>
+                        <option value="true" {% if is_active_filter == 'true' %}selected{% endif %}>Активные</option>
+                        <option value="false" {% if is_active_filter == 'false' %}selected{% endif %}>Неактивные</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="queue" class="form-label">Очередь</label>
+                    <select id="queue" name="queue" class="form-select">
+                        <option value="">Все очереди</option>
+                        {% for q in queues %}
+                            <option value="{{ q.id }}" {% if queue_filter == q.id|stringformat:"s" %}selected{% endif %}>{{ q.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Поиск</label>
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Название, описание..." value="{{ search }}">
+                </div>
+                
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="d-grid gap-2 w-100">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i> Применить
+                        </button>
+                        <a href="{% url 'cooking_stations' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-eraser me-1"></i> Сбросить
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Список станций -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        {% for station in stations %}
+            <div class="col">
+                <div class="card h-100 shadow-sm {% if not station.is_active %}border-danger{% endif %}">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h2 class="h5 mb-0">{{ station.name }}</h2>
+                        <div>
+                            {% if station.is_active %}
+                                <span class="badge bg-success">Активна</span>
+                            {% else %}
+                                <span class="badge bg-danger">Неактивна</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Описание</label>
+                            <div>{{ station.description|default:"Нет описания"|linebreaks }}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Очередь</label>
+                            <div>
+                                {% if station.queue %}
+                                    <a href="{% url 'kitchen_queue' station.queue.id %}" class="badge bg-primary text-decoration-none">
+                                        {{ station.queue.name }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Не назначена</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Ответственные роли</label>
+                            <div>
+                                {% for role in station.responsible_roles %}
+                                    <span class="badge bg-secondary me-1">{{ role }}</span>
+                                {% empty %}
+                                    <span class="text-muted">Не указаны</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Среднее время приготовления</label>
+                            <div>{{ station.average_prep_time }} мин</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Текущая загрузка</label>
+                            <div class="d-flex align-items-center">
+                                <span class="h4 mb-0 me-2">{{ station.current_workload }}</span>
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    <div class="progress-bar 
+                                        {% if station.current_workload > 10 %}bg-danger
+                                        {% elif station.current_workload > 5 %}bg-warning
+                                        {% else %}bg-success{% endif %}" 
+                                        role="progressbar" 
+                                        style="width: {{ station.current_workload|default:0|multiply:10 }}%;" 
+                                        aria-valuenow="{{ station.current_workload }}" 
+                                        aria-valuemin="0" 
+                                        aria-valuemax="10">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'cooking_station_edit' station.id %}" class="btn btn-primary">
+                                <i class="fas fa-edit me-1"></i> Редактировать
+                            </a>
+                            <div class="btn-group">
+                                <a href="{% url 'cooking_station_toggle' station.id %}" class="btn {% if station.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                                    <i class="fas {% if station.is_active %}fa-toggle-off{% else %}fa-toggle-on{% endif %} me-1"></i> 
+                                    {{ station.is_active|yesno:"Деактивировать,Активировать" }}
+                                </a>
+                                <a href="{% url 'cooking_station_delete' station.id %}" class="btn btn-outline-danger">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Кухонные станции не найдены.
+                    {% if search %} Попробуйте изменить параметры поиска.{% endif %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'cooking_station_create' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Добавить первую станцию
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

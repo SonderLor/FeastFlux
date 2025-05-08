@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}Журнал кухни | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Журнал кухни - {{ restaurant.name }}</h1>
+        <div class="d-flex gap-2">
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-download me-1"></i> Экспорт
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                    <li><a class="dropdown-item" href="{% url 'export_kitchen_log' %}?format=csv&restaurant={{ restaurant.id }}"><i class="fas fa-file-csv me-2"></i> Экспорт в CSV</a></li>
+                    <li><a class="dropdown-item" href="{% url 'export_kitchen_log' %}?format=excel&restaurant={{ restaurant.id }}"><i class="fas fa-file-excel me-2"></i> Экспорт в Excel</a></li>
+                    <li><a class="dropdown-item" href="{% url 'export_kitchen_log' %}?format=pdf&restaurant={{ restaurant.id }}"><i class="fas fa-file-pdf me-2"></i> Экспорт в PDF</a></li>
+                </ul>
+            </div>
+            <a href="{% url 'kitchen_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-tachometer-alt me-1"></i> К панели кухни
+            </a>
+        </div>
+    </div>
+    
+    <!-- Фильтры -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="{{ filter_form.start_date.id_for_label }}" class="form-label">Дата начала</label>
+                    {{ filter_form.start_date }}
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="{{ filter_form.end_date.id_for_label }}" class="form-label">Дата окончания</label>
+                    {{ filter_form.end_date }}
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="{{ filter_form.event_type.id_for_label }}" class="form-label">Тип события</label>
+                    {{ filter_form.event_type }}
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="{{ filter_form.order_number.id_for_label }}" class="form-label">Номер заказа</label>
+                    {{ filter_form.order_number }}
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="{{ filter_form.user.id_for_label }}" class="form-label">Пользователь</label>
+                    {{ filter_form.user }}
+                </div>
+                
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="d-grid gap-2 w-100">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i> Применить
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="d-grid gap-2 w-100">
+                        <a href="{% url 'kitchen_log' %}?restaurant={{ restaurant.id }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-eraser me-1"></i> Сбросить
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 d-flex align-items-end justify-content-end">
+                    <button type="button" class="btn btn-outline-primary" id="refresh-log">
+                        <i class="fas fa-sync-alt me-1"></i> Обновить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <!-- Статистика по типам событий -->
+        <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Статистика по типам событий</h2>
+                </div>
+                <div class="card-body">
+                    <canvas id="eventTypeChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Таблица событий -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">События кухни</h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Время</th>
+                                    <th>Тип события</th>
+                                    <th>Описание</th>
+                                    <th>Заказ</th>
+                                    <th>Пользователь</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in events %}
+                                    <tr>
+                                        <td>{{ event.created_at|date:"d.m.Y H:i:s" }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if event.event_type == 'ORDER_RECEIVED' %}bg-info
+                                                {% elif event.event_type == 'ORDER_STARTED' %}bg-primary
+                                                {% elif event.event_type == 'ORDER_COMPLETED' %}bg-success
+                                                {% elif event.event_type == 'ORDER_DELAYED' %}bg-warning
+                                                {% elif event.event_type == 'ORDER_CANCELLED' %}bg-danger
+                                                {% elif event.event_type == 'ITEM_STARTED' %}bg-primary
+                                                {% elif event.event_type == 'ITEM_COMPLETED' %}bg-success
+                                                {% elif event.event_type == 'STAFF_ASSIGNED' %}bg-info
+                                                {% elif event.event_type == 'QUEUE_STATUS_CHANGED' %}bg-secondary
+                                                {% elif event.event_type == 'NOTE_ADDED' %}bg-light text-dark
+                                                {% else %}bg-secondary{% endif %}">
+                                                {{ event.get_event_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ event.description|truncatechars:50 }}</td>
+                                        <td>
+                                            {% if event.kitchen_order %}
+                                                <a href="{% url 'kitchen_order_details' event.kitchen_order.id %}" class="text-decoration-none">
+                                                    {{ event.kitchen_order.order.order_number }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if event.created_by %}
+                                                <span>{{ event.created_by.get_full_name|default:event.created_by.username }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Система</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5">
+                                            <div class="empty-state">
+                                                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                                <h3 class="h5">Нет записей в журнале</h3>
+                                                <p class="text-muted">События кухни не найдены. Попробуйте изменить параметры фильтрации.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Пагинация -->
+                {% if events.has_other_pages %}
+                    <div class="card-footer bg-white">
+                        <nav aria-label="Pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if events.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ events.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link" aria-hidden="true">&laquo;&laquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link" aria-hidden="true">&laquo;</span>
+                                    </li>
+                                {% endif %}
+
+                                {% for i in events.paginator.page_range %}
+                                    {% if events.number == i %}
+                                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                    {% elif i > events.number|add:'-3' and i < events.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if events.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ events.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ events.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link" aria-hidden="true">&raquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link" aria-hidden="true">&raquo;&raquo;</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Данные для диаграммы
+        const eventStats = [
+            {% for stat in event_stats %}
+                {
+                    type: "{{ stat.event_type }}",
+                    label: "{{ stat.event_type|get_event_type_display }}",
+                    count: {{ stat.count }}
+                },
+            {% endfor %}
+        ];
+
+        // Цвета для разных типов событий
+        const eventColors = {
+            'ORDER_RECEIVED': '#17a2b8',
+            'ORDER_STARTED': '#0d6efd',
+            'ORDER_COMPLETED': '#198754',
+            'ORDER_DELAYED': '#ffc107',
+            'ORDER_CANCELLED': '#dc3545',
+            'ITEM_STARTED': '#0d6efd',
+            'ITEM_COMPLETED': '#198754',
+            'STAFF_ASSIGNED': '#17a2b8',
+            'QUEUE_STATUS_CHANGED': '#6c757d',
+            'NOTE_ADDED': '#f8f9fa',
+            'OTHER': '#6c757d'
+        };
+
+        // Создаем диаграмму
+        const ctx = document.getElementById('eventTypeChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: eventStats.map(stat => stat.label),
+                datasets: [{
+                    data: eventStats.map(stat => stat.count),
+                    backgroundColor: eventStats.map(stat => eventColors[stat.type] || '#6c757d'),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 15,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${context.label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Обновление данных при нажатии на кнопку обновления
+        document.getElementById('refresh-log').addEventListener('click', function() {
+            location.reload();
+        });
+    });
+</script>
+{% endblock %}

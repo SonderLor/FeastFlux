@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление кухонной станции | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Удаление кухонной станции</h1>
+        <a href="{% url 'cooking_stations' %}?restaurant={{ restaurant.id }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> К списку станций
+        </a>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h2 class="h5 mb-0">Подтверждение удаления</h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning mb-4">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Вы собираетесь удалить кухонную станцию <strong>{{ station.name }}</strong>. Это действие нельзя отменить.
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h3 class="h6 mb-3">Информация о станции</h3>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Название:</span>
+                                <span>{{ station.name }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Очередь:</span>
+                                <span>{{ station.queue.name|default:"Не назначена" }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Статус:</span>
+                                <span>
+                                    {% if station.is_active %}
+                                        <span class="badge bg-success">Активна</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Неактивна</span>
+                                    {% endif %}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Среднее время приготовления:</span>
+                                <span>{{ station.average_prep_time }} мин</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'cooking_stations' %}?restaurant={{ restaurant.id }}" class="btn btn-outline-secondary">Отмена</a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash-alt me-1"></i> Удалить станцию
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,770 @@
+{% extends 'base.html' %}
+
+{% block title %}Очередь кухни - {{ queue.name }} | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Очередь: {{ queue.name }}</h1>
+            <div class="text-muted">{{ restaurant.name }}</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'kitchen_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-tachometer-alt me-1"></i> К панели кухни
+            </a>
+            <button id="refresh-queue" class="btn btn-outline-secondary">
+                <i class="fas fa-sync-alt me-1"></i> Обновить
+            </button>
+        </div>
+    </div>
+    
+    <!-- Фильтры -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="status" class="form-label">Статус заказа</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">Все статусы</option>
+                        {% for status_code, status_name in status_choices %}
+                            <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>{{ status_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="priority" class="form-label">Приоритет</label>
+                    <select id="priority" name="priority" class="form-select">
+                        <option value="">Все приоритеты</option>
+                        {% for priority_code, priority_name in priority_choices %}
+                            <option value="{{ priority_code }}" {% if priority_filter == priority_code %}selected{% endif %}>{{ priority_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-filter me-1"></i> Применить
+                    </button>
+                    <a href="{% url 'kitchen_queue' queue.id %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-eraser me-1"></i> Сбросить
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Статус очереди -->
+    <div class="row mb-4">
+        <div class="col-lg-9">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Информация об очереди</h2>
+                    <span class="badge {% if queue.status == 'OPEN' %}bg-success{% elif queue.status == 'PAUSED' %}bg-warning{% else %}bg-danger{% endif %}">
+                        {{ queue.get_status_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Название очереди</label>
+                                <div class="fw-bold">{{ queue.name }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Описание</label>
+                                <div>{{ queue.description|default:"Нет описания" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Ответственные роли</label>
+                                <div>
+                                    {% for role in queue.responsible_roles %}
+                                        <span class="badge bg-secondary me-1">{{ role }}</span>
+                                    {% empty %}
+                                        <span class="text-muted">Не указаны</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted">Очередь по умолчанию</label>
+                                <div>
+                                    {% if queue.is_default %}
+                                        <span class="badge bg-primary">Да</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Нет</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Статистика</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Новые заказы</span>
+                            <span class="badge bg-info">{{ new_count }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {{ new_count|add:in_progress_count|add:delayed_count|default:1|divide_by:100|multiply:new_count }}%" aria-valuenow="{{ new_count }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Готовятся</span>
+                            <span class="badge bg-primary">{{ in_progress_count }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ new_count|add:in_progress_count|add:delayed_count|default:1|divide_by:100|multiply:in_progress_count }}%" aria-valuenow="{{ in_progress_count }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Задержанные</span>
+                            <span class="badge bg-danger">{{ delayed_count }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: {{ new_count|add:in_progress_count|add:delayed_count|default:1|divide_by:100|multiply:delayed_count }}%" aria-valuenow="{{ delayed_count }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Выполнено</span>
+                            <span class="badge bg-success">{{ completed_count }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="text-muted mb-2">Среднее время приготовления</div>
+                        <div class="h5">{{ queue.average_processing_time }} мин</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Вкладки с заказами -->
+    <ul class="nav nav-tabs mb-4" id="orderTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="new-tab" data-bs-toggle="tab" data-bs-target="#new" type="button" role="tab" aria-controls="new" aria-selected="true">
+                Новые <span class="badge bg-secondary ms-1">{{ new_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="in-progress-tab" data-bs-toggle="tab" data-bs-target="#in-progress" type="button" role="tab" aria-controls="in-progress" aria-selected="false">
+                Готовятся <span class="badge bg-secondary ms-1">{{ in_progress_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="delayed-tab" data-bs-toggle="tab" data-bs-target="#delayed" type="button" role="tab" aria-controls="delayed" aria-selected="false">
+                Задержанные <span class="badge bg-secondary ms-1">{{ delayed_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab" aria-controls="completed" aria-selected="false">
+                Готовые <span class="badge bg-secondary ms-1">{{ completed_count }}</span>
+            </button>
+        </li>
+    </ul>
+    
+    <!-- Содержимое вкладок -->
+    <div class="tab-content" id="orderTabsContent">
+        <!-- Новые заказы -->
+        <div class="tab-pane fade show active" id="new" role="tabpanel" aria-labelledby="new-tab">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mb-4">
+                {% for order in new_orders %}
+                    <div class="col">
+                        <div class="card h-100 border-info kitchen-order-card">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h3 class="h6 mb-0">Заказ #{{ order.order.order_number }}</h3>
+                                <div>
+                                    {% if order.priority == 'LOW' %}
+                                        <span class="badge bg-secondary me-1">Низкий</span>
+                                    {% elif order.priority == 'NORMAL' %}
+                                        <span class="badge bg-primary me-1">Обычный</span>
+                                    {% elif order.priority == 'HIGH' %}
+                                        <span class="badge bg-warning text-dark me-1">Высокий</span>
+                                    {% elif order.priority == 'URGENT' %}
+                                        <span class="badge bg-danger me-1">Срочно</span>
+                                    {% endif %}
+                                    <span class="badge bg-info">Новый</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Тип и номер столика</div>
+                                    <div>
+                                        {% if order.order.table %}
+                                            <span class="badge bg-light text-dark">Столик №{{ order.order.table.number }}</span>
+                                        {% elif order.order.order_type == 'DELIVERY' %}
+                                            <span class="badge bg-light text-dark">Доставка</span>
+                                        {% elif order.order.order_type == 'TAKEAWAY' %}
+                                            <span class="badge bg-light text-dark">Самовывоз</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Время</div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Создан: {{ order.created_at|date:"H:i" }}</span>
+                                        <span id="order-timer-{{ order.id }}" class="fw-bold">
+                                            {{ order.created_at|timesince }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Состав</div>
+                                    <div class="order-items-list">
+                                        {% for item in order.kitchen_items.all %}
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>{{ item.order_item.quantity }}× {{ item.order_item.menu_item.name }}</span>
+                                                <span class="badge bg-secondary">{{ item.get_status_display }}</span>
+                                            </div>
+                                        {% empty %}
+                                            <div class="text-muted small">Нет позиций</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Назначен</div>
+                                    <div>
+                                        {% if order.assigned_to %}
+                                            <span>{{ order.assigned_to.get_full_name|default:order.assigned_to.username }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Не назначен</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                {% if order.notes %}
+                                    <div>
+                                        <div class="text-muted small mb-1">Примечания</div>
+                                        <div class="notes-container bg-light p-2 rounded small">
+                                            {{ order.notes }}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-white d-flex justify-content-between">
+                                <div class="btn-group">
+                                    <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="IN_PROGRESS">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-play me-1"></i> Начать
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Другие действия</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{% url 'kitchen_order_details' order.id %}"><i class="fas fa-eye me-2"></i> Детали</a></li>
+                                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#assignModal" data-order-id="{{ order.id }}"><i class="fas fa-user-tag me-2"></i> Назначить</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="DELAYED">
+                                                <button type="submit" class="dropdown-item text-warning"><i class="fas fa-exclamation-triangle me-2"></i> Задержан</button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="CANCELLED">
+                                                <button type="submit" class="dropdown-item text-danger"><i class="fas fa-times-circle me-2"></i> Отменить</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Нет новых заказов в очереди.
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Заказы в процессе -->
+        <div class="tab-pane fade" id="in-progress" role="tabpanel" aria-labelledby="in-progress-tab">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mb-4">
+                {% for order in in_progress_orders %}
+                    <div class="col">
+                        <div class="card h-100 border-primary kitchen-order-card">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h3 class="h6 mb-0">Заказ #{{ order.order.order_number }}</h3>
+                                <div>
+                                    {% if order.priority == 'LOW' %}
+                                        <span class="badge bg-secondary me-1">Низкий</span>
+                                    {% elif order.priority == 'NORMAL' %}
+                                        <span class="badge bg-primary me-1">Обычный</span>
+                                    {% elif order.priority == 'HIGH' %}
+                                        <span class="badge bg-warning text-dark me-1">Высокий</span>
+                                    {% elif order.priority == 'URGENT' %}
+                                        <span class="badge bg-danger me-1">Срочно</span>
+                                    {% endif %}
+                                    <span class="badge bg-primary">Готовится</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Тип и номер столика</div>
+                                    <div>
+                                        {% if order.order.table %}
+                                            <span class="badge bg-light text-dark">Столик №{{ order.order.table.number }}</span>
+                                        {% elif order.order.order_type == 'DELIVERY' %}
+                                            <span class="badge bg-light text-dark">Доставка</span>
+                                        {% elif order.order.order_type == 'TAKEAWAY' %}
+                                            <span class="badge bg-light text-dark">Самовывоз</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Время</div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Начат: {{ order.started_at|date:"H:i" }}</span>
+                                        <span id="order-timer-{{ order.id }}" class="fw-bold">
+                                            {{ order.get_processing_time }} мин
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Состав</div>
+                                    <div class="order-items-list">
+                                        {% for item in order.kitchen_items.all %}
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>{{ item.order_item.quantity }}× {{ item.order_item.menu_item.name }}</span>
+                                                <span class="badge {% if item.status == 'PENDING' %}bg-secondary{% elif item.status == 'PREPARING' %}bg-primary{% elif item.status == 'READY' %}bg-success{% endif %}">
+                                                    {{ item.get_status_display }}
+                                                </span>
+                                            </div>
+                                        {% empty %}
+                                            <div class="text-muted small">Нет позиций</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Назначен</div>
+                                    <div>
+                                        {% if order.assigned_to %}
+                                            <span>{{ order.assigned_to.get_full_name|default:order.assigned_to.username }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Не назначен</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                {% if order.estimated_completion_time %}
+                                    <div class="mb-3">
+                                        <div class="text-muted small mb-1">Расчетное время готовности</div>
+                                        <div>{{ order.estimated_completion_time|date:"H:i" }}</div>
+                                    </div>
+                                {% endif %}
+
+                                {% if order.notes %}
+                                    <div>
+                                        <div class="text-muted small mb-1">Примечания</div>
+                                        <div class="notes-container bg-light p-2 rounded small">
+                                            {{ order.notes }}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-white d-flex justify-content-between">
+                                <div class="btn-group">
+                                    <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="COMPLETED">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check me-1"></i> Готово
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Другие действия</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{% url 'kitchen_order_details' order.id %}"><i class="fas fa-eye me-2"></i> Детали</a></li>
+                                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#assignModal" data-order-id="{{ order.id }}"><i class="fas fa-user-tag me-2"></i> Назначить</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="DELAYED">
+                                                <button type="submit" class="dropdown-item text-warning"><i class="fas fa-exclamation-triangle me-2"></i> Задержан</button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="CANCELLED">
+                                                <button type="submit" class="dropdown-item text-danger"><i class="fas fa-times-circle me-2"></i> Отменить</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Нет заказов в процессе приготовления.
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Задержанные заказы -->
+        <div class="tab-pane fade" id="delayed" role="tabpanel" aria-labelledby="delayed-tab">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mb-4">
+                {% for order in delayed_orders %}
+                    <div class="col">
+                        <div class="card h-100 border-danger kitchen-order-card">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h3 class="h6 mb-0">Заказ #{{ order.order.order_number }}</h3>
+                                <div>
+                                    {% if order.priority == 'LOW' %}
+                                        <span class="badge bg-secondary me-1">Низкий</span>
+                                    {% elif order.priority == 'NORMAL' %}
+                                        <span class="badge bg-primary me-1">Обычный</span>
+                                    {% elif order.priority == 'HIGH' %}
+                                        <span class="badge bg-warning text-dark me-1">Высокий</span>
+                                    {% elif order.priority == 'URGENT' %}
+                                        <span class="badge bg-danger me-1">Срочно</span>
+                                    {% endif %}
+                                    <span class="badge bg-danger">Задержан</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Тип и номер столика</div>
+                                    <div>
+                                        {% if order.order.table %}
+                                            <span class="badge bg-light text-dark">Столик №{{ order.order.table.number }}</span>
+                                        {% elif order.order.order_type == 'DELIVERY' %}
+                                            <span class="badge bg-light text-dark">Доставка</span>
+                                        {% elif order.order.order_type == 'TAKEAWAY' %}
+                                            <span class="badge bg-light text-dark">Самовывоз</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Время</div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Создан: {{ order.created_at|date:"H:i" }}</span>
+                                        <span id="order-timer-{{ order.id }}" class="fw-bold text-danger">
+                                            {{ order.get_processing_time }} мин
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Состав</div>
+                                    <div class="order-items-list">
+                                        {% for item in order.kitchen_items.all %}
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>{{ item.order_item.quantity }}× {{ item.order_item.menu_item.name }}</span>
+                                                <span class="badge {% if item.status == 'PENDING' %}bg-secondary{% elif item.status == 'PREPARING' %}bg-primary{% elif item.status == 'READY' %}bg-success{% endif %}">
+                                                    {{ item.get_status_display }}
+                                                </span>
+                                            </div>
+                                        {% empty %}
+                                            <div class="text-muted small">Нет позиций</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Назначен</div>
+                                    <div>
+                                        {% if order.assigned_to %}
+                                            <span>{{ order.assigned_to.get_full_name|default:order.assigned_to.username }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Не назначен</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                {% if order.notes %}
+                                    <div>
+                                        <div class="text-muted small mb-1">Примечания</div>
+                                        <div class="notes-container bg-light p-2 rounded small">
+                                            {{ order.notes }}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-white d-flex justify-content-between">
+                                <div class="btn-group">
+                                    <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="IN_PROGRESS">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-play me-1"></i> Возобновить
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Другие действия</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{% url 'kitchen_order_details' order.id %}"><i class="fas fa-eye me-2"></i> Детали</a></li>
+                                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#assignModal" data-order-id="{{ order.id }}"><i class="fas fa-user-tag me-2"></i> Назначить</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="COMPLETED">
+                                                <button type="submit" class="dropdown-item text-success"><i class="fas fa-check me-2"></i> Готово</button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="CANCELLED">
+                                                <button type="submit" class="dropdown-item text-danger"><i class="fas fa-times-circle me-2"></i> Отменить</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Нет задержанных заказов.
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Готовые заказы -->
+        <div class="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mb-4">
+                {% for order in completed_orders %}
+                    <div class="col">
+                        <div class="card h-100 border-success kitchen-order-card">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h3 class="h6 mb-0">Заказ #{{ order.order.order_number }}</h3>
+                                <span class="badge bg-success">Готов</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Тип и номер столика</div>
+                                    <div>
+                                        {% if order.order.table %}
+                                            <span class="badge bg-light text-dark">Столик №{{ order.order.table.number }}</span>
+                                        {% elif order.order.order_type == 'DELIVERY' %}
+                                            <span class="badge bg-light text-dark">Доставка</span>
+                                        {% elif order.order.order_type == 'TAKEAWAY' %}
+                                            <span class="badge bg-light text-dark">Самовывоз</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Время</div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Готов: {{ order.completed_at|date:"H:i" }}</span>
+                                        <span class="fw-bold text-success">
+                                            {{ order.get_processing_time }} мин
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Состав</div>
+                                    <div class="order-items-list">
+                                        {% for item in order.kitchen_items.all %}
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>{{ item.order_item.quantity }}× {{ item.order_item.menu_item.name }}</span>
+                                                <span class="badge bg-success">{{ item.get_status_display }}</span>
+                                            </div>
+                                        {% empty %}
+                                            <div class="text-muted small">Нет позиций</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="text-muted small mb-1">Готовил</div>
+                                    <div>
+                                        {% if order.assigned_to %}
+                                            <span>{{ order.assigned_to.get_full_name|default:order.assigned_to.username }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Не назначен</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white text-center">
+                                <a href="{% url 'kitchen_order_details' order.id %}" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-eye me-1"></i> Просмотр деталей
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Нет готовых заказов.
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно назначения -->
+<div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignModalLabel">Назначить сотрудника</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="assign-form" method="post" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="{{ assign_form.assigned_to.id_for_label }}" class="form-label">Сотрудник</label>
+                        {{ assign_form.assigned_to }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Назначить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Автоматическое обновление страницы
+        let refreshInterval = localStorage.getItem('kitchenRefreshInterval') || 30;
+        let refreshTimer = setInterval(refreshQueue, refreshInterval * 1000);
+
+        // Ручное обновление
+        $('#refresh-queue').click(function() {
+            refreshQueue();
+        });
+
+        function refreshQueue() {
+            $.ajax({
+                url: window.location.href,
+                type: 'GET',
+                dataType: 'html',
+                success: function(data) {
+                    const newContent = $(data).find('.container-fluid');
+                    $('.container-fluid').html(newContent.html());
+
+                    // Перепривязываем обработчики событий
+                    bindEvents();
+
+                    // Прокручиваем до активной вкладки
+                    const activeTab = $('.nav-link.active').attr('id');
+                    $('#' + activeTab).tab('show');
+                },
+                error: function() {
+                    showNotification('Ошибка при обновлении данных', 'error');
+                }
+            });
+        }
+
+        function bindEvents() {
+            // Назначение заказа сотруднику
+            $('#assignModal').on('show.bs.modal', function(event) {
+                const button = $(event.relatedTarget);
+                const orderId = button.data('order-id');
+                const form = $(this).find('#assign-form');
+                form.attr('action', '{% url "assign_kitchen_order" "000" %}'.replace('000', orderId));
+            });
+
+            // Обновление таймеров
+            updateTimers();
+        }
+
+        // Функция для обновления всех таймеров
+        function updateTimers() {
+            $('.kitchen-order-card').each(function() {
+                const orderId = $(this).find('[id^="order-timer-"]').attr('id');
+                if (orderId) {
+                    const timerElement = $('#' + orderId);
+                    const currentValue = timerElement.text().trim();
+
+                    // Если это время в минутах, увеличиваем его
+                    if (currentValue.endsWith('мин')) {
+                        const minutes = parseInt(currentValue);
+                        if (!isNaN(minutes)) {
+                            // Увеличиваем только таймеры для заказов в процессе
+                            if ($(this).hasClass('border-primary') || $(this).hasClass('border-danger')) {
+                                timerElement.text((minutes + 1) + ' мин');
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Запускаем обновление таймеров каждую минуту
+        setInterval(updateTimers, 60000);
+
+        // Инициализация привязки событий
+        bindEvents();
+
+        function showNotification(message, type) {
+            const toast = $(`<div class="toast ${type === 'error' ? 'bg-danger text-white' : 'bg-success text-white'}" role="alert" aria-live="assertive" aria-atomic="true" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                <div class="toast-header">
+                    <strong class="me-auto">${type === 'error' ? 'Ошибка' : 'Уведомление'}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>`);
+
+            $('body').append(toast);
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 3000
+            });
+            bsToast.show();
+
+            // Удаляем элемент после скрытия
+            toast.on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
+    });
+</script>
+{% endblock %}

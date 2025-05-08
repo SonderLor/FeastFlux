@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Выбор ресторана | FeastFlux{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0">Выберите ресторан</h1>
+            <p class="text-muted">Пожалуйста, выберите ресторан для продолжения</p>
+        </div>
+    </div>
+    
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for restaurant in restaurants %}
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            {% if restaurant.logo %}
+                                <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.name }}" class="me-3 rounded-circle" style="width: 60px; height: 60px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 60px; height: 60px;">
+                                    <i class="fas fa-utensils fa-lg"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <h2 class="h5 mb-1">{{ restaurant.name }}</h2>
+                                <p class="text-muted mb-0 small">{{ restaurant.address }}</p>
+                            </div>
+                        </div>
+                        
+                        <p class="small mb-3">
+                            <i class="fas fa-phone-alt me-1 text-muted"></i> {{ restaurant.phone }}
+                        </p>
+                        
+                        <p class="small mb-3">
+                            <i class="fas fa-clock me-1 text-muted"></i> {{ restaurant.get_working_hours }}
+                        </p>
+                        
+                        <div class="d-grid">
+                            {% if action == 'kitchen' %}
+                                <a href="{% url 'kitchen_dashboard' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                                    <i class="fas fa-utensils me-1"></i> Панель кухни
+                                </a>
+                            {% elif action == 'cooking_stations' %}
+                                <a href="{% url 'cooking_stations' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                                    <i class="fas fa-blender me-1"></i> Кухонные станции
+                                </a>
+                            {% elif action == 'kitchen_log' %}
+                                <a href="{% url 'kitchen_log' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                                    <i class="fas fa-clipboard-list me-1"></i> Журнал кухни
+                                </a>
+                            {% else %}
+                                <a href="{% url 'kitchen_dashboard' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                                    <i class="fas fa-utensils me-1"></i> Открыть
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i> У вас нет доступа ни к одному ресторану.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
