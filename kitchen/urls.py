@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = "kitchen"
+
 urlpatterns = [
     path("dashboard/", views.kitchen_dashboard, name="kitchen_dashboard"),
     path("queue/<uuid:id>/", views.kitchen_queue, name="kitchen_queue"),

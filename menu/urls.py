@@ -1,6 +1,9 @@
 from django.urls import path
 from . import views
 
+app_name = "menu"
+
+# TODO Сделать пользователю избранное
 urlpatterns = [
     path("public/<uuid:restaurant_id>/", views.public_menu, name="public_menu"),
     path("view/", views.menu_view, name="menu_view"),

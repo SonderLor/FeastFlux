@@ -1,6 +1,9 @@
 from django.urls import path
 from . import views
 
+app_name = "restaurants"
+
+# TODO Сделать пользователю историю бронирований
 urlpatterns = [
     path("public/", views.public_restaurant_list, name="public_restaurants"),
     path("public/<uuid:id>/", views.public_restaurant_detail, name="public_restaurant_detail"),
