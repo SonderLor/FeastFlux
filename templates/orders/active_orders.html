@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3">Активные заказы - {{ restaurant.name }}</h1>
         <div class="d-flex gap-2">
-            <a href="{% url 'create_order' %}" class="btn btn-primary">
+            <a href="{% url 'orders:create_order' %}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i> Новый заказ
             </a>
             <button id="refresh-orders" class="btn btn-outline-secondary">
@@ -149,7 +149,7 @@
                     <button type="submit" class="btn btn-primary me-2">
                         <i class="fas fa-filter me-1"></i> Применить
                     </button>
-                    <a href="{% url 'active_orders' %}?restaurant={{ restaurant.id }}" class="btn btn-outline-secondary">
+                    <a href="{% url 'orders:active_orders' %}?restaurant={{ restaurant.id }}" class="btn btn-outline-secondary">
                         <i class="fas fa-eraser me-1"></i> Сбросить
                     </a>
                 </div>
@@ -260,12 +260,12 @@
                     </div>
                     <div class="card-footer bg-white">
                         <div class="d-flex justify-content-between">
-                            <a href="{% url 'order_details' order.id %}" class="btn btn-primary">
+                            <a href="{% url 'orders:order_details' order.id %}" class="btn btn-primary">
                                 <i class="fas fa-eye me-1"></i> Подробнее
                             </a>
                             <div class="btn-group">
                                 {% if order.status == 'PLACED' %}
-                                    <form method="post" action="{% url 'update_order_status' order.id %}">
+                                    <form method="post" action="{% url 'orders:update_order_status' order.id %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="status" value="PREPARING">
                                         <button type="submit" class="btn btn-success me-2">
@@ -273,7 +273,7 @@
                                         </button>
                                     </form>
                                 {% elif order.status == 'PREPARING' %}
-                                    <form method="post" action="{% url 'update_order_status' order.id %}">
+                                    <form method="post" action="{% url 'orders:update_order_status' order.id %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="status" value="READY">
                                         <button type="submit" class="btn btn-success me-2">
@@ -281,7 +281,7 @@
                                         </button>
                                     </form>
                                 {% elif order.status == 'READY' %}
-                                    <form method="post" action="{% url 'update_order_status' order.id %}">
+                                    <form method="post" action="{% url 'orders:update_order_status' order.id %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="status" value="SERVED">
                                         <button type="submit" class="btn btn-success me-2">
@@ -289,12 +289,12 @@
                                         </button>
                                     </form>
                                 {% elif order.status == 'SERVED' %}
-                                    <a href="{% url 'order_payment' order.id %}" class="btn btn-primary me-2">
+                                    <a href="{% url 'orders:order_payment' order.id %}" class="btn btn-primary me-2">
                                         <i class="fas fa-cash-register me-1"></i> Оплата
                                     </a>
                                 {% endif %}
 
-                                <a href="{% url 'edit_order' order.id %}" class="btn btn-outline-secondary">
+                                <a href="{% url 'orders:edit_order' order.id %}" class="btn btn-outline-secondary">
                                     <i class="fas fa-edit"></i>
                                 </a>
                             </div>
@@ -310,7 +310,7 @@
                             <i class="fas fa-clipboard-check fa-4x text-muted mb-3"></i>
                             <h4>Нет активных заказов</h4>
                             <p class="text-muted">На данный момент нет активных заказов, соответствующих выбранным критериям</p>
-                            <a href="{% url 'create_order' %}" class="btn btn-primary mt-3">
+                            <a href="{% url 'orders:create_order' %}" class="btn btn-primary mt-3">
                                 <i class="fas fa-plus me-1"></i> Создать новый заказ
                             </a>
                         </div>

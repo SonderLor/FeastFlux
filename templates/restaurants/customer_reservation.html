@@ -10,7 +10,7 @@
         <p class="text-muted">{{ restaurant.name }} - {{ restaurant.address }}</p>
     </div>
     <div class="col-lg-4 text-lg-end">
-        <a href="{% url 'public_restaurant_detail' restaurant.id %}" class="btn btn-outline-primary">
+        <a href="{% url 'restaurants:public_restaurant_detail' restaurant.id %}" class="btn btn-outline-primary">
             <i class="fas fa-arrow-left me-1"></i> Назад к ресторану
         </a>
     </div>
@@ -240,7 +240,7 @@
                     <hr class="my-4">
 
                     <div class="d-flex justify-content-between">
-                        <a href="{% url 'public_restaurant_detail' restaurant.id %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'restaurants:public_restaurant_detail' restaurant.id %}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i> Вернуться к ресторану
                         </a>
                         <button type="submit" class="btn btn-primary">

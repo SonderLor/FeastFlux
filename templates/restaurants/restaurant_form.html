@@ -8,18 +8,18 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">Рестораны</a></li>
                     {% if is_create %}
                         <li class="breadcrumb-item active">Добавление ресторана</li>
                     {% else %}
-                        <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
                         <li class="breadcrumb-item active">Редактирование</li>
                     {% endif %}
                 </ol>
             </nav>
             <h1>{% if is_create %}Добавление ресторана{% else %}Редактирование ресторана{% endif %}</h1>
         </div>
-        <a href="{% if is_create %}{% url 'restaurant_list' %}{% else %}{% url 'restaurant_detail' restaurant.id %}{% endif %}" class="btn btn-outline-secondary">
+        <a href="{% if is_create %}{% url 'restaurants:restaurant_list' %}{% else %}{% url 'restaurants:restaurant_detail' restaurant.id %}{% endif %}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-1"></i> 
             {% if is_create %}Назад к списку{% else %}Назад к ресторану{% endif %}
         </a>
@@ -247,7 +247,7 @@
 
                 <div class="col-12 mt-4">
                     <div class="d-flex justify-content-between">
-                        <a href="{% if is_create %}{% url 'restaurant_list' %}{% else %}{% url 'restaurant_detail' restaurant.id %}{% endif %}" class="btn btn-outline-secondary">
+                        <a href="{% if is_create %}{% url 'restaurants:restaurant_list' %}{% else %}{% url 'restaurants:restaurant_detail' restaurant.id %}{% endif %}" class="btn btn-outline-secondary">
                             <i class="fas fa-times me-1"></i> Отмена
                         </a>
                         <button type="submit" class="btn btn-primary">

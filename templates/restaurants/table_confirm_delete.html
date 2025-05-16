@@ -8,15 +8,15 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'table_layout' restaurant.id %}">План столиков</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:table_layout' restaurant.id %}">План столиков</a></li>
                     <li class="breadcrumb-item active">Удаление столика №{{ table.number }}</li>
                 </ol>
             </nav>
             <h1>Удаление столика №{{ table.number }}</h1>
         </div>
-        <a href="{% url 'table_layout' restaurant.id %}" class="btn btn-outline-secondary">
+        <a href="{% url 'restaurants:table_layout' restaurant.id %}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-1"></i> Назад к плану столиков
         </a>
     </div>
@@ -77,7 +77,7 @@
             <form method="post">
                 {% csrf_token %}
                 <div class="d-flex justify-content-between">
-                    <a href="{% url 'table_layout' restaurant.id %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'restaurants:table_layout' restaurant.id %}" class="btn btn-outline-secondary">
                         <i class="fas fa-times me-1"></i> Отмена
                     </a>
                     <button type="submit" class="btn btn-danger">

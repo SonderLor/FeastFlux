@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Список ресторанов</h1>
         {% if perms.restaurants.manage_restaurant %}
-        <a href="{% url 'restaurant_create' %}" class="btn btn-primary">
+        <a href="{% url 'restaurants:restaurant_create' %}" class="btn btn-primary">
             <i class="fas fa-plus-circle me-2"></i> Добавить ресторан
         </a>
         {% endif %}
@@ -65,14 +65,14 @@
                 </div>
                 <div class="card-footer bg-white">
                     <div class="d-flex justify-content-between">
-                        <a href="{% url 'restaurant_detail' restaurant.id %}" class="btn btn-sm btn-primary">
+                        <a href="{% url 'restaurants:restaurant_detail' restaurant.id %}" class="btn btn-sm btn-primary">
                             <i class="fas fa-info-circle me-1"></i> Детали
                         </a>
                         <div>
-                            <a href="{% url 'table_layout' restaurant.id %}" class="btn btn-sm btn-outline-primary">
+                            <a href="{% url 'restaurants:table_layout' restaurant.id %}" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-chair me-1"></i> Столики
                             </a>
-                            <a href="{% url 'reservation_list' restaurant.id %}" class="btn btn-sm btn-outline-primary ms-1">
+                            <a href="{% url 'restaurants:reservation_list' restaurant.id %}" class="btn btn-sm btn-outline-primary ms-1">
                                 <i class="fas fa-calendar-alt me-1"></i> Бронирования
                             </a>
                         </div>

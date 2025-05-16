@@ -40,11 +40,11 @@
                         
                         <div class="d-grid">
                             {% if action == 'history' %}
-                                <a href="{% url 'order_history' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                                <a href="{% url 'orders:order_history' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
                                     <i class="fas fa-history me-1"></i> История заказов
                                 </a>
                             {% else %}
-                                <a href="{% url 'active_orders' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                                <a href="{% url 'orders:active_orders' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
                                     <i class="fas fa-list me-1"></i> Текущие заказы
                                 </a>
                             {% endif %}

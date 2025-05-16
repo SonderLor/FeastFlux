@@ -9,10 +9,10 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h1 class="h3">Заказ #{{ order.order_number }}</h1>
                 <div class="d-flex gap-2">
-                    <a href="{% url 'active_orders' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'orders:active_orders' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-list me-1"></i> К списку заказов
                     </a>
-                    <a href="{% url 'edit_order' order.id %}" class="btn btn-outline-primary">
+                    <a href="{% url 'orders:edit_order' order.id %}" class="btn btn-outline-primary">
                         <i class="fas fa-edit me-1"></i> Редактировать
                     </a>
                 </div>
@@ -48,7 +48,7 @@
                                     Изменить статус
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="changeStatusDropdown">
-                                    <form method="post" action="{% url 'update_order_status' order.id %}" id="status-form">
+                                    <form method="post" action="{% url 'orders:update_order_status' order.id %}" id="status-form">
                                         {% csrf_token %}
                                         <input type="hidden" name="status" id="status-input" value="">
                                         
@@ -223,13 +223,13 @@
                         <div class="d-flex justify-content-between">
                             <div>
                                 {% if order.status != 'CANCELLED' and order.status != 'COMPLETED' %}
-                                    <a href="{% url 'edit_order' order.id %}" class="btn btn-primary me-2">
+                                    <a href="{% url 'orders:edit_order' order.id %}" class="btn btn-primary me-2">
                                         <i class="fas fa-edit me-1"></i> Редактировать заказ
                                     </a>
                                 {% endif %}
                                 
                                 {% if order.status == 'SERVED' or order.status == 'READY' %}
-                                    <a href="{% url 'order_payment' order.id %}" class="btn btn-success me-2">
+                                    <a href="{% url 'orders:order_payment' order.id %}" class="btn btn-success me-2">
                                         <i class="fas fa-cash-register me-1"></i> Оплата
                                     </a>
                                 {% endif %}
@@ -300,7 +300,7 @@
             <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
                     <h2 class="h5 mb-0">Статус оплаты</h2>
-                    <a href="{% url 'order_payment' order.id %}" class="btn btn-sm btn-outline-primary">
+                    <a href="{% url 'orders:order_payment' order.id %}" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-cash-register me-1"></i> К оплате
                     </a>
                 </div>
@@ -351,7 +351,7 @@
                                     <i class="fas fa-check-circle me-1"></i> Заказ полностью оплачен
                                 </div>
                             {% else %}
-                                <a href="{% url 'order_payment' order.id %}" class="btn btn-primary">
+                                <a href="{% url 'orders:order_payment' order.id %}" class="btn btn-primary">
                                     <i class="fas fa-cash-register me-1"></i> Перейти к оплате
                                 </a>
                             {% endif %}
@@ -426,7 +426,7 @@
                 <p>Вы уверены, что хотите отменить заказ #{{ order.order_number }}?</p>
                 <p class="text-danger">Это действие нельзя отменить.</p>
                 
-                <form id="cancel-order-form" method="post" action="{% url 'update_order_status' order.id %}">
+                <form id="cancel-order-form" method="post" action="{% url 'orders:update_order_status' order.id %}">
                     {% csrf_token %}
                     <input type="hidden" name="status" value="CANCELLED">
                     <div class="mb-3">

@@ -65,7 +65,7 @@
                                             </td>
                                             <td class="text-end item-total">₽{{ item.get_total_price }}</td>
                                             <td class="text-center">
-                                                <a href="{% url 'customer_remove_cart_item' item.id %}" class="btn btn-sm btn-outline-danger remove-item-btn">
+                                                <a href="{% url 'orders:customer_remove_cart_item' item.id %}" class="btn btn-sm btn-outline-danger remove-item-btn">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             </td>
@@ -118,10 +118,10 @@
                         </div>
                         
                         <div class="cart-actions mt-4 d-flex justify-content-between">
-                            <a href="{% url 'customer_menu_selection' %}" class="btn btn-outline-primary">
+                            <a href="{% url 'orders:customer_menu_selection' %}" class="btn btn-outline-primary">
                                 <i class="fas fa-arrow-left me-1"></i> Вернуться к меню
                             </a>
-                            <a href="{% url 'customer_checkout' %}" class="btn btn-success">
+                            <a href="{% url 'orders:customer_checkout' %}" class="btn btn-success">
                                 Оформить заказ <i class="fas fa-arrow-right ms-1"></i>
                             </a>
                         </div>
@@ -132,7 +132,7 @@
                             </div>
                             <h3 class="h4 mb-3">Ваша корзина пуста</h3>
                             <p class="text-muted mb-4">Добавьте блюда из меню в свой заказ</p>
-                            <a href="{% url 'customer_menu_selection' %}" class="btn btn-primary">
+                            <a href="{% url 'orders:customer_menu_selection' %}" class="btn btn-primary">
                                 <i class="fas fa-utensils me-1"></i> Перейти к меню
                             </a>
                         </div>
@@ -191,7 +191,7 @@
                         </div>
 
                         <div class="checkout-btn mt-4">
-                            <a href="{% url 'customer_checkout' %}" class="btn btn-success w-100">
+                            <a href="{% url 'orders:customer_checkout' %}" class="btn btn-success w-100">
                                 <i class="fas fa-check-circle me-1"></i> Оформить заказ
                             </a>
                         </div>
@@ -227,7 +227,7 @@
                         </div>
 
                         <div class="edit-order-btn mt-3">
-                            <a href="{% url 'customer_order_create' %}" class="btn btn-outline-secondary w-100">
+                            <a href="{% url 'orders:customer_order_create' %}" class="btn btn-outline-secondary w-100">
                                 <i class="fas fa-edit me-1"></i> Изменить параметры заказа
                             </a>
                         </div>

@@ -8,7 +8,7 @@
         <div class="col">
             <div class="d-flex justify-content-between align-items-center">
                 <h1 class="h3">{{ is_create|yesno:'Создание,Редактирование' }} скидки</h1>
-                <a href="{% url 'discount_list' %}" class="btn btn-outline-secondary">
+                <a href="{% url 'orders:discount_list' %}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-1"></i> К списку скидок
                 </a>
             </div>
@@ -230,7 +230,7 @@
                         </div>
 
                         <div class="d-flex justify-content-end">
-                            <a href="{% url 'discount_list' %}" class="btn btn-outline-secondary me-2">Отмена</a>
+                            <a href="{% url 'orders:discount_list' %}" class="btn btn-outline-secondary me-2">Отмена</a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-1"></i> Сохранить
                             </button>
@@ -307,7 +307,7 @@
                         </div>
 
                         <div class="text-center">
-                            <a href="{% url 'discount_toggle_status' discount.id %}" class="btn btn-outline-{{ discount.is_active|yesno:'danger,success' }}">
+                            <a href="{% url 'orders:discount_toggle_status' discount.id %}" class="btn btn-outline-{{ discount.is_active|yesno:'danger,success' }}">
                                 <i class="fas fa-toggle-{{ discount.is_active|yesno:'off,on' }} me-1"></i> {{ discount.is_active|yesno:'Деактивировать,Активировать' }}
                             </a>
                         </div>

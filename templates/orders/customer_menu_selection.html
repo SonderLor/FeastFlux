@@ -186,10 +186,10 @@
                         </div>
                         
                         <div class="cart-actions mt-4">
-                            <a href="{% url 'customer_cart' %}" class="btn btn-success w-100 mb-2">
+                            <a href="{% url 'orders:customer_cart' %}" class="btn btn-success w-100 mb-2">
                                 <i class="fas fa-shopping-cart me-1"></i> Перейти к оформлению
                             </a>
-                            <a href="{% url 'customer_order_create' %}" class="btn btn-outline-secondary w-100">
+                            <a href="{% url 'orders:customer_order_create' %}" class="btn btn-outline-secondary w-100">
                                 <i class="fas fa-cog me-1"></i> Изменить параметры заказа
                             </a>
                         </div>
@@ -217,7 +217,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="add-to-cart-form" method="post" action="{% url 'customer_add_to_cart' %}">
+                <form id="add-to-cart-form" method="post" action="{% url 'orders:customer_add_to_cart' %}">
                     {% csrf_token %}
                     <input type="hidden" id="modal-item-id" name="menu_item_id" value="">
                     

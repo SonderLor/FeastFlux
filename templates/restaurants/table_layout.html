@@ -8,8 +8,8 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
                     <li class="breadcrumb-item active">План столиков</li>
                 </ol>
             </nav>
@@ -17,7 +17,7 @@
         </div>
         <div>
             {% if perms.restaurants.add_table %}
-            <a href="{% url 'table_create' restaurant.id %}" class="btn btn-primary me-2">
+            <a href="{% url 'restaurants:table_create' restaurant.id %}" class="btn btn-primary me-2">
                 <i class="fas fa-plus-circle me-1"></i> Добавить столик
             </a>
             {% endif %}
@@ -71,7 +71,7 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-filter me-1"></i> Применить
                             </button>
-                            <a href="{% url 'table_layout' restaurant.id %}{% if edit_mode %}?edit_mode=1{% endif %}" class="btn btn-outline-secondary">
+                            <a href="{% url 'restaurants:table_layout' restaurant.id %}{% if edit_mode %}?edit_mode=1{% endif %}" class="btn btn-outline-secondary">
                                 <i class="fas fa-undo me-1"></i> Сбросить
                             </a>
                         </div>
@@ -131,10 +131,10 @@
                             
                             {% if edit_mode %}
                             <div class="table-actions position-absolute bottom-0 start-50 translate-middle-x bg-white rounded py-1 px-2 shadow-sm">
-                                <a href="{% url 'table_edit' table.id %}" class="text-primary me-2" data-bs-toggle="tooltip" title="Редактировать">
+                                <a href="{% url 'restaurants:table_edit' table.id %}" class="text-primary me-2" data-bs-toggle="tooltip" title="Редактировать">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="{% url 'table_delete' table.id %}" class="text-danger" data-bs-toggle="tooltip" title="Удалить">
+                                <a href="{% url 'restaurants:table_delete' table.id %}" class="text-danger" data-bs-toggle="tooltip" title="Удалить">
                                     <i class="fas fa-trash-alt"></i>
                                 </a>
                             </div>
@@ -147,7 +147,7 @@
                                 <h5>Столики отсутствуют</h5>
                                 {% if perms.restaurants.add_table %}
                                 <p>Нажмите на кнопку "Добавить столик" чтобы создать новый столик</p>
-                                <a href="{% url 'table_create' restaurant.id %}" class="btn btn-primary">
+                                <a href="{% url 'restaurants:table_create' restaurant.id %}" class="btn btn-primary">
                                     <i class="fas fa-plus-circle me-1"></i> Добавить столик
                                 </a>
                                 {% endif %}
@@ -212,13 +212,13 @@
                             <td>
                                 <div class="btn-group btn-group-sm">
                                     {% if perms.restaurants.change_table %}
-                                    <a href="{% url 'table_edit' table.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
+                                    <a href="{% url 'restaurants:table_edit' table.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     {% endif %}
                                     
                                     {% if perms.restaurants.delete_table %}
-                                    <a href="{% url 'table_delete' table.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
+                                    <a href="{% url 'restaurants:table_delete' table.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
                                     {% endif %}

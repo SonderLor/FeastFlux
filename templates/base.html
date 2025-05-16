@@ -50,7 +50,7 @@
                         {% if user.is_customer %}
                         <li><a class="dropdown-item" href="{% url 'users:customer_profile' %}">Мой профиль</a></li>
                         <li><a class="dropdown-item" href="{% url 'orders:customer_orders_history' %}">Мои заказы</a></li>
-                        <li><a class="dropdown-item" href="#">Бронирования</a></li>
+                        <li><a class="dropdown-item" href="{% url 'restaurants:customer_reservation_history' %}">Бронирования</a></li>
                         {% else %}
                         <li><a class="dropdown-item" href="{% url 'users:staff_profile' %}">Мой профиль</a></li>
                         {% if user.is_admin or user.is_manager %}
