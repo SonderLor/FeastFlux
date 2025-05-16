@@ -48,9 +48,8 @@ def login_view(request):
                     return redirect("analytics:dashboard")
                 elif user.is_kitchen_staff():
                     return redirect("kitchen:kitchen_dashboard")
-                # TODO Сделать дашборд для официантов
                 elif user.is_waiter():
-                    return redirect("waiter_dashboard")
+                    return redirect("kitchen:waiter_dashboard")
                 else:
                     return redirect("users:staff_profile")
             else:

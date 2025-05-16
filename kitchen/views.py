@@ -1,3 +1,5 @@
+from decimal import Decimal, InvalidOperation
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
@@ -8,6 +10,7 @@ from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 
+from orders.models import Order, OrderItem, Payment
 from .models import KitchenQueue, KitchenOrder, KitchenOrderItem, CookingStation, KitchenEvent
 from .forms import (
     CookingStationForm,
@@ -16,7 +19,7 @@ from .forms import (
     UpdateKitchenItemStatusForm,
     AssignOrderForm,
 )
-from restaurants.models import Restaurant
+from restaurants.models import Restaurant, Table, Reservation
 
 
 @login_required
@@ -1049,3 +1052,497 @@ def export_kitchen_log(request):
 
     messages.error(request, _("Неизвестный формат экспорта."))
     return redirect("kitchen_log")
+
+
+@login_required
+@permission_required("orders.view_order", raise_exception=True)
+def waiter_dashboard(request):
+    """Дашборд для официантов."""
+    user = request.user
+
+    if not user.is_waiter():
+        messages.error(request, _("Доступ запрещен. Этот раздел только для официантов."))
+        return redirect("users:staff_profile")
+
+    if not user.restaurant:
+        messages.error(request, _("Вы не привязаны ни к одному ресторану."))
+        return redirect("users:staff_profile")
+
+    restaurant = user.restaurant
+    today = timezone.now().date()
+    current_time = timezone.now().time()
+
+    tables = Table.objects.filter(restaurant=restaurant)
+    tables_free = tables.filter(status=Table.TableStatus.FREE).count()
+    tables_occupied = tables.filter(status=Table.TableStatus.OCCUPIED).count()
+    tables_reserved = tables.filter(status=Table.TableStatus.RESERVED).count()
+
+    active_orders = Order.objects.filter(
+        restaurant=restaurant,
+        waiter=user,
+        status__in=[
+            Order.OrderStatus.DRAFT,
+            Order.OrderStatus.PLACED,
+            Order.OrderStatus.PREPARING,
+            Order.OrderStatus.READY
+        ]
+    ).order_by('-created_at')[:5]
+
+    ready_orders = Order.objects.filter(
+        restaurant=restaurant,
+        waiter=user,
+        status=Order.OrderStatus.READY
+    ).order_by('-created_at')
+
+    today_reservations = Reservation.objects.filter(
+        restaurant=restaurant,
+        reservation_date=today,
+        status=Reservation.ReservationStatus.CONFIRMED
+    ).order_by('reservation_time')
+
+    upcoming_reservations = today_reservations.filter(
+        reservation_time__gt=current_time
+    )[:5]
+
+    today_completed_orders = Order.objects.filter(
+        restaurant=restaurant,
+        waiter=user,
+        status=Order.OrderStatus.COMPLETED,
+        completed_at__date=today
+    )
+
+    today_revenue = today_completed_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+    today_orders_count = today_completed_orders.count()
+
+    avg_order_amount = today_revenue / today_orders_count if today_orders_count > 0 else 0
+
+    context = {
+        'restaurant': restaurant,
+        'tables_count': tables.count(),
+        'tables_free': tables_free,
+        'tables_occupied': tables_occupied,
+        'tables_reserved': tables_reserved,
+        'active_orders': active_orders,
+        'ready_orders': ready_orders,
+        'ready_orders_count': ready_orders.count(),
+        'upcoming_reservations': upcoming_reservations,
+        'today_revenue': today_revenue,
+        'today_orders_count': today_orders_count,
+        'avg_order_amount': avg_order_amount,
+        'today': today,
+    }
+
+    return render(request, "kitchen/waiter_dashboard.html", context)
+
+
+@login_required
+@permission_required("restaurants.view_table", raise_exception=True)
+def waiter_tables(request):
+    """Представление для управления столиками официантом."""
+    user = request.user
+
+    if not user.is_waiter():
+        messages.error(request, _("Доступ запрещен. Этот раздел только для официантов."))
+        return redirect("users:staff_profile")
+
+    if not user.restaurant:
+        messages.error(request, _("Вы не привязаны ни к одному ресторану."))
+        return redirect("users:staff_profile")
+
+    restaurant = user.restaurant
+
+    tables = Table.objects.filter(restaurant=restaurant).order_by('number')
+
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        tables = tables.filter(status=status_filter)
+
+    search = request.GET.get('search', '')
+    if search:
+        tables = tables.filter(number__icontains=search)
+
+    today = timezone.now().date()
+
+    for table in tables:
+        table.current_orders = Order.objects.filter(
+            restaurant=restaurant,
+            table=table,
+            status__in=[
+                Order.OrderStatus.DRAFT,
+                Order.OrderStatus.PLACED,
+                Order.OrderStatus.PREPARING,
+                Order.OrderStatus.READY,
+                Order.OrderStatus.SERVED,
+            ]
+        ).order_by('-created_at')
+
+        table.reservations_today = Reservation.objects.filter(
+            restaurant=restaurant,
+            table=table,
+            reservation_date=today,
+            status=Reservation.ReservationStatus.CONFIRMED
+        ).order_by('reservation_time')
+
+    context = {
+        'restaurant': restaurant,
+        'tables': tables,
+        'status_filter': status_filter,
+        'search': search,
+        'status_choices': Table.TableStatus.choices,
+        'today': today,
+    }
+
+    return render(request, "kitchen/waiter_tables.html", context)
+
+
+@login_required
+@permission_required("orders.view_order", raise_exception=True)
+def waiter_orders(request):
+    """Представление для управления заказами официантом."""
+    user = request.user
+
+    if not user.is_waiter():
+        messages.error(request, _("Доступ запрещен. Этот раздел только для официантов."))
+        return redirect("users:staff_profile")
+
+    if not user.restaurant:
+        messages.error(request, _("Вы не привязаны ни к одному ресторану."))
+        return redirect("users:staff_profile")
+
+    restaurant = user.restaurant
+
+    orders = Order.objects.filter(
+        restaurant=restaurant,
+        waiter=user
+    ).order_by('-created_at')
+
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        orders = orders.filter(status=status_filter)
+
+    table_filter = request.GET.get('table', '')
+    if table_filter:
+        orders = orders.filter(table__number=table_filter)
+
+    date_filter = request.GET.get('date', '')
+    if date_filter:
+        try:
+            filter_date = timezone.datetime.strptime(date_filter, "%Y-%m-%d").date()
+            orders = orders.filter(created_at__date=filter_date)
+        except ValueError:
+            pass
+
+    tables = Table.objects.filter(restaurant=restaurant).order_by('number')
+
+    paginator = Paginator(orders, 15)
+    page = request.GET.get('page')
+
+    try:
+        orders_page = paginator.page(page)
+    except PageNotAnInteger:
+        orders_page = paginator.page(1)
+    except EmptyPage:
+        orders_page = paginator.page(paginator.num_pages)
+
+    context = {
+        'restaurant': restaurant,
+        'orders': orders_page,
+        'tables': tables,
+        'status_filter': status_filter,
+        'table_filter': table_filter,
+        'date_filter': date_filter,
+        'status_choices': Order.OrderStatus.choices,
+        'order_type_choices': Order.OrderType.choices,
+    }
+
+    return render(request, "kitchen/waiter_orders.html", context)
+
+
+@login_required
+@permission_required("restaurants.view_reservation", raise_exception=True)
+def waiter_reservations(request):
+    """Представление для управления бронированиями официантом."""
+    user = request.user
+
+    if not user.is_waiter():
+        messages.error(request, _("Доступ запрещен. Этот раздел только для официантов."))
+        return redirect("users:staff_profile")
+
+    if not user.restaurant:
+        messages.error(request, _("Вы не привязаны ни к одному ресторану."))
+        return redirect("users:staff_profile")
+
+    restaurant = user.restaurant
+
+    reservations = Reservation.objects.filter(restaurant=restaurant)
+
+    date_filter = request.GET.get('date')
+    if date_filter:
+        try:
+            filter_date = timezone.datetime.strptime(date_filter, "%Y-%m-%d").date()
+            reservations = reservations.filter(reservation_date=filter_date)
+        except ValueError:
+            reservations = reservations.filter(reservation_date=timezone.now().date())
+    else:
+        reservations = reservations.filter(reservation_date=timezone.now().date())
+
+    status_filter = request.GET.get('status')
+    if status_filter:
+        reservations = reservations.filter(status=status_filter)
+
+    table_filter = request.GET.get('table')
+    if table_filter:
+        reservations = reservations.filter(table_id=table_filter)
+
+    reservations = reservations.order_by('reservation_time')
+
+    tables = Table.objects.filter(restaurant=restaurant).order_by('number')
+
+    context = {
+        'restaurant': restaurant,
+        'reservations': reservations,
+        'tables': tables,
+        'statuses': Reservation.ReservationStatus.choices,
+        'filter_date': date_filter or timezone.now().date().strftime("%Y-%m-%d"),
+        'status_filter': status_filter,
+        'table_filter': table_filter,
+    }
+
+    return render(request, "kitchen/waiter_reservations.html", context)
+
+
+@login_required
+@permission_required("orders.view_order", raise_exception=True)
+def waiter_order_details(request, id):
+    """Детальное представление заказа для официанта."""
+    order = get_object_or_404(Order, id=id)
+    user = request.user
+
+    if not user.is_waiter():
+        messages.error(request, _("Доступ запрещен. Этот раздел только для официантов."))
+        return redirect("users:staff_profile")
+
+    if user.restaurant != order.restaurant:
+        messages.error(request, _("У вас нет доступа к этому заказу."))
+        return redirect("kitchen:waiter_dashboard")
+
+    order_items = OrderItem.objects.filter(order=order).select_related('menu_item').order_by('created_at')
+
+    order_nutrition = order.get_order_nutrition()
+    order_allergens = order.get_order_allergens() if hasattr(order, 'get_order_allergens') else []
+
+    payments = Payment.objects.filter(order=order).order_by('-payment_date')
+
+    customer_info = {
+        'name': order.customer_name or (order.customer.get_full_name() if order.customer else ''),
+        'phone': order.customer_phone or (
+            order.customer.profile.phone_number if order.customer and hasattr(order.customer, 'profile') else ''),
+        'dietary_preferences': order.nutritional_preferences or {},
+    }
+
+    context = {
+        'order': order,
+        'order_items': order_items,
+        'order_nutrition': order_nutrition,
+        'order_allergens': order_allergens,
+        'restaurant': order.restaurant,
+        'status_choices': Order.OrderStatus.choices,
+        'payments': payments,
+        'customer_info': customer_info,
+        'total_paid': sum(p.amount for p in payments.filter(status=Payment.PaymentStatus.COMPLETED)),
+    }
+
+    return render(request, "kitchen/waiter_order_details.html", context)
+
+
+@login_required
+@permission_required("orders.change_order", raise_exception=True)
+def waiter_update_order_status(request, id):
+    """Обновление статуса заказа официантом."""
+    order = get_object_or_404(Order, id=id)
+    user = request.user
+
+    if not user.is_waiter():
+        messages.error(request, _("Доступ запрещен. Этот раздел только для официантов."))
+        return redirect("users:staff_profile")
+
+    if user.restaurant != order.restaurant:
+        messages.error(request, _("У вас нет доступа к этому заказу."))
+        return redirect("kitchen:waiter_dashboard")
+
+    if request.method == "POST":
+        new_status = request.POST.get('status')
+        if new_status in dict(Order.OrderStatus.choices).keys():
+            order.status = new_status
+
+            if new_status == Order.OrderStatus.PLACED and not order.placed_at:
+                order.placed_at = timezone.now()
+            elif new_status == Order.OrderStatus.COMPLETED and not order.completed_at:
+                order.completed_at = timezone.now()
+
+            if new_status in [Order.OrderStatus.COMPLETED, Order.OrderStatus.CANCELLED]:
+                OrderItem.objects.filter(order=order).update(status=new_status)
+
+            if new_status in [Order.OrderStatus.COMPLETED, Order.OrderStatus.CANCELLED] and order.table:
+                other_active_orders = Order.objects.filter(
+                    table=order.table,
+                    status__in=[
+                        Order.OrderStatus.DRAFT,
+                        Order.OrderStatus.PLACED,
+                        Order.OrderStatus.PREPARING,
+                        Order.OrderStatus.READY,
+                        Order.OrderStatus.SERVED
+                    ]
+                ).exclude(id=order.id).exists()
+
+                if not other_active_orders:
+                    order.table.status = Table.TableStatus.FREE
+                    order.table.save(update_fields=["status"])
+
+            order.save()
+            messages.success(request, _("Статус заказа успешно обновлен."))
+        else:
+            messages.error(request, _("Некорректный статус заказа."))
+
+    return redirect("kitchen:waiter_order_details", id=order.id)
+
+
+@login_required
+@permission_required("restaurants.change_table", raise_exception=True)
+def waiter_update_table_status(request, id):
+    """Обновление статуса столика официантом."""
+    table = get_object_or_404(Table, id=id)
+    user = request.user
+
+    if not user.is_waiter():
+        messages.error(request, _("Доступ запрещен. Этот раздел только для официантов."))
+        return redirect("users:staff_profile")
+
+    if user.restaurant != table.restaurant:
+        messages.error(request, _("У вас нет доступа к этому столику."))
+        return redirect("kitchen:waiter_dashboard")
+
+    if request.method == "POST":
+        new_status = request.POST.get('status')
+        if new_status in dict(Table.TableStatus.choices).keys():
+            active_orders = Order.objects.filter(
+                table=table,
+                status__in=[
+                    Order.OrderStatus.DRAFT,
+                    Order.OrderStatus.PLACED,
+                    Order.OrderStatus.PREPARING,
+                    Order.OrderStatus.READY,
+                    Order.OrderStatus.SERVED
+                ]
+            ).exists()
+
+            today = timezone.now().date()
+            current_time = timezone.now().time()
+            active_reservations = Reservation.objects.filter(
+                table=table,
+                reservation_date=today,
+                reservation_time__lte=current_time,
+                end_time__gt=current_time,
+                status=Reservation.ReservationStatus.CONFIRMED
+            ).exists()
+
+            if active_orders and new_status == Table.TableStatus.FREE:
+                messages.error(request, _("Невозможно освободить столик с активными заказами."))
+            elif active_reservations and new_status == Table.TableStatus.FREE:
+                messages.error(request, _("Невозможно освободить столик с активными бронированиями."))
+            else:
+                table.status = new_status
+                table.save()
+                messages.success(request, _("Статус столика успешно обновлен."))
+        else:
+            messages.error(request, _("Некорректный статус столика."))
+
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    else:
+        return redirect("kitchen:waiter_tables")
+
+
+@login_required
+@permission_required("orders.can_process_payments", raise_exception=True)
+def waiter_process_payment(request, order_id):
+    """Обработка оплаты заказа официантом."""
+    order = get_object_or_404(Order, id=order_id)
+    user = request.user
+
+    if not user.is_waiter():
+        messages.error(request, _("Доступ запрещен. Этот раздел только для официантов."))
+        return redirect("users:staff_profile")
+
+    if user.restaurant != order.restaurant:
+        messages.error(request, _("У вас нет доступа к этому заказу."))
+        return redirect("kitchen:waiter_dashboard")
+
+    if request.method == "POST":
+        payment_method = request.POST.get('payment_method')
+        amount = request.POST.get('amount')
+
+        try:
+            amount = Decimal(amount)
+        except (ValueError, InvalidOperation):
+            messages.error(request, _("Указана некорректная сумма оплаты."))
+            return redirect("kitchen:waiter_order_details", id=order.id)
+
+        if payment_method not in dict(Payment.PaymentMethod.choices).keys():
+            messages.error(request, _("Указан некорректный способ оплаты."))
+            return redirect("kitchen:waiter_order_details", id=order.id)
+
+        payment = Payment.objects.create(
+            order=order,
+            payment_method=payment_method,
+            amount=amount,
+            status=Payment.PaymentStatus.COMPLETED,
+            processed_by=request.user,
+            transaction_id=f"MANUAL-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+        )
+
+        total_paid = sum(
+            p.amount for p in order.payments.filter(status=Payment.PaymentStatus.COMPLETED)
+        )
+
+        if total_paid >= order.total_amount and order.status in [
+            Order.OrderStatus.SERVED,
+            Order.OrderStatus.READY
+        ]:
+            order.status = Order.OrderStatus.COMPLETED
+            order.completed_at = timezone.now()
+            order.save(update_fields=["status", "completed_at"])
+
+            if order.table:
+                other_active_orders = Order.objects.filter(
+                    table=order.table,
+                    status__in=[
+                        Order.OrderStatus.DRAFT,
+                        Order.OrderStatus.PLACED,
+                        Order.OrderStatus.PREPARING,
+                        Order.OrderStatus.READY,
+                        Order.OrderStatus.SERVED
+                    ]
+                ).exclude(id=order.id).exists()
+
+                if not other_active_orders:
+                    order.table.status = Table.TableStatus.FREE
+                    order.table.save(update_fields=["status"])
+
+        messages.success(request, _("Платеж успешно обработан."))
+        return redirect("kitchen:waiter_order_details", id=order.id)
+
+    remaining_amount = order.total_amount - sum(
+        p.amount for p in order.payments.filter(status=Payment.PaymentStatus.COMPLETED)
+    )
+
+    context = {
+        'order': order,
+        'restaurant': order.restaurant,
+        'payment_methods': Payment.PaymentMethod.choices,
+        'remaining_amount': remaining_amount,
+    }
+
+    return render(request, "kitchen/waiter_payment_form.html", context)

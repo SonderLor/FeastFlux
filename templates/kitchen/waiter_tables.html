@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Управление столиками" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="page-title">{% trans "Управление столиками" %} - {{ restaurant.name }}</h2>
+            <p class="text-muted">
+                {% trans "Сегодня" %}: {{ today|date:"d.m.Y" }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Фильтр столиков -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "Фильтры" %}</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="status" class="form-label">{% trans "Статус" %}</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">{% trans "Все статусы" %}</option>
+                        {% for status_code, status_name in status_choices %}
+                        <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                            {{ status_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">{% trans "Поиск по номеру" %}</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="{% trans 'Введите номер столика' %}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">{% trans "Применить" %}</button>
+                    <a href="{% url 'kitchen:waiter_tables' %}" class="btn btn-secondary">{% trans "Сбросить" %}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Столики -->
+    <div class="row">
+        {% for table in tables %}
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card shadow h-100 {% if table.status == 'FREE' %}border-left-success{% elif table.status == 'OCCUPIED' %}border-left-danger{% elif table.status == 'RESERVED' %}border-left-warning{% else %}border-left-secondary{% endif %}">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">№ {{ table.number }} ({{ table.capacity }} {% trans "мест" %})</h6>
+                        <span class="badge {% if table.status == 'FREE' %}bg-success{% elif table.status == 'OCCUPIED' %}bg-danger{% elif table.status == 'RESERVED' %}bg-warning{% else %}bg-secondary{% endif %} text-white">
+                            {{ table.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>{% trans "Форма" %}:</strong> {{ table.get_shape_display }}
+                        </div>
+                        {% if table.location_description %}
+                            <div class="mb-3">
+                                <strong>{% trans "Расположение" %}:</strong> {{ table.location_description }}
+                            </div>
+                        {% endif %}
+                        
+                        {% if table.current_orders %}
+                            <div class="mb-3">
+                                <strong>{% trans "Текущие заказы" %}:</strong>
+                                <ul class="list-unstyled">
+                                    {% for order in table.current_orders|slice:":3" %}
+                                        <li>
+                                            <a href="{% url 'kitchen:waiter_order_details' order.id %}">
+                                                {{ order.order_number }} 
+                                                <span class="badge {% if order.status == 'READY' %}bg-success{% elif order.status == 'PLACED' %}bg-primary{% elif order.status == 'SERVED' %}bg-info{% else %}bg-warning{% endif %} text-white">
+                                                    {{ order.get_status_display }}
+                                                </span>
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                    {% if table.current_orders.count > 3 %}
+                                        <li class="text-muted">{% trans "И еще" %} {{ table.current_orders.count|add:"-3" }}...</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        
+                        {% if table.reservations_today %}
+                            <div class="mb-3">
+                                <strong>{% trans "Бронирования сегодня" %}:</strong>
+                                <ul class="list-unstyled">
+                                    {% for reservation in table.reservations_today|slice:":3" %}
+                                        <li>
+                                            {{ reservation.reservation_time|time:"H:i" }} - {{ reservation.end_time|time:"H:i" }}
+                                            ({{ reservation.customer_name }})
+                                        </li>
+                                    {% endfor %}
+                                    {% if table.reservations_today.count > 3 %}
+                                        <li class="text-muted">{% trans "И еще" %} {{ table.reservations_today.count|add:"-3" }}...</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mt-3">
+                            <form method="post" action="{% url 'kitchen:waiter_update_table_status' table.id %}" class="row g-2">
+                                {% csrf_token %}
+                                <div class="col-8">
+                                    <select name="status" class="form-select form-select-sm">
+                                        {% for status_code, status_name in status_choices %}
+                                            <option value="{{ status_code }}" {% if table.status == status_code %}selected{% endif %}>
+                                                {{ status_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <button type="submit" class="btn btn-primary btn-sm w-100">{% trans "Изменить" %}</button>
+                                </div>
+                            </form>
+                            
+                            {% if table.status == 'FREE' %}
+                                <a href="{% url 'orders:create_order_table' table.id %}" class="btn btn-success btn-sm w-100 mt-2">
+                                    {% trans "Новый заказ" %}
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    {% trans "Столики не найдены." %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

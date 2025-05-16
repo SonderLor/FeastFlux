@@ -25,4 +25,12 @@ urlpatterns = [
     path("stations/<uuid:id>/delete/", views.cooking_station_delete, name="cooking_station_delete"),
     path("log/", views.kitchen_log, name="kitchen_log"),
     path("log/export/", views.export_kitchen_log, name="export_kitchen_log"),
+    path("waiter/dashboard/", views.waiter_dashboard, name="waiter_dashboard"),
+    path("waiter/tables/", views.waiter_tables, name="waiter_tables"),
+    path("waiter/orders/", views.waiter_orders, name="waiter_orders"),
+    path("waiter/reservations/", views.waiter_reservations, name="waiter_reservations"),
+    path("waiter/order/<uuid:id>/", views.waiter_order_details, name="waiter_order_details"),
+    path("waiter/order/<uuid:id>/update-status/", views.waiter_update_order_status, name="waiter_update_order_status"),
+    path("waiter/table/<uuid:id>/update-status/", views.waiter_update_table_status, name="waiter_update_table_status"),
+    path("waiter/payment/<uuid:order_id>/", views.waiter_process_payment, name="waiter_process_payment"),
 ]

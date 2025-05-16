@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Бронирования" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="page-title">{% trans "Бронирования" %} - {{ restaurant.name }}</h2>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "Фильтры" %}</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="date" class="form-label">{% trans "Дата" %}</label>
+                    <input type="date" class="form-control" id="date" name="date" value="{{ filter_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">{% trans "Статус" %}</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">{% trans "Все статусы" %}</option>
+                        {% for status_code, status_name in statuses %}
+                        <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                            {{ status_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="table" class="form-label">{% trans "Столик" %}</label>
+                    <select name="table" id="table" class="form-select">
+                        <option value="">{% trans "Все столики" %}</option>
+                        {% for table in tables %}
+                        <option value="{{ table.id }}" {% if table_filter == table.id|stringformat:"s" %}selected{% endif %}>
+                            № {{ table.number }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">{% trans "Применить" %}</button>
+                    <a href="{% url 'kitchen:waiter_reservations' %}" class="btn btn-secondary">{% trans "Сбросить" %}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Бронирования -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "Бронирования" %} {{ filter_date }}</h6>
+            <a href="{% url 'restaurants:reservation_create' restaurant.id %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> {% trans "Новое бронирование" %}
+            </a>
+        </div>
+        <div class="card-body">
+            {% if reservations %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Время" %}</th>
+                                <th>{% trans "Окончание" %}</th>
+                                <th>{% trans "Столик" %}</th>
+                                <th>{% trans "Гость" %}</th>
+                                <th>{% trans "Контакт" %}</th>
+                                <th>{% trans "Гостей" %}</th>
+                                <th>{% trans "Статус" %}</th>
+                                <th>{% trans "Особые пожелания" %}</th>
+                                <th>{% trans "Действия" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in reservations %}
+                                <tr>
+                                    <td>{{ reservation.reservation_time|time:"H:i" }}</td>
+                                    <td>{{ reservation.end_time|time:"H:i" }}</td>
+                                    <td>№ {{ reservation.table.number }}</td>
+                                    <td>{{ reservation.customer_name }}</td>
+                                    <td>{{ reservation.customer_phone }}</td>
+                                    <td>{{ reservation.number_of_guests }}</td>
+                                    <td>
+                                        {% if reservation.status == 'PENDING' %}
+                                            <span class="badge bg-warning text-dark">{{ reservation.get_status_display }}</span>
+                                        {% elif reservation.status == 'CONFIRMED' %}
+                                            <span class="badge bg-success text-white">{{ reservation.get_status_display }}</span>
+                                        {% elif reservation.status == 'CANCELLED' %}
+                                            <span class="badge bg-danger text-white">{{ reservation.get_status_display }}</span>
+                                        {% elif reservation.status == 'COMPLETED' %}
+                                            <span class="badge bg-dark text-white">{{ reservation.get_status_display }}</span>
+                                        {% elif reservation.status == 'NO_SHOW' %}
+                                            <span class="badge bg-secondary text-white">{{ reservation.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if reservation.special_requests %}
+                                            <span class="text-truncate d-inline-block" style="max-width: 150px;" title="{{ reservation.special_requests }}">
+                                                {{ reservation.special_requests }}
+                                            </span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'restaurants:reservation_edit' reservation.id %}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if reservation.status == 'CONFIRMED' %}
+                                                <a href="{% url 'orders:create_order' %}?reservation={{ reservation.id }}" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-utensils"></i>
+                                                </a>
+                                            {% endif %}
+                                            {% if reservation.status == 'PENDING' %}
+                                                <form method="post" action="{% url 'restaurants:reservation_edit' reservation.id %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="status" value="CONFIRMED">
+                                                    <button type="submit" class="btn btn-sm btn-success">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                            {% if reservation.status not in 'CANCELLED,COMPLETED,NO_SHOW' %}
+                                                <a href="{% url 'restaurants:reservation_cancel' reservation.id %}" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-day fa-3x mb-3 text-gray-300"></i>
+                    <p>{% trans "Бронирования не найдены." %}</p>
+                    <a href="{% url 'restaurants:reservation_create' restaurant.id %}" class="btn btn-primary">
+                        {% trans "Создать бронирование" %}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

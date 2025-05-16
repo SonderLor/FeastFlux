@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Оплата заказа" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="page-title">{% trans "Оплата заказа" %} №{{ order.order_number }}</h2>
+            <p class="text-muted">
+                {{ order.created_at|date:"d.m.Y H:i" }} | 
+                {% if order.table %}{% trans "Столик" %} №{{ order.table.number }} | {% endif %}
+                {{ order.get_order_type_display }}
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Информация об оплате" %}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="row mb-2">
+                            <div class="col-6 text-start">{% trans "Сумма заказа:" %}</div>
+                            <div class="col-6 text-end font-weight-bold">{{ order.total_amount|floatformat:2 }} руб.</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-6 text-start">{% trans "Уже оплачено:" %}</div>
+                            <div class="col-6 text-end">{{ order.total_amount|sub:remaining_amount|floatformat:2 }} руб.</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 text-start">{% trans "К оплате:" %}</div>
+                            <div class="col-6 text-end font-weight-bold">{{ remaining_amount|floatformat:2 }} руб.</div>
+                        </div>
+                    </div>
+
+                    <form method="post" action="{% url 'kitchen:waiter_process_payment' order.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="payment_method" class="form-label">{% trans "Способ оплаты" %}</label>
+                            <select name="payment_method" id="payment_method" class="form-select" required>
+                                {% for method_code, method_name in payment_methods %}
+                                    <option value="{{ method_code }}">{{ method_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">{% trans "Сумма" %}</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" min="0.01" max="{{ remaining_amount }}" 
+                                       class="form-control" id="amount" name="amount" 
+                                       value="{{ remaining_amount }}" required>
+                                <span class="input-group-text">руб.</span>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'kitchen:waiter_order_details' order.id %}" class="btn btn-secondary">
+                                {% trans "Отмена" %}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                {% trans "Подтвердить оплату" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

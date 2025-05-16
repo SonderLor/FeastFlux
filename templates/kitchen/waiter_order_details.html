@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Детали заказа" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="page-title">
+                {% trans "Заказ" %} №{{ order.order_number }}
+                <span class="ml-2">
+                    {% if order.status == 'DRAFT' %}
+                        <span class="badge bg-secondary text-white">{{ order.get_status_display }}</span>
+                    {% elif order.status == 'PLACED' %}
+                        <span class="badge bg-primary text-white">{{ order.get_status_display }}</span>
+                    {% elif order.status == 'PREPARING' %}
+                        <span class="badge bg-warning text-dark">{{ order.get_status_display }}</span>
+                    {% elif order.status == 'READY' %}
+                        <span class="badge bg-success text-white">{{ order.get_status_display }}</span>
+                    {% elif order.status == 'SERVED' %}
+                        <span class="badge bg-info text-white">{{ order.get_status_display }}</span>
+                    {% elif order.status == 'COMPLETED' %}
+                        <span class="badge bg-dark text-white">{{ order.get_status_display }}</span>
+                    {% elif order.status == 'CANCELLED' %}
+                        <span class="badge bg-danger text-white">{{ order.get_status_display }}</span>
+                    {% endif %}
+                </span>
+            </h2>
+            <p class="text-muted">
+                {{ order.created_at|date:"d.m.Y H:i" }} | {{ order.get_order_type_display }}
+                {% if order.table %}| {% trans "Столик" %} №{{ order.table.number }}{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Информация о заказе -->
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Позиции заказа" %}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Блюдо" %}</th>
+                                    <th>{% trans "Количество" %}</th>
+                                    <th>{% trans "Цена" %}</th>
+                                    <th>{% trans "Сумма" %}</th>
+                                    <th>{% trans "Статус" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order_items %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ item.menu_item.name }}</strong>
+                                            {% if item.notes %}
+                                                <br><small class="text-muted">{{ item.notes }}</small>
+                                            {% endif %}
+                                            
+                                            {% if item.order_item_modifiers.exists %}
+                                                <ul class="list-unstyled small text-muted ml-3">
+                                                    {% for mod in item.order_item_modifiers.all %}
+                                                        <li>
+                                                            {{ mod.modifier.name }} 
+                                                            {% if mod.quantity > 1 %}x{{ mod.quantity }}{% endif %}
+                                                            {% if mod.modifier.price_change != 0 %}
+                                                                ({{ mod.modifier.price_change|floatformat:2 }} руб.)
+                                                            {% endif %}
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.unit_price|floatformat:2 }} руб.</td>
+                                        <td>{{ item.get_total_price|floatformat:2 }} руб.</td>
+                                        <td>
+                                            {% if item.status == 'DRAFT' %}
+                                                <span class="badge bg-secondary text-white">{{ item.get_status_display }}</span>
+                                            {% elif item.status == 'PLACED' %}
+                                                <span class="badge bg-primary text-white">{{ item.get_status_display }}</span>
+                                            {% elif item.status == 'PREPARING' %}
+                                                <span class="badge bg-warning text-dark">{{ item.get_status_display }}</span>
+                                            {% elif item.status == 'READY' %}
+                                                <span class="badge bg-success text-white">{{ item.get_status_display }}</span>
+                                            {% elif item.status == 'SERVED' %}
+                                                <span class="badge bg-info text-white">{{ item.get_status_display }}</span>
+                                            {% elif item.status == 'COMPLETED' %}
+                                                <span class="badge bg-dark text-white">{{ item.get_status_display }}</span>
+                                            {% elif item.status == 'CANCELLED' %}
+                                                <span class="badge bg-danger text-white">{{ item.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>{% trans "Сумма без скидки:" %}</strong></td>
+                                    <td colspan="2">{{ order.subtotal|floatformat:2 }} руб.</td>
+                                </tr>
+                                {% if order.discount_amount > 0 %}
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>{% trans "Скидка:" %}</strong></td>
+                                    <td colspan="2">-{{ order.discount_amount|floatformat:2 }} руб.</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>{% trans "Налог:" %}</strong></td>
+                                    <td colspan="2">{{ order.tax_amount|floatformat:2 }} руб.</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>{% trans "Итого:" %}</strong></td>
+                                    <td colspan="2"><strong>{{ order.total_amount|floatformat:2 }} руб.</strong></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>{% trans "Оплачено:" %}</strong></td>
+                                    <td colspan="2">{{ total_paid|floatformat:2 }} руб.</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>{% trans "К оплате:" %}</strong></td>
+                                    <td colspan="2">{{ order.total_amount|sub:total_paid|floatformat:2 }} руб.</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    {% if order_nutrition %}
+                    <div class="mt-4">
+                        <h6 class="font-weight-bold">{% trans "Пищевая ценность заказа:" %}</h6>
+                        <div class="row">
+                            <div class="col-md-2 text-center">
+                                <div class="bg-light rounded p-2 mb-2">
+                                    <strong>{% trans "Калории" %}</strong>
+                                    <div class="h5">{{ order_nutrition.calories|floatformat:0 }} ккал</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="bg-light rounded p-2 mb-2">
+                                    <strong>{% trans "Белки" %}</strong>
+                                    <div class="h5">{{ order_nutrition.protein|floatformat:1 }} г</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="bg-light rounded p-2 mb-2">
+                                    <strong>{% trans "Жиры" %}</strong>
+                                    <div class="h5">{{ order_nutrition.fat|floatformat:1 }} г</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="bg-light rounded p-2 mb-2">
+                                    <strong>{% trans "Углеводы" %}</strong>
+                                    <div class="h5">{{ order_nutrition.carbs|floatformat:1 }} г</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="bg-light rounded p-2 mb-2">
+                                    <strong>{% trans "Клетчатка" %}</strong>
+                                    <div class="h5">{{ order_nutrition.fiber|floatformat:1 }} г</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="bg-light rounded p-2 mb-2">
+                                    <strong>{% trans "Сахар" %}</strong>
+                                    <div class="h5">{{ order_nutrition.sugar|floatformat:1 }} г</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if order_allergens %}
+                    <div class="mt-4">
+                        <h6 class="font-weight-bold">{% trans "Аллергены в заказе:" %}</h6>
+                        <div class="d-flex flex-wrap">
+                            {% for allergen in order_allergens %}
+                                <span class="badge bg-warning text-dark m-1 p-2">{{ allergen }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Боковая панель -->
+        <div class="col-md-4">
+            <!-- Статус заказа -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Управление заказом" %}</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'kitchen:waiter_update_order_status' order.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="status" class="form-label">{% trans "Статус заказа" %}</label>
+                            <select name="status" id="status" class="form-select">
+                                {% for status_code, status_name in status_choices %}
+                                    <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
+                                        {{ status_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">{% trans "Обновить статус" %}</button>
+                    </form>
+                    
+                    {% if order.status == 'READY' %}
+                    <form method="post" action="{% url 'kitchen:waiter_update_order_status' order.id %}" class="mt-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="SERVED">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-check mr-2"></i> {% trans "Отметить как поданный" %}
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if order.status == 'SERVED' or order.status == 'READY' %}
+                    <a href="{% url 'kitchen:waiter_process_payment' order.id %}" class="btn btn-warning w-100 mt-3">
+                        <i class="fas fa-money-bill mr-2"></i> {% trans "Принять оплату" %}
+                    </a>
+                    {% endif %}
+                    
+                    {% if order.status in 'DRAFT,PLACED' %}
+                    <a href="{% url 'orders:edit_order' order.id %}" class="btn btn-info w-100 mt-3">
+                        <i class="fas fa-edit mr-2"></i> {% trans "Редактировать заказ" %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Информация о клиенте -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Информация о клиенте" %}</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>{% trans "Имя:" %}</strong> {{ customer_info.name|default:"-" }}</p>
+                    <p><strong>{% trans "Телефон:" %}</strong> {{ customer_info.phone|default:"-" }}</p>
+                    
+                    {% if customer_info.dietary_preferences %}
+                    <div class="mt-3">
+                        <h6>{% trans "Предпочтения по питанию:" %}</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for key, value in customer_info.dietary_preferences.items %}
+                                {% if value %}
+                                    <li class="list-group-item px-0 py-1">{{ key|title }}</li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    {% if order.special_requests %}
+                    <div class="mt-3">
+                        <h6>{% trans "Особые пожелания:" %}</h6>
+                        <p class="text-muted">{{ order.special_requests }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Платежи -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Платежи" %}</h6>
+                </div>
+                <div class="card-body">
+                    {% if payments %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Дата" %}</th>
+                                        <th>{% trans "Способ" %}</th>
+                                        <th>{% trans "Сумма" %}</th>
+                                        <th>{% trans "Статус" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in payments %}
+                                        <tr>
+                                            <td>{{ payment.payment_date|date:"d.m.Y H:i" }}</td>
+                                            <td>{{ payment.get_payment_method_display }}</td>
+                                            <td>{{ payment.amount|floatformat:2 }} руб.</td>
+                                            <td>
+                                                {% if payment.status == 'COMPLETED' %}
+                                                    <span class="badge bg-success text-white">{{ payment.get_status_display }}</span>
+                                                {% elif payment.status == 'PENDING' %}
+                                                    <span class="badge bg-warning text-dark">{{ payment.get_status_display }}</span>
+                                                {% elif payment.status == 'FAILED' %}
+                                                    <span class="badge bg-danger text-white">{{ payment.get_status_display }}</span>
+                                                {% elif payment.status == 'REFUNDED' %}
+                                                    <span class="badge bg-secondary text-white">{{ payment.get_status_display }}</span>
+                                                {% elif payment.status == 'PARTIAL_REFUND' %}
+                                                    <span class="badge bg-info text-white">{{ payment.get_status_display }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center py-3">{% trans "Пока нет платежей по этому заказу" %}</p>
+                        {% if order.status == 'SERVED' or order.status == 'READY' %}
+                            <a href="{% url 'kitchen:waiter_process_payment' order.id %}" class="btn btn-warning w-100">
+                                <i class="fas fa-money-bill mr-2"></i> {% trans "Принять оплату" %}
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
