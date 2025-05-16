@@ -61,8 +61,8 @@
         <h1 class="display-4 fw-bold mb-4">Откройте для себя новый уровень ресторанного опыта</h1>
         <p class="lead mb-5">Изысканная кухня с полной прозрачностью пищевой ценности. <br>Знайте, что вы едите!</p>
         <div class="d-flex justify-content-center gap-3">
-            <a href="{% url 'public_restaurants' %}" class="btn btn-primary btn-lg">Найти ресторан</a>
-            <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg">Присоединиться</a>
+            <a href="{% url 'restaurants:public_restaurants' %}" class="btn btn-primary btn-lg">Найти ресторан</a>
+            <a href="{% url 'users:register' %}" class="btn btn-outline-light btn-lg">Присоединиться</a>
         </div>
     </div>
 </section>
@@ -109,7 +109,7 @@
     <section class="py-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="fw-bold mb-0">Наши рестораны</h2>
-            <a href="{% url 'public_restaurants' %}" class="btn btn-outline-primary">Показать все</a>
+            <a href="{% url 'restaurants:public_restaurants' %}" class="btn btn-outline-primary">Показать все</a>
         </div>
 
         <div class="row g-4">
@@ -128,7 +128,7 @@
                         <address class="card-text text-muted">
                             <i class="fas fa-map-marker-alt me-1"></i> {{ restaurant.address|truncatechars:50 }}
                         </address>
-                        <a href="{% url 'public_restaurant_detail' restaurant.id %}"
+                        <a href="{% url 'restaurants:public_restaurant_detail' restaurant.id %}"
                            class="btn btn-sm btn-outline-primary mt-2">Подробнее</a>
                     </div>
                 </div>
@@ -196,7 +196,7 @@
                     </div>
                 </div>
 
-                <a href="{% url 'about' %}" class="btn btn-primary">Узнать больше</a>
+                <a href="{% url 'core:about' %}" class="btn btn-primary">Узнать больше</a>
             </div>
 
             <div class="col-lg-6">
@@ -294,8 +294,8 @@
         <p class="lead text-muted mb-4">Присоединяйтесь к тысячам довольных посетителей, которые уже оценили
             FeastFlux</p>
         <div class="d-flex justify-content-center gap-3">
-            <a href="{% url 'public_restaurants' %}" class="btn btn-primary btn-lg">Найти ресторан</a>
-            <a href="{% url 'register' %}" class="btn btn-outline-secondary btn-lg">Создать аккаунт</a>
+            <a href="{% url 'restaurants:public_restaurants' %}" class="btn btn-primary btn-lg">Найти ресторан</a>
+            <a href="{% url 'users:register' %}" class="btn btn-outline-secondary btn-lg">Создать аккаунт</a>
         </div>
     </section>
-    {% endblock %}
+{% endblock %}

@@ -16,7 +16,7 @@
 <!-- Навигационная панель -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container">
-        <a class="navbar-brand" href="{% url 'home' %}">
+        <a class="navbar-brand" href="{% url 'core:home' %}">
             <i class="fas fa-utensils"></i> FeastFlux
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -25,16 +25,16 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'home' %}">Главная</a>
+                    <a class="nav-link" href="{% url 'core:home' %}">Главная</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'public_restaurants' %}">Рестораны</a>
+                    <a class="nav-link" href="{% url 'restaurants:public_restaurants' %}">Рестораны</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'about' %}">О нас</a>
+                    <a class="nav-link" href="{% url 'core:about' %}">О нас</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'contact' %}">Контакты</a>
+                    <a class="nav-link" href="{% url 'core:contact' %}">Контакты</a>
                 </li>
             </ul>
 
@@ -48,13 +48,13 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                         {% if user.is_customer %}
-                        <li><a class="dropdown-item" href="{% url 'customer_profile' %}">Мой профиль</a></li>
-                        <li><a class="dropdown-item" href="#">Мои заказы</a></li>
+                        <li><a class="dropdown-item" href="{% url 'users:customer_profile' %}">Мой профиль</a></li>
+                        <li><a class="dropdown-item" href="{% url 'orders:customer_orders_history' %}">Мои заказы</a></li>
                         <li><a class="dropdown-item" href="#">Бронирования</a></li>
                         {% else %}
                         <li><a class="dropdown-item" href="{% url 'users:staff_profile' %}">Мой профиль</a></li>
                         {% if user.is_admin or user.is_manager %}
-                        <li><a class="dropdown-item" href="{% url 'staff_list' %}">Управление персоналом</a></li>
+                        <li><a class="dropdown-item" href="{% url 'users:staff_list' %}">Управление персоналом</a></li>
                         <li><a class="dropdown-item" href="#">Панель управления</a></li>
                         {% endif %}
                         {% if user.is_kitchen_staff %}
@@ -67,15 +67,15 @@
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="{% url 'logout' %}">Выход</a></li>
+                        <li><a class="dropdown-item" href="{% url 'users:logout' %}">Выход</a></li>
                     </ul>
                 </li>
                 {% else %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'login' %}">Вход</a>
+                    <a class="nav-link" href="{% url 'users:login' %}">Вход</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'register' %}">Регистрация</a>
+                    <a class="nav-link" href="{% url 'users:register' %}">Регистрация</a>
                 </li>
                 {% endif %}
             </ul>

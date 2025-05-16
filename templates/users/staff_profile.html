@@ -16,7 +16,7 @@
                 </a>
 
                 {% if user.is_admin or user.is_manager %}
-                    <a href="{% url 'staff_list' %}" class="list-group-item list-group-item-action">
+                    <a href="{% url 'users:staff_list' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-users me-2"></i> Управление персоналом
                     </a>
                     <a href="#" class="list-group-item list-group-item-action">
