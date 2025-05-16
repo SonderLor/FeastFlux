@@ -403,6 +403,69 @@ def reservation_cancel(request, id):
     return render(request, "restaurants/reservation_cancel.html", context)
 
 
+@login_required
+def customer_reservation_history(request):
+    """Представление для отображения истории бронирований клиента."""
+    user = request.user
+
+    reservations = Reservation.objects.filter(user=user).order_by('-reservation_date', '-reservation_time')
+
+    status = request.GET.get('status')
+    if status:
+        reservations = reservations.filter(status=status)
+
+    date_from = request.GET.get('date_from')
+    if date_from:
+        try:
+            date_from = timezone.datetime.strptime(date_from, "%Y-%m-%d").date()
+            reservations = reservations.filter(reservation_date__gte=date_from)
+        except ValueError:
+            pass
+
+    date_to = request.GET.get('date_to')
+    if date_to:
+        try:
+            date_to = timezone.datetime.strptime(date_to, "%Y-%m-%d").date()
+            reservations = reservations.filter(reservation_date__lte=date_to)
+        except ValueError:
+            pass
+
+    restaurant_id = request.GET.get('restaurant')
+    if restaurant_id:
+        reservations = reservations.filter(restaurant_id=restaurant_id)
+
+    paginator = Paginator(reservations, 10)
+    page = request.GET.get('page')
+
+    try:
+        reservations_page = paginator.page(page)
+    except PageNotAnInteger:
+        reservations_page = paginator.page(1)
+    except EmptyPage:
+        reservations_page = paginator.page(paginator.num_pages)
+
+    user_restaurants = Restaurant.objects.filter(
+        id__in=Reservation.objects.filter(user=user).values_list('restaurant', flat=True).distinct()
+    )
+
+    current_date = timezone.now().date()
+    current_time = timezone.now().time()
+
+    context = {
+        'reservations': reservations_page,
+        'statuses': Reservation.ReservationStatus.choices,
+        'selected_status': status,
+        'selected_date_from': date_from.strftime("%Y-%m-%d") if date_from else '',
+        'selected_date_to': date_to.strftime("%Y-%m-%d") if date_to else '',
+        'selected_restaurant': restaurant_id,
+        'user_restaurants': user_restaurants,
+        'current_date': current_date,
+        'current_time': current_time,
+    }
+
+    return render(request, "restaurants/customer_reservation_history.html", context)
+
+
 def public_restaurant_list(request):
     """Представление для публичного списка всех ресторанов."""
     form = RestaurantFilterForm(request.GET)

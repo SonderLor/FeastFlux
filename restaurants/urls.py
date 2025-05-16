@@ -3,7 +3,6 @@ from . import views
 
 app_name = "restaurants"
 
-# TODO Сделать пользователю историю бронирований
 urlpatterns = [
     path("public/", views.public_restaurant_list, name="public_restaurants"),
     path("public/<uuid:id>/", views.public_restaurant_detail, name="public_restaurant_detail"),
@@ -14,6 +13,7 @@ urlpatterns = [
         views.reservation_confirmation,
         name="reservation_confirmation",
     ),
+    path("my/reservations/", views.customer_reservation_history, name="customer_reservation_history"),
     path("", views.restaurant_list, name="restaurant_list"),
     path("<uuid:id>/", views.restaurant_detail, name="restaurant_detail"),
     path("manage/", views.restaurant_manage, name="restaurant_manage"),
