@@ -191,8 +191,8 @@
     <h2 class="fw-bold mb-3">Присоединяйтесь к нашей миссии</h2>
     <p class="mb-4">Становитесь частью ресторанной революции, где вкус и здоровье идут рука об руку</p>
     <div class="d-flex justify-content-center gap-3">
-        <a href="{% url 'public_restaurants' %}" class="btn btn-light btn-lg">Найти ресторан</a>
-        <a href="{% url 'contact' %}" class="btn btn-outline-light btn-lg">Связаться с нами</a>
+        <a href="{% url 'restaurants:public_restaurants' %}" class="btn btn-light btn-lg">Найти ресторан</a>
+        <a href="{% url 'core:contact' %}" class="btn btn-outline-light btn-lg">Связаться с нами</a>
     </div>
 </div>
 {% endblock %}

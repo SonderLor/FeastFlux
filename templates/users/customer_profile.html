@@ -11,18 +11,21 @@
                 <h5 class="mb-0">Меню пользователя</h5>
             </div>
             <div class="list-group list-group-flush">
-                <a href="{% url 'customer_profile' %}" class="list-group-item list-group-item-action active">
+                <a href="{% url 'users:customer_profile' %}" class="list-group-item list-group-item-action active">
                     <i class="fas fa-user me-2"></i> Мой профиль
                 </a>
-                <a href="#" class="list-group-item list-group-item-action">
+                <a href="{% url 'orders:customer_orders_history' %}" class="list-group-item list-group-item-action">
                     <i class="fas fa-utensils me-2"></i> Мои заказы
                 </a>
+                <!-- TODO Сделать пользователю историю бронирований -->
                 <a href="#" class="list-group-item list-group-item-action">
                     <i class="fas fa-calendar-alt me-2"></i> Бронирования
                 </a>
+                <!-- TODO Сделать пользователю избранное -->
                 <a href="#" class="list-group-item list-group-item-action">
                     <i class="fas fa-heart me-2"></i> Избранное
                 </a>
+                <!-- TODO Сделать пользователю настройки -->
                 <a href="#" class="list-group-item list-group-item-action">
                     <i class="fas fa-cog me-2"></i> Настройки
                 </a>
