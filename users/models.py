@@ -1,4 +1,5 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -177,9 +178,80 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
     """
     if created:
         UserProfile.objects.create(user=instance)
+        assign_default_permissions(instance)
     else:
         UserProfile.objects.get_or_create(user=instance)
         instance.profile.save()
+
+
+def assign_default_permissions(user):
+    """
+    Назначает пользователю разрешения в зависимости от его роли.
+    """
+    content_type = ContentType.objects.get_for_model(User)
+    user_permissions = Permission.objects.filter(content_type=content_type)
+
+    basic_permissions = [
+        "view_own_profile"
+    ]
+
+    customer_permissions = [
+        "view_public_tables",
+        "view_own_orders",
+        "view_own_cart",
+        "add_customer_order",
+        "checkout_order"
+    ]
+
+    staff_permissions = [
+        "view_public_tables",
+        "view_own_orders"
+    ]
+
+    manager_permissions = [
+        "can_manage_users",
+        "can_view_reports",
+        "can_manage_menu",
+        "can_process_payments"
+    ]
+
+    for perm_codename in basic_permissions:
+        try:
+            permission = user_permissions.get(codename=perm_codename)
+            user.user_permissions.add(permission)
+        except Permission.DoesNotExist:
+            pass
+
+    if user.role == User.UserRole.CUSTOMER:
+        for perm_codename in customer_permissions:
+            try:
+                permission = user_permissions.get(codename=perm_codename)
+                user.user_permissions.add(permission)
+            except Permission.DoesNotExist:
+                pass
+
+    elif user.role in [User.UserRole.WAITER, User.UserRole.KITCHEN, User.UserRole.BARTENDER]:
+        for perm_codename in staff_permissions:
+            try:
+                permission = user_permissions.get(codename=perm_codename)
+                user.user_permissions.add(permission)
+            except Permission.DoesNotExist:
+                pass
+
+        if user.role == User.UserRole.WAITER:
+            try:
+                permission = user_permissions.get(codename="can_process_payments")
+                user.user_permissions.add(permission)
+            except Permission.DoesNotExist:
+                pass
+
+    elif user.role in [User.UserRole.MANAGER, User.UserRole.ADMIN]:
+        for perm_codename in manager_permissions:
+            try:
+                permission = user_permissions.get(codename=perm_codename)
+                user.user_permissions.add(permission)
+            except Permission.DoesNotExist:
+                pass
 
 
 class VerificationToken(models.Model):
