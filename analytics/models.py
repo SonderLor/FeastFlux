@@ -63,6 +63,9 @@ class DailySales(models.Model):
             models.Index(fields=["date"]),
             models.Index(fields=["restaurant", "date"]),
         ]
+        permissions = [
+            ("view_sales_report", "Может просматривать отчет о продажах"),
+        ]
 
     def __str__(self):
         return f"{self.restaurant.name} - {self.date.strftime('%d.%m.%Y')}: {self.net_sales}"
@@ -195,6 +198,9 @@ class PopularItem(models.Model):
             models.Index(fields=["restaurant", "date_period"]),
             models.Index(fields=["menu_item", "date_period"]),
         ]
+        permissions = [
+            ("view_menu_analysis", "Может просматривать анализ меню"),
+        ]
 
     def __str__(self):
         return f"{self.menu_item.name} - {self.date_period}: {self.total_orders} заказов"
@@ -322,6 +328,9 @@ class StaffPerformance(models.Model):
             models.Index(fields=["restaurant", "date_period"]),
             models.Index(fields=["staff", "date_period"]),
         ]
+        permissions = [
+            ("view_staff_performance", "Может просматривать эффективность персонала"),
+        ]
 
     def __str__(self):
         return f"{self.staff.get_full_name()} - {self.date_period}"
@@ -376,6 +385,9 @@ class TableOccupancy(models.Model):
         indexes = [
             models.Index(fields=["restaurant", "date"]),
             models.Index(fields=["table", "date"]),
+        ]
+        permissions = [
+            ("view_table_occupancy", "Может просматривать занятость столиков"),
         ]
 
     def __str__(self):
@@ -462,6 +474,9 @@ class NutritionalAnalytics(models.Model):
         unique_together = ["restaurant", "date_period"]
         indexes = [
             models.Index(fields=["restaurant", "date_period"]),
+        ]
+        permissions = [
+            ("view_nutritional_analytics", "Может просматривать анализ пищевой ценности"),
         ]
 
     def __str__(self):
@@ -649,6 +664,9 @@ class CustomerSegment(models.Model):
         indexes = [
             models.Index(fields=["restaurant", "loyalty_index"]),
         ]
+        permissions = [
+            ("view_customer_segmentation", "Может просматривать сегментацию клиентов"),
+        ]
 
     def __str__(self):
         if self.restaurant:
@@ -727,6 +745,9 @@ class CustomerInsight(models.Model):
         verbose_name = _("Аналитика по клиенту")
         verbose_name_plural = _("Аналитика по клиентам")
         ordering = ["-total_spend"]
+        permissions = [
+            ("view_analytics_dashboard", "Может просматривать аналитическую панель"),
+        ]
 
     def __str__(self):
         return f"Аналитика клиента: {self.customer.get_full_name() or self.customer.username}"

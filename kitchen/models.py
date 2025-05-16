@@ -52,6 +52,9 @@ class KitchenQueue(models.Model):
         verbose_name_plural = _("Очереди кухни")
         ordering = ["restaurant", "order", "name"]
         unique_together = [["restaurant", "name"]]
+        permissions = [
+            ("view_kitchen_queue", "Может просматривать очередь на кухне"),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.restaurant.name})"
@@ -158,6 +161,9 @@ class KitchenOrder(models.Model):
             models.Index(fields=["status", "priority"]),
             models.Index(fields=["queue", "status"]),
             models.Index(fields=["assigned_to"]),
+        ]
+        permissions = [
+            ("view_kitchen_order", "Может просматривать заказы на кухне"),
         ]
 
     def __str__(self):
@@ -376,6 +382,9 @@ class CookingStation(models.Model):
         verbose_name_plural = _("Кухонные станции")
         ordering = ["restaurant", "name"]
         unique_together = [["restaurant", "name"]]
+        permissions = [
+            ("manage_cooking_stations", "Может управлять кухонными станциями"),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.restaurant.name})"
@@ -457,6 +466,10 @@ class KitchenEvent(models.Model):
             models.Index(fields=["restaurant", "created_at"]),
             models.Index(fields=["kitchen_order", "event_type"]),
             models.Index(fields=["kitchen_item", "event_type"]),
+        ]
+        permissions = [
+            ("view_kitchen_log", "Может просматривать журнал кухни"),
+            ("view_kitchen_dashboard", "Может просматривать панель кухни"),
         ]
 
     def __str__(self):

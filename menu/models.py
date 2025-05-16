@@ -311,6 +311,11 @@ class MenuItem(models.Model):
             models.Index(fields=["restaurant", "category", "is_active"]),
             models.Index(fields=["is_vegetarian", "is_vegan", "is_gluten_free"]),
         ]
+        permissions = [
+            ("view_menu_item", "Может просматривать позиции меню"),
+            ("manage_menu", "Может управлять меню"),
+            ("view_menu", "Может просматривать меню"),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.restaurant.name})"

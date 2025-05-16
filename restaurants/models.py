@@ -53,6 +53,9 @@ class Restaurant(models.Model):
         verbose_name = _("Ресторан")
         verbose_name_plural = _("Рестораны")
         ordering = ["name"]
+        permissions = [
+            ("manage_restaurant", "Может управлять рестораном"),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.city})"
@@ -137,6 +140,9 @@ class Table(models.Model):
         verbose_name_plural = _("Столики")
         ordering = ["restaurant", "number"]
         unique_together = [["restaurant", "number"]]
+        permissions = [
+            ("view_public_tables", "Может публично просматривать столики"),
+        ]
 
     def __str__(self):
         return f"Столик №{self.number} ({self.restaurant.name})"

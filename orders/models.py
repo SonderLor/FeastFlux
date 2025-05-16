@@ -110,6 +110,9 @@ class Discount(models.Model):
             models.Index(fields=["code"]),
             models.Index(fields=["valid_from", "valid_to", "is_active"]),
         ]
+        permissions = [
+            ("manage_discounts", "Может управлять скидками"),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.code})"
@@ -289,6 +292,9 @@ class Order(models.Model):
             models.Index(fields=["order_number"]),
             models.Index(fields=["table"]),
             models.Index(fields=["waiter"]),
+        ]
+        permissions = [
+            ("view_order_history", "Может просматривать историю заказов"),
         ]
 
     def __str__(self):

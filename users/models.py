@@ -187,71 +187,123 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
 def assign_default_permissions(user):
     """
     Назначает пользователю разрешения в зависимости от его роли.
+    Включает разрешения из всех приложений системы.
     """
-    content_type = ContentType.objects.get_for_model(User)
-    user_permissions = Permission.objects.filter(content_type=content_type)
-
-    basic_permissions = [
-        "view_own_profile"
+    basic_perms = [
+        ("users", "view_own_profile")
     ]
 
-    customer_permissions = [
-        "view_public_tables",
-        "view_own_orders",
-        "view_own_cart",
-        "add_customer_order",
-        "checkout_order"
+    customer_perms = [
+        ("restaurants", "view_public_tables"),
+        ("users", "view_own_orders"),
+        ("users", "view_own_cart"),
+        ("users", "add_customer_order"),
+        ("users", "checkout_order"),
+        ("restaurants", "view_reservation")
     ]
 
-    staff_permissions = [
-        "view_public_tables",
-        "view_own_orders"
+    staff_perms = [
+        ("restaurants", "view_restaurant"),
+        ("restaurants", "view_table"),
+        ("orders", "view_order"),
+        ("menu", "view_menu"),
     ]
 
-    manager_permissions = [
-        "can_manage_users",
-        "can_view_reports",
-        "can_manage_menu",
-        "can_process_payments"
+    waiter_perms = [
+        ("orders", "view_order"),
+        ("orders", "add_order"),
+        ("orders", "change_order"),
+        ("users", "can_process_payments"),
+        ("restaurants", "view_reservation"),
+        ("restaurants", "add_reservation"),
+        ("restaurants", "change_reservation"),
+        ("restaurants", "change_table")
     ]
 
-    for perm_codename in basic_permissions:
-        try:
-            permission = user_permissions.get(codename=perm_codename)
-            user.user_permissions.add(permission)
-        except Permission.DoesNotExist:
-            pass
+    kitchen_perms = [
+        ("kitchen", "view_kitchen_dashboard"),
+        ("kitchen", "view_kitchen_queue"),
+        ("kitchen", "view_kitchen_order"),
+        ("orders", "view_order"),
+        ("menu", "view_menu_item")
+    ]
+
+    bartender_perms = kitchen_perms
+
+    manager_perms = staff_perms + [
+        ("users", "can_manage_users"),
+        ("users", "can_view_reports"),
+        ("users", "can_manage_menu"),
+        ("users", "can_process_payments"),
+        ("restaurants", "manage_restaurant"),
+        ("restaurants", "add_table"),
+        ("restaurants", "change_table"),
+        ("restaurants", "delete_table"),
+        ("restaurants", "view_reservation"),
+        ("restaurants", "add_reservation"),
+        ("restaurants", "change_reservation"),
+        ("restaurants", "delete_reservation"),
+        ("menu", "manage_menu"),
+        ("menu", "add_menuitem"),
+        ("menu", "change_menuitem"),
+        ("menu", "delete_menuitem"),
+        ("orders", "view_order_history"),
+        ("orders", "manage_discounts"),
+        ("kitchen", "view_kitchen_log"),
+        ("kitchen", "manage_cooking_stations"),
+        ("analytics", "view_analytics_dashboard"),
+        ("analytics", "view_sales_report"),
+        ("analytics", "view_menu_analysis"),
+        ("analytics", "view_staff_performance"),
+        ("analytics", "view_table_occupancy"),
+        ("analytics", "view_nutritional_analytics"),
+        ("analytics", "view_customer_segmentation")
+    ]
+
+    admin_perms = manager_perms
+
+    _add_permissions(user, basic_perms)
 
     if user.role == User.UserRole.CUSTOMER:
-        for perm_codename in customer_permissions:
-            try:
-                permission = user_permissions.get(codename=perm_codename)
-                user.user_permissions.add(permission)
-            except Permission.DoesNotExist:
-                pass
+        _add_permissions(user, customer_perms)
 
-    elif user.role in [User.UserRole.WAITER, User.UserRole.KITCHEN, User.UserRole.BARTENDER]:
-        for perm_codename in staff_permissions:
-            try:
-                permission = user_permissions.get(codename=perm_codename)
-                user.user_permissions.add(permission)
-            except Permission.DoesNotExist:
-                pass
+    elif user.role == User.UserRole.WAITER:
+        _add_permissions(user, staff_perms + waiter_perms)
 
-        if user.role == User.UserRole.WAITER:
-            try:
-                permission = user_permissions.get(codename="can_process_payments")
-                user.user_permissions.add(permission)
-            except Permission.DoesNotExist:
-                pass
+    elif user.role == User.UserRole.KITCHEN:
+        _add_permissions(user, staff_perms + kitchen_perms)
 
-    elif user.role in [User.UserRole.MANAGER, User.UserRole.ADMIN]:
-        for perm_codename in manager_permissions:
-            try:
-                permission = user_permissions.get(codename=perm_codename)
-                user.user_permissions.add(permission)
-            except Permission.DoesNotExist:
-                pass
+    elif user.role == User.UserRole.BARTENDER:
+        _add_permissions(user, staff_perms + bartender_perms)
+
+    elif user.role == User.UserRole.MANAGER:
+        _add_permissions(user, manager_perms)
+
+    elif user.role == User.UserRole.ADMIN or user.is_superuser:
+        _add_permissions(user, admin_perms)
+
+        if user.is_superuser:
+            all_perms = Permission.objects.all()
+            for perm in all_perms:
+                user.user_permissions.add(perm)
+
+
+def _add_permissions(user, permission_list):
+    """
+    Вспомогательная функция для добавления разрешений из списка.
+    Каждое разрешение в формате (app_label, codename).
+    """
+    for app_label, codename in permission_list:
+        try:
+            permission = Permission.objects.get(
+                content_type__app_label=app_label,
+                codename=codename
+            )
+            user.user_permissions.add(permission)
+        except Permission.DoesNotExist:
+            print(f"Permission {app_label}.{codename} does not exist")
+        except Exception as e:
+            print(f"Error adding permission {app_label}.{codename}: {str(e)}")
 
 
 class VerificationToken(models.Model):
