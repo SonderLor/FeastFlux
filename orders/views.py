@@ -20,7 +20,7 @@ User = get_user_model()
 
 
 @login_required
-@permission_required("orders.add_customer_order", raise_exception=True)
+@permission_required("users.add_customer_order", raise_exception=True)
 def customer_order_create(request):
     """Создание заказа клиентом."""
     if request.method == "POST":
@@ -66,7 +66,7 @@ def customer_order_create(request):
 
 
 @login_required
-@permission_required("orders.add_customer_order", raise_exception=True)
+@permission_required("users.add_customer_order", raise_exception=True)
 def customer_menu_selection(request):
     """Выбор блюд для заказа клиентом."""
     current_order_id = request.session.get("current_order_id")
@@ -123,7 +123,7 @@ def customer_menu_selection(request):
 
 
 @login_required
-@permission_required("orders.add_customer_order", raise_exception=True)
+@permission_required("users.add_customer_order", raise_exception=True)
 @require_POST
 def customer_add_to_cart(request):
     """AJAX-метод для добавления блюда в корзину."""
@@ -176,7 +176,7 @@ def customer_add_to_cart(request):
 
 
 @login_required
-@permission_required("orders.view_own_cart", raise_exception=True)
+@permission_required("users.view_own_cart", raise_exception=True)
 def customer_cart(request):
     """Просмотр корзины клиентом."""
     current_order_id = request.session.get("current_order_id")
@@ -243,7 +243,7 @@ def customer_cart(request):
 
 
 @login_required
-@permission_required("orders.view_own_cart", raise_exception=True)
+@permission_required("users.view_own_cart", raise_exception=True)
 @require_POST
 def customer_update_cart_item(request, item_id):
     """AJAX-метод для обновления количества позиции в корзине."""
@@ -286,7 +286,7 @@ def customer_update_cart_item(request, item_id):
 
 
 @login_required
-@permission_required("orders.view_own_cart", raise_exception=True)
+@permission_required("users.view_own_cart", raise_exception=True)
 def customer_remove_cart_item(request, item_id):
     """Удаление позиции из корзины."""
     current_order_id = request.session.get("current_order_id")
@@ -317,7 +317,7 @@ def customer_remove_cart_item(request, item_id):
 
 
 @login_required
-@permission_required("orders.checkout_order", raise_exception=True)
+@permission_required("users.checkout_order", raise_exception=True)
 def customer_checkout(request):
     """Оформление заказа клиентом."""
     current_order_id = request.session.get("current_order_id")
@@ -403,7 +403,7 @@ def customer_checkout(request):
 
 
 @login_required
-@permission_required("orders.view_own_order", raise_exception=True)
+@permission_required("users.view_own_orders", raise_exception=True)
 def customer_order_status(request, id):
     """Просмотр статуса заказа клиентом."""
     order = get_object_or_404(Order, id=id)
@@ -426,7 +426,7 @@ def customer_order_status(request, id):
 
 
 @login_required
-@permission_required("orders.view_own_order", raise_exception=True)
+@permission_required("users.view_own_orders", raise_exception=True)
 def customer_orders_history(request):
     """История заказов клиента."""
     orders = (
@@ -965,7 +965,7 @@ def order_payment(request, id):
 
 
 @login_required
-@permission_required("orders.view_order_history", raise_exception=True)
+@permission_required("users.view_own_orders", raise_exception=True)
 def order_history(request):
     """История заказов."""
     user = request.user
