@@ -29,6 +29,7 @@ dependencies = [
     "mypy>=1.4.1",
     "flake8>=6.1.0",
     "reportlab>=4.4.0",
+    "pandas>=2.2.3",
 ]
 
 [tool.black]
