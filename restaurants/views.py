@@ -70,7 +70,7 @@ def restaurant_detail(request, id):
 
     if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
         messages.error(request, _("У вас нет доступа к этому ресторану."))
-        return redirect("restaurant_list")
+        return redirect("restaurants:restaurant_list")
 
     today = timezone.now().date()
     reservations_today = Reservation.objects.filter(
@@ -117,7 +117,7 @@ def restaurant_create(request):
         if form.is_valid():
             restaurant = form.save()
             messages.success(request, _("Ресторан успешно создан!"))
-            return redirect("restaurant_detail", id=restaurant.id)
+            return redirect("restaurants:restaurant_detail", id=restaurant.id)
     else:
         form = RestaurantForm()
 
@@ -140,7 +140,7 @@ def restaurant_edit(request, id):
         if form.is_valid():
             restaurant = form.save()
             messages.success(request, _("Ресторан успешно обновлен!"))
-            return redirect("restaurant_detail", id=restaurant.id)
+            return redirect("restaurants:restaurant_detail", id=restaurant.id)
     else:
         form = RestaurantForm(instance=restaurant)
 
@@ -162,7 +162,7 @@ def table_layout(request, id):
 
     if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
         messages.error(request, _("У вас нет доступа к этому ресторану."))
-        return redirect("restaurant_list")
+        return redirect("restaurants:restaurant_list")
 
     tables = Table.objects.filter(restaurant=restaurant)
 
@@ -207,7 +207,7 @@ def table_create(request, restaurant_id):
             table.restaurant = restaurant
             table.save()
             messages.success(request, _("Столик успешно создан!"))
-            return redirect("table_layout", id=restaurant.id)
+            return redirect("restaurants:table_layout", id=restaurant.id)
     else:
         form = TableForm(user=request.user, initial={"restaurant": restaurant})
 
@@ -232,7 +232,7 @@ def table_edit(request, id):
         if form.is_valid():
             form.save()
             messages.success(request, _("Столик успешно обновлен!"))
-            return redirect("table_layout", id=restaurant.id)
+            return redirect("restaurants:table_layout", id=restaurant.id)
     else:
         form = TableForm(instance=table, user=request.user)
 
@@ -256,7 +256,7 @@ def table_delete(request, id):
     if request.method == "POST":
         table.delete()
         messages.success(request, _("Столик успешно удален!"))
-        return redirect("table_layout", id=restaurant.id)
+        return redirect("restaurants:table_layout", id=restaurant.id)
 
     context = {
         "table": table,
@@ -275,7 +275,7 @@ def reservation_list(request, id):
 
     if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
         messages.error(request, _("У вас нет доступа к этому ресторану."))
-        return redirect("restaurant_list")
+        return redirect("restaurants:restaurant_list")
 
     date = request.GET.get("date")
     status = request.GET.get("status")
@@ -324,7 +324,7 @@ def reservation_create(request, id):
 
     if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
         messages.error(request, _("У вас нет доступа к этому ресторану."))
-        return redirect("restaurant_list")
+        return redirect("restaurants:restaurant_list")
 
     if request.method == "POST":
         form = StaffReservationForm(request.POST, restaurant=restaurant, user=user)
@@ -334,7 +334,7 @@ def reservation_create(request, id):
             reservation.created_by = user
             reservation.save()
             messages.success(request, _("Бронирование успешно создано!"))
-            return redirect("reservation_list", id=restaurant.id)
+            return redirect("restaurants:reservation_list", id=restaurant.id)
     else:
         form = StaffReservationForm(restaurant=restaurant, user=user)
 
@@ -357,7 +357,7 @@ def reservation_edit(request, id):
 
     if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
         messages.error(request, _("У вас нет доступа к этому ресторану."))
-        return redirect("restaurant_list")
+        return redirect("restaurants:restaurant_list")
 
     if request.method == "POST":
         form = StaffReservationForm(
@@ -366,7 +366,7 @@ def reservation_edit(request, id):
         if form.is_valid():
             form.save()
             messages.success(request, _("Бронирование успешно обновлено!"))
-            return redirect("reservation_list", id=restaurant.id)
+            return redirect("restaurants:reservation_list", id=restaurant.id)
     else:
         form = StaffReservationForm(instance=reservation, restaurant=restaurant, user=user)
 
@@ -393,7 +393,7 @@ def reservation_cancel(request, id):
         reservation.special_requests = f"{reservation.special_requests or ''}\n\nОтменено: {reason}"
         reservation.save()
         messages.success(request, _("Бронирование успешно отменено!"))
-        return redirect("reservation_list", id=restaurant.id)
+        return redirect("restaurants:reservation_list", id=restaurant.id)
 
     context = {
         "reservation": reservation,
@@ -592,7 +592,7 @@ def customer_reservation(request, id):
                 request, _("Бронирование успешно создано! Мы свяжемся с вами для подтверждения.")
             )
 
-            return redirect("reservation_confirmation", id=reservation.id)
+            return redirect("restaurants:reservation_confirmation", id=reservation.id)
     else:
         form = ReservationForm(restaurant=restaurant, user=request.user)
 
@@ -611,7 +611,7 @@ def reservation_confirmation(request, id):
 
     if reservation.user != request.user and not request.user.is_staff:
         messages.error(request, _("У вас нет прав для просмотра этого бронирования."))
-        return redirect("home")
+        return redirect("core:home")
 
     context = {
         "reservation": reservation,

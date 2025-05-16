@@ -117,7 +117,7 @@ def menu_view(request, restaurant_id=None):
 
         if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
             messages.error(request, _("У вас нет доступа к этому ресторану."))
-            return redirect("restaurant_list")
+            return redirect("restaurants:restaurant_list")
     elif user.restaurant:
         restaurant = user.restaurant
     else:
@@ -127,7 +127,7 @@ def menu_view(request, restaurant_id=None):
             restaurants = user.managed_restaurants.filter(is_active=True)
         else:
             messages.error(request, _("У вас нет доступа к ресторанам."))
-            return redirect("home")
+            return redirect("core:home")
 
         if restaurants.count() == 1:
             restaurant = restaurants.first()
@@ -214,7 +214,7 @@ def menu_management(request, restaurant_id=None):
 
         if user.is_manager() and not user.managed_restaurants.filter(id=restaurant.id).exists():
             messages.error(request, _("У вас нет прав на управление меню этого ресторана."))
-            return redirect("restaurant_list")
+            return redirect("restaurants:restaurant_list")
     elif user.restaurant:
         restaurant = user.restaurant
     else:
@@ -224,14 +224,14 @@ def menu_management(request, restaurant_id=None):
             restaurants = user.managed_restaurants.filter(is_active=True)
         else:
             messages.error(request, _("У вас нет доступа к ресторанам."))
-            return redirect("home")
+            return redirect("core:home")
 
         if restaurants.count() == 1:
             restaurant = restaurants.first()
         else:
             context = {
                 "restaurants": restaurants,
-                "back_url": request.META.get("HTTP_REFERER", "home"),
+                "back_url": request.META.get("HTTP_REFERER", "core:home"),
             }
             return render(request, "menu/select_restaurant.html", context)
 
@@ -300,7 +300,7 @@ def category_create(request, restaurant_id=None):
         restaurant = request.user.restaurant
     else:
         messages.error(request, _("Необходимо указать ресторан."))
-        return redirect("menu_management")
+        return redirect("menu:menu_management")
 
     if request.method == "POST":
         form = CategoryForm(request.POST, request.FILES, user=request.user)
@@ -311,7 +311,7 @@ def category_create(request, restaurant_id=None):
             category.save()
 
             messages.success(request, _("Категория успешно создана!"))
-            return redirect("menu_management", restaurant_id=restaurant.id)
+            return redirect("menu:menu_management", restaurant_id=restaurant.id)
     else:
         form = CategoryForm(user=request.user, initial={"restaurant": restaurant})
 
@@ -336,14 +336,14 @@ def category_edit(request, category_id):
         user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id)
     ):
         messages.error(request, _("У вас нет прав на редактирование этой категории."))
-        return redirect("menu_management")
+        return redirect("menu:menu_management")
 
     if request.method == "POST":
         form = CategoryForm(request.POST, request.FILES, instance=category, user=user)
         if form.is_valid():
             form.save()
             messages.success(request, _("Категория успешно обновлена!"))
-            return redirect("menu_management", restaurant_id=restaurant.id)
+            return redirect("menu:menu_management", restaurant_id=restaurant.id)
     else:
         form = CategoryForm(instance=category, user=user)
 
@@ -367,7 +367,7 @@ def category_delete(request, category_id):
     user = request.user
     if user.is_manager() and not user.managed_restaurants.filter(id=restaurant.id).exists():
         messages.error(request, _("У вас нет прав на удаление этой категории."))
-        return redirect("menu_management")
+        return redirect("menu:menu_management")
 
     menu_items = MenuItem.objects.filter(category=category)
     subcategories = Category.objects.filter(parent=category)
@@ -398,7 +398,7 @@ def category_delete(request, category_id):
 
             messages.success(request, _("Категория и все её содержимое деактивированы!"))
 
-        return redirect("menu_management", restaurant_id=restaurant.id)
+        return redirect("menu:menu_management", restaurant_id=restaurant.id)
 
     context = {
         "category": category,
@@ -423,11 +423,11 @@ def menu_item_create(request, restaurant_id=None, category_id=None):
         restaurant = user.restaurant
     else:
         messages.error(request, _("Необходимо указать ресторан."))
-        return redirect("menu_management")
+        return redirect("menu:menu_management")
 
     if user.is_manager() and not user.managed_restaurants.filter(id=restaurant.id).exists():
         messages.error(request, _("У вас нет прав на добавление блюд в этот ресторан."))
-        return redirect("menu_management")
+        return redirect("menu:menu_management")
 
     initial_data = {"restaurant": restaurant}
     if category_id:
@@ -458,7 +458,7 @@ def menu_item_create(request, restaurant_id=None, category_id=None):
             menu_item.update_dietary_flags()
 
             messages.success(request, _("Блюдо успешно создано!"))
-            return redirect("menu_item_detail", item_id=menu_item.id)
+            return redirect("menu:menu_item_detail", item_id=menu_item.id)
     else:
         form = MenuItemForm(user=user, initial=initial_data)
         formset = MenuItemIngredientFormSet()
@@ -485,7 +485,7 @@ def menu_item_edit(request, item_id):
         user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id)
     ):
         messages.error(request, _("У вас нет прав на редактирование этого блюда."))
-        return redirect("menu_management")
+        return redirect("menu:menu_management")
 
     if request.method == "POST":
         form = MenuItemForm(request.POST, request.FILES, instance=menu_item, user=user)
@@ -498,7 +498,7 @@ def menu_item_edit(request, item_id):
             menu_item.update_dietary_flags()
 
             messages.success(request, _("Блюдо успешно обновлено!"))
-            return redirect("menu_item_detail", item_id=menu_item.id)
+            return redirect("menu:menu_item_detail", item_id=menu_item.id)
     else:
         form = MenuItemForm(instance=menu_item, user=user)
         formset = MenuItemIngredientFormSet(instance=menu_item)
@@ -530,7 +530,7 @@ def menu_item_detail(request, item_id):
     user = request.user
     if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
         messages.error(request, _("У вас нет прав на просмотр этого блюда."))
-        return redirect("menu_management")
+        return redirect("menu:menu_management")
 
     nutrition = menu_item.calculate_total_nutrition()
 
@@ -569,7 +569,7 @@ def menu_item_delete(request, item_id):
     user = request.user
     if user.is_manager() and not user.managed_restaurants.filter(id=restaurant.id).exists():
         messages.error(request, _("У вас нет прав на удаление этого блюда."))
-        return redirect("menu_management")
+        return redirect("menu:menu_management")
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -582,7 +582,7 @@ def menu_item_delete(request, item_id):
             menu_item.save()
             messages.success(request, _("Блюдо успешно деактивировано!"))
 
-        return redirect("menu_management", restaurant_id=restaurant.id)
+        return redirect("menu:menu_management", restaurant_id=restaurant.id)
 
     context = {
         "menu_item": menu_item,
@@ -603,7 +603,7 @@ def ingredient_list(request, restaurant_id=None):
 
         if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
             messages.error(request, _("У вас нет доступа к этому ресторану."))
-            return redirect("restaurant_list")
+            return redirect("restaurants:restaurant_list")
     elif user.restaurant:
         restaurant = user.restaurant
     else:
@@ -613,14 +613,14 @@ def ingredient_list(request, restaurant_id=None):
             restaurants = user.managed_restaurants.filter(is_active=True)
         else:
             messages.error(request, _("У вас нет доступа к ресторанам."))
-            return redirect("home")
+            return redirect("core:home")
 
         if restaurants.count() == 1:
             restaurant = restaurants.first()
         else:
             context = {
                 "restaurants": restaurants,
-                "back_url": request.META.get("HTTP_REFERER", "home"),
+                "back_url": request.META.get("HTTP_REFERER", "core:home"),
                 "action": "ingredients",
             }
             return render(request, "menu/select_restaurant.html", context)
@@ -687,11 +687,11 @@ def ingredient_create(request, restaurant_id=None):
         restaurant = user.restaurant
     else:
         messages.error(request, _("Необходимо указать ресторан."))
-        return redirect("ingredient_list")
+        return redirect("menu:ingredient_list")
 
     if user.is_manager() and not user.managed_restaurants.filter(id=restaurant.id).exists():
         messages.error(request, _("У вас нет прав на добавление ингредиентов в этот ресторан."))
-        return redirect("ingredient_list")
+        return redirect("menu:ingredient_list")
 
     if request.method == "POST":
         form = IngredientForm(request.POST, request.FILES, user=user)
@@ -705,7 +705,7 @@ def ingredient_create(request, restaurant_id=None):
             form.save_m2m()
 
             messages.success(request, _("Ингредиент успешно создан!"))
-            return redirect("ingredient_list", restaurant_id=restaurant.id)
+            return redirect("menu:ingredient_list", restaurant_id=restaurant.id)
     else:
         form = IngredientForm(user=user, initial={"restaurant": restaurant})
 
@@ -728,7 +728,7 @@ def ingredient_edit(request, ingredient_id):
     user = request.user
     if user.is_manager() and not user.managed_restaurants.filter(id=restaurant.id).exists():
         messages.error(request, _("У вас нет прав на редактирование этого ингредиента."))
-        return redirect("ingredient_list")
+        return redirect("menu:ingredient_list")
 
     if request.method == "POST":
         form = IngredientForm(request.POST, request.FILES, instance=ingredient, user=user)
@@ -739,7 +739,7 @@ def ingredient_edit(request, ingredient_id):
                 menu_item.update_dietary_flags()
 
             messages.success(request, _("Ингредиент успешно обновлен!"))
-            return redirect("ingredient_list", restaurant_id=restaurant.id)
+            return redirect("menu:ingredient_list", restaurant_id=restaurant.id)
     else:
         form = IngredientForm(instance=ingredient, user=user)
 
@@ -766,21 +766,21 @@ def ingredient_delete(request, ingredient_id):
     user = request.user
     if user.is_manager() and not user.managed_restaurants.filter(id=restaurant.id).exists():
         messages.error(request, _("У вас нет прав на удаление этого ингредиента."))
-        return redirect("ingredient_list")
+        return redirect("menu:ingredient_list")
 
     menu_items = MenuItem.objects.filter(ingredients=ingredient)
 
     if request.method == "POST":
         if menu_items.exists() and request.POST.get("confirm") != "yes":
             messages.error(request, _("Ингредиент используется в блюдах. Подтвердите удаление."))
-            return redirect("ingredient_delete", ingredient_id=ingredient.id)
+            return redirect("menu:ingredient_delete", ingredient_id=ingredient.id)
 
         MenuItemIngredient.objects.filter(ingredient=ingredient).delete()
 
         ingredient.delete()
 
         messages.success(request, _("Ингредиент успешно удален!"))
-        return redirect("ingredient_list", restaurant_id=restaurant.id)
+        return redirect("menu:ingredient_list", restaurant_id=restaurant.id)
 
     context = {
         "ingredient": ingredient,
@@ -803,7 +803,7 @@ def modifier_list(request, restaurant_id=None):
 
         if user.is_waiter() and (not user.restaurant or user.restaurant.id != restaurant.id):
             messages.error(request, _("У вас нет доступа к этому ресторану."))
-            return redirect("restaurant_list")
+            return redirect("restaurants:restaurant_list")
     elif user.restaurant:
         restaurant = user.restaurant
     else:
@@ -813,14 +813,14 @@ def modifier_list(request, restaurant_id=None):
             restaurants = user.managed_restaurants.filter(is_active=True)
         else:
             messages.error(request, _("У вас нет доступа к ресторанам."))
-            return redirect("home")
+            return redirect("core:home")
 
         if restaurants.count() == 1:
             restaurant = restaurants.first()
         else:
             context = {
                 "restaurants": restaurants,
-                "back_url": request.META.get("HTTP_REFERER", "home"),
+                "back_url": request.META.get("HTTP_REFERER", "core:home"),
                 "action": "modifiers",
             }
             return render(request, "menu/select_restaurant.html", context)
@@ -871,11 +871,11 @@ def modifier_create(request, restaurant_id=None):
         restaurant = user.restaurant
     else:
         messages.error(request, _("Необходимо указать ресторан."))
-        return redirect("modifier_list")
+        return redirect("menu:modifier_list")
 
     if user.is_manager() and not user.managed_restaurants.filter(id=restaurant.id).exists():
         messages.error(request, _("У вас нет прав на добавление модификаторов в этот ресторан."))
-        return redirect("modifier_list")
+        return redirect("menu:modifier_list")
 
     if request.method == "POST":
         form = ModifierForm(request.POST, user=user)
@@ -888,7 +888,7 @@ def modifier_create(request, restaurant_id=None):
             form.save_m2m()
 
             messages.success(request, _("Модификатор успешно создан!"))
-            return redirect("modifier_list", restaurant_id=restaurant.id)
+            return redirect("menu:modifier_list", restaurant_id=restaurant.id)
     else:
         form = ModifierForm(user=user, initial={"restaurant": restaurant})
 
@@ -911,14 +911,14 @@ def modifier_edit(request, modifier_id):
     user = request.user
     if user.is_manager() and not user.managed_restaurants.filter(id=restaurant.id).exists():
         messages.error(request, _("У вас нет прав на редактирование этого модификатора."))
-        return redirect("modifier_list")
+        return redirect("menu:modifier_list")
 
     if request.method == "POST":
         form = ModifierForm(request.POST, instance=modifier, user=user)
         if form.is_valid():
             form.save()
             messages.success(request, _("Модификатор успешно обновлен!"))
-            return redirect("modifier_list", restaurant_id=restaurant.id)
+            return redirect("menu:modifier_list", restaurant_id=restaurant.id)
     else:
         form = ModifierForm(instance=modifier, user=user)
 
@@ -942,14 +942,14 @@ def modifier_delete(request, modifier_id):
     user = request.user
     if user.is_manager() and not user.managed_restaurants.filter(id=restaurant.id).exists():
         messages.error(request, _("У вас нет прав на удаление этого модификатора."))
-        return redirect("modifier_list")
+        return redirect("menu:modifier_list")
 
     menu_items_count = modifier.applicable_items.count()
 
     if request.method == "POST":
         modifier.delete()
         messages.success(request, _("Модификатор успешно удален!"))
-        return redirect("modifier_list", restaurant_id=restaurant.id)
+        return redirect("menu:modifier_list", restaurant_id=restaurant.id)
 
     context = {
         "modifier": modifier,

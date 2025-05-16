@@ -41,7 +41,7 @@ def customer_order_create(request):
 
             request.session["current_order_id"] = str(order.id)
 
-            return redirect("customer_menu_selection")
+            return redirect("orders:customer_menu_selection")
     else:
         current_order_id = request.session.get("current_order_id")
         if current_order_id:
@@ -49,7 +49,7 @@ def customer_order_create(request):
                 current_order = Order.objects.get(
                     id=current_order_id, status=Order.OrderStatus.DRAFT
                 )
-                return redirect("customer_cart")
+                return redirect("orders:customer_cart")
             except Order.DoesNotExist:
                 request.session.pop("current_order_id", None)
 
@@ -73,7 +73,7 @@ def customer_menu_selection(request):
 
     if not current_order_id:
         messages.error(request, _("Заказ не найден. Пожалуйста, начните заново."))
-        return redirect("customer_order_create")
+        return redirect("orders:customer_order_create")
 
     try:
         order = Order.objects.get(
@@ -82,7 +82,7 @@ def customer_menu_selection(request):
     except Order.DoesNotExist:
         messages.error(request, _("Заказ не найден. Пожалуйста, начните заново."))
         request.session.pop("current_order_id", None)
-        return redirect("customer_order_create")
+        return redirect("orders:customer_order_create")
 
     categories = order.restaurant.menu_categories.filter(
         parent__isnull=True, is_active=True
@@ -183,7 +183,7 @@ def customer_cart(request):
 
     if not current_order_id:
         messages.error(request, _("Корзина пуста. Пожалуйста, начните заказ."))
-        return redirect("customer_order_create")
+        return redirect("orders:customer_order_create")
 
     try:
         order = Order.objects.get(
@@ -192,13 +192,13 @@ def customer_cart(request):
     except Order.DoesNotExist:
         messages.error(request, _("Заказ не найден. Пожалуйста, начните заново."))
         request.session.pop("current_order_id", None)
-        return redirect("customer_order_create")
+        return redirect("orders:customer_order_create")
 
     order_items = OrderItem.objects.filter(order=order).select_related("menu_item")
 
     if not order_items.exists():
         messages.warning(request, _("Ваша корзина пуста. Пожалуйста, добавьте блюда в заказ."))
-        return redirect("customer_menu_selection")
+        return redirect("orders:customer_menu_selection")
 
     discount_form = DiscountForm()
     discount_error = None
@@ -293,7 +293,7 @@ def customer_remove_cart_item(request, item_id):
 
     if not current_order_id:
         messages.error(request, _("Корзина не найдена."))
-        return redirect("customer_order_create")
+        return redirect("orders:customer_order_create")
 
     try:
         order = Order.objects.get(
@@ -302,7 +302,7 @@ def customer_remove_cart_item(request, item_id):
         order_item = OrderItem.objects.get(id=item_id, order=order)
     except (Order.DoesNotExist, OrderItem.DoesNotExist):
         messages.error(request, _("Позиция не найдена."))
-        return redirect("customer_cart")
+        return redirect("orders:customer_cart")
 
     order_item.delete()
 
@@ -311,9 +311,9 @@ def customer_remove_cart_item(request, item_id):
     messages.success(request, _("Позиция успешно удалена из заказа."))
 
     if not OrderItem.objects.filter(order=order).exists():
-        return redirect("customer_menu_selection")
+        return redirect("orders:customer_menu_selection")
 
-    return redirect("customer_cart")
+    return redirect("orders:customer_cart")
 
 
 @login_required
@@ -324,7 +324,7 @@ def customer_checkout(request):
 
     if not current_order_id:
         messages.error(request, _("Заказ не найден. Пожалуйста, начните заново."))
-        return redirect("customer_order_create")
+        return redirect("orders:customer_order_create")
 
     try:
         order = Order.objects.get(
@@ -333,11 +333,11 @@ def customer_checkout(request):
     except Order.DoesNotExist:
         messages.error(request, _("Заказ не найден. Пожалуйста, начните заново."))
         request.session.pop("current_order_id", None)
-        return redirect("customer_order_create")
+        return redirect("orders:customer_order_create")
 
     if not OrderItem.objects.filter(order=order).exists():
         messages.warning(request, _("Ваша корзина пуста. Пожалуйста, добавьте блюда в заказ."))
-        return redirect("customer_menu_selection")
+        return redirect("orders:customer_menu_selection")
 
     if request.method == "POST":
         form = CheckoutForm(
@@ -374,7 +374,7 @@ def customer_checkout(request):
                 request,
                 _("Ваш заказ успешно оформлен! Номер заказа: {}.").format(order.order_number),
             )
-            return redirect("customer_order_status", id=order.id)
+            return redirect("orders:customer_order_status", id=order.id)
     else:
         initial_data = {}
         if hasattr(request.user, "profile"):
@@ -410,7 +410,7 @@ def customer_order_status(request, id):
 
     if order.customer != request.user:
         messages.error(request, _("У вас нет доступа к этому заказу."))
-        return redirect("customer_orders_history")
+        return redirect("orders:customer_orders_history")
 
     order_items = OrderItem.objects.filter(order=order).select_related("menu_item")
 
@@ -467,14 +467,14 @@ def active_orders(request):
             restaurants = Restaurant.objects.filter(id=user.restaurant.id)
         else:
             messages.error(request, _("Вы не привязаны ни к одному ресторану."))
-            return redirect("home")
+            return redirect("core:home")
 
     restaurant_id = request.GET.get("restaurant")
     if restaurant_id:
         restaurant = get_object_or_404(Restaurant, id=restaurant_id, is_active=True)
         if restaurant not in restaurants:
             messages.error(request, _("У вас нет доступа к этому ресторану."))
-            return redirect("active_orders")
+            return redirect("orders:active_orders")
     else:
         if restaurants.count() == 1:
             restaurant = restaurants.first()
@@ -555,7 +555,7 @@ def create_order(request, table_id=None):
             )
             if user.is_manager() and not user.managed_restaurants.filter(id=restaurant.id).exists():
                 messages.error(request, _("У вас нет доступа к этому ресторану."))
-                return redirect("home")
+                return redirect("core:home")
         else:
             if user.is_admin():
                 restaurants = Restaurant.objects.filter(is_active=True)
@@ -571,7 +571,7 @@ def create_order(request, table_id=None):
                 return render(request, "orders/select_restaurant.html", context)
     else:
         messages.error(request, _("Вы не привязаны ни к одному ресторану."))
-        return redirect("home")
+        return redirect("core:home")
 
     table = None
     if table_id:
@@ -597,7 +597,7 @@ def create_order(request, table_id=None):
         )
 
         messages.success(request, _("Заказ успешно создан! Добавьте позиции в заказ."))
-        return redirect("edit_order", id=order.id)
+        return redirect("orders:edit_order", id=order.id)
 
     if table:
         tables = [table]
@@ -627,10 +627,10 @@ def order_details(request, id):
     if not user.is_admin() and not user.is_manager():
         if user.restaurant and user.restaurant != order.restaurant:
             messages.error(request, _("У вас нет доступа к этому заказу."))
-            return redirect("active_orders")
+            return redirect("orders:active_orders")
     elif user.is_manager() and not user.managed_restaurants.filter(id=order.restaurant.id).exists():
         messages.error(request, _("У вас нет доступа к этому заказу."))
-        return redirect("active_orders")
+        return redirect("orders:active_orders")
 
     order_items = OrderItem.objects.filter(order=order).select_related("menu_item")
 
@@ -670,14 +670,14 @@ def edit_order(request, id):
     if not user.is_admin() and not user.is_manager():
         if user.restaurant and user.restaurant != order.restaurant:
             messages.error(request, _("У вас нет доступа к этому заказу."))
-            return redirect("active_orders")
+            return redirect("orders:active_orders")
     elif user.is_manager() and not user.managed_restaurants.filter(id=order.restaurant.id).exists():
         messages.error(request, _("У вас нет доступа к этому заказу."))
-        return redirect("active_orders")
+        return redirect("orders:active_orders")
 
     if order.status in [Order.OrderStatus.COMPLETED, Order.OrderStatus.CANCELLED]:
         messages.error(request, _("Невозможно редактировать завершенный или отмененный заказ."))
-        return redirect("order_details", id=order.id)
+        return redirect("orders:order_details", id=order.id)
 
     if request.method == "POST" and "add_item" in request.POST:
         menu_item_id = request.POST.get("menu_item_id")
@@ -715,7 +715,7 @@ def edit_order(request, id):
             order.calculate_totals()
 
             messages.success(request, _("Позиция успешно добавлена в заказ."))
-            return redirect("edit_order", id=order.id)
+            return redirect("orders:edit_order", id=order.id)
 
         except MenuItem.DoesNotExist:
             messages.error(request, _("Выбранное блюдо не найдено."))
@@ -731,7 +731,7 @@ def edit_order(request, id):
         order.save()
 
         messages.success(request, _("Информация о заказе обновлена."))
-        return redirect("edit_order", id=order.id)
+        return redirect("orders:edit_order", id=order.id)
 
     order_items = OrderItem.objects.filter(order=order).select_related("menu_item")
 
@@ -828,27 +828,27 @@ def remove_order_item(request, id, item_id):
     if not user.is_admin() and not user.is_manager():
         if user.restaurant and user.restaurant != order.restaurant:
             messages.error(request, _("У вас нет доступа к этому заказу."))
-            return redirect("active_orders")
+            return redirect("orders:active_orders")
     elif user.is_manager() and not user.managed_restaurants.filter(id=order.restaurant.id).exists():
         messages.error(request, _("У вас нет доступа к этому заказу."))
-        return redirect("active_orders")
+        return redirect("orders:active_orders")
 
     if order.status in [Order.OrderStatus.COMPLETED, Order.OrderStatus.CANCELLED]:
         messages.error(request, _("Невозможно редактировать завершенный или отмененный заказ."))
-        return redirect("order_details", id=order.id)
+        return redirect("orders:order_details", id=order.id)
 
     try:
         order_item = OrderItem.objects.get(id=item_id, order=order)
     except OrderItem.DoesNotExist:
         messages.error(request, _("Позиция не найдена."))
-        return redirect("edit_order", id=order.id)
+        return redirect("orders:edit_order", id=order.id)
 
     order_item.delete()
 
     order.calculate_totals()
 
     messages.success(request, _("Позиция успешно удалена из заказа."))
-    return redirect("edit_order", id=order.id)
+    return redirect("orders:edit_order", id=order.id)
 
 
 @login_required
@@ -862,25 +862,25 @@ def update_order_status(request, id):
     if not user.is_admin() and not user.is_manager():
         if user.restaurant and user.restaurant != order.restaurant:
             messages.error(request, _("У вас нет доступа к этому заказу."))
-            return redirect("active_orders")
+            return redirect("orders:active_orders")
     elif user.is_manager() and not user.managed_restaurants.filter(id=order.restaurant.id).exists():
         messages.error(request, _("У вас нет доступа к этому заказу."))
-        return redirect("active_orders")
+        return redirect("orders:active_orders")
 
     new_status = request.POST.get("status")
 
     valid_statuses = [status[0] for status in Order.OrderStatus.choices]
     if new_status not in valid_statuses:
         messages.error(request, _("Указан неверный статус."))
-        return redirect("order_details", id=order.id)
+        return redirect("orders:order_details", id=order.id)
 
     if order.status == Order.OrderStatus.COMPLETED and new_status != Order.OrderStatus.CANCELLED:
         messages.error(request, _("Невозможно изменить статус завершенного заказа."))
-        return redirect("order_details", id=order.id)
+        return redirect("orders:order_details", id=order.id)
 
     if order.status == Order.OrderStatus.CANCELLED and new_status != Order.OrderStatus.PLACED:
         messages.error(request, _("Невозможно изменить статус отмененного заказа."))
-        return redirect("order_details", id=order.id)
+        return redirect("orders:order_details", id=order.id)
 
     order.status = new_status
 
@@ -892,7 +892,7 @@ def update_order_status(request, id):
     OrderItem.objects.filter(order=order).update(status=new_status)
 
     messages.success(request, _("Статус заказа успешно обновлен."))
-    return redirect("order_details", id=order.id)
+    return redirect("orders:order_details", id=order.id)
 
 
 @login_required
@@ -905,14 +905,14 @@ def order_payment(request, id):
     if not user.is_admin() and not user.is_manager():
         if user.restaurant and user.restaurant != order.restaurant:
             messages.error(request, _("У вас нет доступа к этому заказу."))
-            return redirect("active_orders")
+            return redirect("orders:active_orders")
     elif user.is_manager() and not user.managed_restaurants.filter(id=order.restaurant.id).exists():
         messages.error(request, _("У вас нет доступа к этому заказу."))
-        return redirect("active_orders")
+        return redirect("orders:active_orders")
 
     if order.status in [Order.OrderStatus.DRAFT, Order.OrderStatus.CANCELLED]:
         messages.error(request, _("Невозможно оплатить черновик или отмененный заказ."))
-        return redirect("order_details", id=order.id)
+        return redirect("orders:order_details", id=order.id)
 
     payments = Payment.objects.filter(order=order)
     total_paid = payments.filter(status=Payment.PaymentStatus.COMPLETED).aggregate(Sum("amount"))[
@@ -922,7 +922,7 @@ def order_payment(request, id):
 
     if remaining <= 0:
         messages.info(request, _("Заказ уже полностью оплачен."))
-        return redirect("order_details", id=order.id)
+        return redirect("orders:order_details", id=order.id)
 
     if request.method == "POST":
         form = PaymentForm(request.POST, order=order)
@@ -949,7 +949,7 @@ def order_payment(request, id):
                     OrderItem.objects.filter(order=order).update(status=Order.OrderStatus.COMPLETED)
 
                 messages.success(request, _("Платеж успешно обработан."))
-                return redirect("order_details", id=order.id)
+                return redirect("orders:order_details", id=order.id)
     else:
         form = PaymentForm(order=order, initial={"amount": remaining})
 
@@ -979,14 +979,14 @@ def order_history(request):
             restaurants = Restaurant.objects.filter(id=user.restaurant.id)
         else:
             messages.error(request, _("Вы не привязаны ни к одному ресторану."))
-            return redirect("home")
+            return redirect("core:home")
 
     restaurant_id = request.GET.get("restaurant")
     if restaurant_id:
         restaurant = get_object_or_404(Restaurant, id=restaurant_id, is_active=True)
         if restaurant not in restaurants:
             messages.error(request, _("У вас нет доступа к этому ресторану."))
-            return redirect("order_history")
+            return redirect("orders:order_history")
     else:
         if restaurants.count() == 1:
             restaurant = restaurants.first()
@@ -1097,7 +1097,7 @@ def discount_list(request):
             )
         else:
             messages.error(request, _("Вы не привязаны ни к одному ресторану."))
-            return redirect("home")
+            return redirect("core:home")
 
     restaurant_filter = request.GET.get("restaurant", "")
     is_active_filter = request.GET.get("is_active", "")
@@ -1159,7 +1159,7 @@ def discount_create(request):
             form.save_m2m()
 
             messages.success(request, _("Скидка/промокод успешно создана!"))
-            return redirect("discount_list")
+            return redirect("orders:discount_list")
     else:
         form = DiscountAdminForm(user=user)
 
@@ -1182,10 +1182,10 @@ def discount_edit(request, id):
         if discount.restaurant and user.is_manager():
             if not user.managed_restaurants.filter(id=discount.restaurant.id).exists():
                 messages.error(request, _("У вас нет доступа к этой скидке/промокоду."))
-                return redirect("discount_list")
+                return redirect("orders:discount_list")
         elif user.restaurant and user.restaurant != discount.restaurant:
             messages.error(request, _("У вас нет доступа к этой скидке/промокоду."))
-            return redirect("discount_list")
+            return redirect("orders:discount_list")
 
     if request.method == "POST":
         form = DiscountAdminForm(request.POST, instance=discount, user=user)
@@ -1193,7 +1193,7 @@ def discount_edit(request, id):
             form.save()
 
             messages.success(request, _("Скидка/промокод успешно обновлена!"))
-            return redirect("discount_list")
+            return redirect("orders:discount_list")
     else:
         form = DiscountAdminForm(instance=discount, user=user)
 
@@ -1227,10 +1227,10 @@ def discount_toggle_status(request, id):
         if discount.restaurant and user.is_manager():
             if not user.managed_restaurants.filter(id=discount.restaurant.id).exists():
                 messages.error(request, _("У вас нет доступа к этой скидке/промокоду."))
-                return redirect("discount_list")
+                return redirect("orders:discount_list")
         elif user.restaurant and user.restaurant != discount.restaurant:
             messages.error(request, _("У вас нет доступа к этой скидке/промокоду."))
-            return redirect("discount_list")
+            return redirect("orders:discount_list")
 
     discount.is_active = not discount.is_active
     discount.save()
@@ -1242,7 +1242,7 @@ def discount_toggle_status(request, id):
         ),
     )
 
-    return redirect("discount_list")
+    return redirect("orders:discount_list")
 
 
 @login_required
@@ -1256,10 +1256,10 @@ def discount_delete(request, id):
         if discount.restaurant and user.is_manager():
             if not user.managed_restaurants.filter(id=discount.restaurant.id).exists():
                 messages.error(request, _("У вас нет доступа к этой скидке/промокоду."))
-                return redirect("discount_list")
+                return redirect("orders:discount_list")
         elif user.restaurant and user.restaurant != discount.restaurant:
             messages.error(request, _("У вас нет доступа к этой скидке/промокоду."))
-            return redirect("discount_list")
+            return redirect("orders:discount_list")
 
     active_orders_with_discount = Order.objects.filter(
         discount=discount,
@@ -1277,13 +1277,13 @@ def discount_delete(request, id):
             request,
             _("Невозможно удалить скидку/промокод, так как она используется в активных заказах."),
         )
-        return redirect("discount_edit", id=discount.id)
+        return redirect("orders:discount_edit", id=discount.id)
 
     if request.method == "POST":
         discount.delete()
 
         messages.success(request, _("Скидка/промокод успешно удалена."))
-        return redirect("discount_list")
+        return redirect("orders:discount_list")
 
     usage_stats = {
         "total_used": discount.times_used,

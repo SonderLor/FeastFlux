@@ -35,14 +35,14 @@ def kitchen_dashboard(request):
             restaurants = Restaurant.objects.filter(id=request.user.restaurant.id)
         else:
             messages.error(request, _("Вы не привязаны ни к одному ресторану."))
-            return redirect("home")
+            return redirect("core:home")
 
     restaurant_id = request.GET.get("restaurant")
     if restaurant_id:
         restaurant = get_object_or_404(Restaurant, id=restaurant_id, is_active=True)
         if restaurant not in restaurants:
             messages.error(request, _("У вас нет доступа к этому ресторану."))
-            return redirect("kitchen_dashboard")
+            return redirect("kitchen:kitchen_dashboard")
     else:
         if restaurants.count() == 1:
             restaurant = restaurants.first()
@@ -146,13 +146,13 @@ def kitchen_queue(request, id):
     if not request.user.is_admin() and not request.user.is_manager():
         if request.user.restaurant and request.user.restaurant != restaurant:
             messages.error(request, _("У вас нет доступа к этой очереди."))
-            return redirect("kitchen_dashboard")
+            return redirect("kitchen:kitchen_dashboard")
     elif (
         request.user.is_manager()
         and not request.user.managed_restaurants.filter(id=restaurant.id).exists()
     ):
         messages.error(request, _("У вас нет доступа к этой очереди."))
-        return redirect("kitchen_dashboard")
+        return redirect("kitchen:kitchen_dashboard")
 
     status_filter = request.GET.get("status", "")
     priority_filter = request.GET.get("priority", "")
@@ -227,13 +227,13 @@ def kitchen_order_details(request, id):
     if not request.user.is_admin() and not request.user.is_manager():
         if request.user.restaurant and request.user.restaurant != restaurant:
             messages.error(request, _("У вас нет доступа к этому заказу."))
-            return redirect("kitchen_dashboard")
+            return redirect("kitchen:kitchen_dashboard")
     elif (
         request.user.is_manager()
         and not request.user.managed_restaurants.filter(id=restaurant.id).exists()
     ):
         messages.error(request, _("У вас нет доступа к этому заказу."))
-        return redirect("kitchen_dashboard")
+        return redirect("kitchen:kitchen_dashboard")
 
     kitchen_items = KitchenOrderItem.objects.filter(kitchen_order=kitchen_order).order_by(
         "sequence_number"
@@ -280,13 +280,13 @@ def update_kitchen_order_status(request, id):
     if not request.user.is_admin() and not request.user.is_manager():
         if request.user.restaurant and request.user.restaurant != restaurant:
             messages.error(request, _("У вас нет доступа к этому заказу."))
-            return redirect("kitchen_dashboard")
+            return redirect("kitchen:kitchen_dashboard")
     elif (
         request.user.is_manager()
         and not request.user.managed_restaurants.filter(id=restaurant.id).exists()
     ):
         messages.error(request, _("У вас нет доступа к этому заказу."))
-        return redirect("kitchen_dashboard")
+        return redirect("kitchen:kitchen_dashboard")
 
     if request.method == "POST":
         form = UpdateKitchenOrderStatusForm(request.POST)
@@ -355,12 +355,12 @@ def update_kitchen_order_status(request, id):
 
             referer = request.META.get("HTTP_REFERER")
             if "queue" in referer:
-                return redirect("kitchen_queue", id=kitchen_order.queue.id)
+                return redirect("kitchen:kitchen_queue", id=kitchen_order.queue.id)
             else:
-                return redirect("kitchen_order_details", id=kitchen_order.id)
+                return redirect("kitchen:kitchen_order_details", id=kitchen_order.id)
 
     messages.error(request, _("Ошибка при обновлении статуса заказа."))
-    return redirect("kitchen_order_details", id=kitchen_order.id)
+    return redirect("kitchen:kitchen_order_details", id=kitchen_order.id)
 
 
 @login_required
@@ -375,13 +375,13 @@ def update_kitchen_item_status(request, id):
     if not request.user.is_admin() and not request.user.is_manager():
         if request.user.restaurant and request.user.restaurant != restaurant:
             messages.error(request, _("У вас нет доступа к этой позиции."))
-            return redirect("kitchen_dashboard")
+            return redirect("kitchen:kitchen_dashboard")
     elif (
         request.user.is_manager()
         and not request.user.managed_restaurants.filter(id=restaurant.id).exists()
     ):
         messages.error(request, _("У вас нет доступа к этой позиции."))
-        return redirect("kitchen_dashboard")
+        return redirect("kitchen:kitchen_dashboard")
 
     if request.method == "POST":
         form = UpdateKitchenItemStatusForm(request.POST)
@@ -452,12 +452,12 @@ def update_kitchen_item_status(request, id):
 
             referer = request.META.get("HTTP_REFERER")
             if "queue" in referer:
-                return redirect("kitchen_queue", id=kitchen_order.queue.id)
+                return redirect("kitchen:kitchen_queue", id=kitchen_order.queue.id)
             else:
-                return redirect("kitchen_order_details", id=kitchen_order.id)
+                return redirect("kitchen:kitchen_order_details", id=kitchen_order.id)
 
     messages.error(request, _("Ошибка при обновлении статуса позиции."))
-    return redirect("kitchen_order_details", id=kitchen_order.id)
+    return redirect("kitchen:kitchen_order_details", id=kitchen_order.id)
 
 
 @login_required
@@ -471,13 +471,13 @@ def assign_kitchen_order(request, id):
     if not request.user.is_admin() and not request.user.is_manager():
         if request.user.restaurant and request.user.restaurant != restaurant:
             messages.error(request, _("У вас нет доступа к этому заказу."))
-            return redirect("kitchen_dashboard")
+            return redirect("kitchen:kitchen_dashboard")
     elif (
         request.user.is_manager()
         and not request.user.managed_restaurants.filter(id=restaurant.id).exists()
     ):
         messages.error(request, _("У вас нет доступа к этому заказу."))
-        return redirect("kitchen_dashboard")
+        return redirect("kitchen:kitchen_dashboard")
 
     if request.method == "POST":
         form = AssignOrderForm(request.POST, restaurant=restaurant)
@@ -507,12 +507,12 @@ def assign_kitchen_order(request, id):
 
             referer = request.META.get("HTTP_REFERER")
             if "queue" in referer:
-                return redirect("kitchen_queue", id=kitchen_order.queue.id)
+                return redirect("kitchen:kitchen_queue", id=kitchen_order.queue.id)
             else:
-                return redirect("kitchen_order_details", id=kitchen_order.id)
+                return redirect("kitchen:kitchen_order_details", id=kitchen_order.id)
 
     messages.error(request, _("Ошибка при назначении сотрудника на заказ."))
-    return redirect("kitchen_order_details", id=kitchen_order.id)
+    return redirect("kitchen:kitchen_order_details", id=kitchen_order.id)
 
 
 @login_required
@@ -528,14 +528,14 @@ def cooking_stations(request):
             restaurants = Restaurant.objects.filter(id=request.user.restaurant.id)
         else:
             messages.error(request, _("Вы не привязаны ни к одному ресторану."))
-            return redirect("home")
+            return redirect("core:home")
 
     restaurant_id = request.GET.get("restaurant")
     if restaurant_id:
         restaurant = get_object_or_404(Restaurant, id=restaurant_id, is_active=True)
         if restaurant not in restaurants:
             messages.error(request, _("У вас нет доступа к этому ресторану."))
-            return redirect("cooking_stations")
+            return redirect("kitchen:cooking_stations")
     else:
         if restaurants.count() == 1:
             restaurant = restaurants.first()
@@ -590,14 +590,14 @@ def cooking_station_create(request):
             restaurants = Restaurant.objects.filter(id=request.user.restaurant.id)
         else:
             messages.error(request, _("Вы не привязаны ни к одному ресторану."))
-            return redirect("home")
+            return redirect("core:home")
 
     restaurant_id = request.GET.get("restaurant")
     if restaurant_id:
         restaurant = get_object_or_404(Restaurant, id=restaurant_id, is_active=True)
         if restaurant not in restaurants:
             messages.error(request, _("У вас нет доступа к этому ресторану."))
-            return redirect("cooking_stations")
+            return redirect("kitchen:cooking_stations")
     else:
         if restaurants.count() == 1:
             restaurant = restaurants.first()
@@ -615,7 +615,7 @@ def cooking_station_create(request):
             station.save()
 
             messages.success(request, _("Кухонная станция успешно создана."))
-            return redirect("cooking_stations")
+            return redirect("kitchen:cooking_stations")
         else:
             messages.error(request, _("Пожалуйста, исправьте ошибки в форме."))
     else:
@@ -638,13 +638,13 @@ def cooking_station_edit(request, id):
     if not request.user.is_admin() and not request.user.is_manager():
         if request.user.restaurant and request.user.restaurant != restaurant:
             messages.error(request, _("У вас нет доступа к этой кухонной станции."))
-            return redirect("cooking_stations")
+            return redirect("kitchen:cooking_stations")
     elif (
         request.user.is_manager()
         and not request.user.managed_restaurants.filter(id=restaurant.id).exists()
     ):
         messages.error(request, _("У вас нет доступа к этой кухонной станции."))
-        return redirect("cooking_stations")
+        return redirect("kitchen:cooking_stations")
 
     queues = KitchenQueue.objects.filter(restaurant=restaurant)
 
@@ -653,7 +653,7 @@ def cooking_station_edit(request, id):
         if form.is_valid():
             form.save()
             messages.success(request, _("Кухонная станция успешно обновлена."))
-            return redirect("cooking_stations")
+            return redirect("kitchen:cooking_stations")
         else:
             messages.error(request, _("Пожалуйста, исправьте ошибки в форме."))
     else:
@@ -682,13 +682,13 @@ def cooking_station_toggle(request, id):
     if not request.user.is_admin() and not request.user.is_manager():
         if request.user.restaurant and request.user.restaurant != restaurant:
             messages.error(request, _("У вас нет доступа к этой кухонной станции."))
-            return redirect("cooking_stations")
+            return redirect("kitchen:cooking_stations")
     elif (
         request.user.is_manager()
         and not request.user.managed_restaurants.filter(id=restaurant.id).exists()
     ):
         messages.error(request, _("У вас нет доступа к этой кухонной станции."))
-        return redirect("cooking_stations")
+        return redirect("kitchen:cooking_stations")
 
     station.is_active = not station.is_active
     station.save()
@@ -696,7 +696,7 @@ def cooking_station_toggle(request, id):
     status_text = _("активирована") if station.is_active else _("деактивирована")
     messages.success(request, _(f'Кухонная станция "{station.name}" успешно {status_text}.'))
 
-    return redirect("cooking_stations")
+    return redirect("kitchen:cooking_stations")
 
 
 @login_required
@@ -709,13 +709,13 @@ def cooking_station_delete(request, id):
     if not request.user.is_admin() and not request.user.is_manager():
         if request.user.restaurant and request.user.restaurant != restaurant:
             messages.error(request, _("У вас нет доступа к этой кухонной станции."))
-            return redirect("cooking_stations")
+            return redirect("kitchen:cooking_stations")
     elif (
         request.user.is_manager()
         and not request.user.managed_restaurants.filter(id=restaurant.id).exists()
     ):
         messages.error(request, _("У вас нет доступа к этой кухонной станции."))
-        return redirect("cooking_stations")
+        return redirect("kitchen:cooking_stations")
 
     active_items = KitchenOrderItem.objects.filter(
         cooking_station=station.name,
@@ -732,14 +732,14 @@ def cooking_station_delete(request, id):
                 "Невозможно удалить кухонную станцию, так как есть активные позиции, связанные с ней."
             ),
         )
-        return redirect("cooking_stations")
+        return redirect("kitchen:cooking_stations")
 
     if request.method == "POST":
         station_name = station.name
         station.delete()
 
         messages.success(request, _(f'Кухонная станция "{station_name}" успешно удалена.'))
-        return redirect("cooking_stations")
+        return redirect("kitchen:cooking_stations")
 
     context = {"station": station, "restaurant": restaurant}
 
@@ -759,14 +759,14 @@ def kitchen_log(request):
             restaurants = Restaurant.objects.filter(id=request.user.restaurant.id)
         else:
             messages.error(request, _("Вы не привязаны ни к одному ресторану."))
-            return redirect("home")
+            return redirect("core:home")
 
     restaurant_id = request.GET.get("restaurant")
     if restaurant_id:
         restaurant = get_object_or_404(Restaurant, id=restaurant_id, is_active=True)
         if restaurant not in restaurants:
             messages.error(request, _("У вас нет доступа к этому ресторану."))
-            return redirect("kitchen_log")
+            return redirect("kitchen:kitchen_log")
     else:
         if restaurants.count() == 1:
             restaurant = restaurants.first()
@@ -840,20 +840,20 @@ def export_kitchen_log(request):
             restaurants = Restaurant.objects.filter(id=request.user.restaurant.id)
         else:
             messages.error(request, _("Вы не привязаны ни к одному ресторану."))
-            return redirect("home")
+            return redirect("core:home")
 
     restaurant_id = request.GET.get("restaurant")
     if restaurant_id:
         restaurant = get_object_or_404(Restaurant, id=restaurant_id, is_active=True)
         if restaurant not in restaurants:
             messages.error(request, _("У вас нет доступа к этому ресторану."))
-            return redirect("kitchen_log")
+            return redirect("kitchen:kitchen_log")
     else:
         if restaurants.count() == 1:
             restaurant = restaurants.first()
         else:
             messages.error(request, _("Необходимо выбрать ресторан."))
-            return redirect("kitchen_log")
+            return redirect("kitchen:kitchen_log")
 
     filter_form = KitchenEventFilterForm(request.GET)
 
@@ -1051,7 +1051,7 @@ def export_kitchen_log(request):
         return response
 
     messages.error(request, _("Неизвестный формат экспорта."))
-    return redirect("kitchen_log")
+    return redirect("kitchen:kitchen_log")
 
 
 @login_required
