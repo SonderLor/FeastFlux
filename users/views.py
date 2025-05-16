@@ -29,9 +29,9 @@ def login_view(request):
     """Представление для авторизации пользователей."""
     if request.user.is_authenticated:
         if request.user.is_customer():
-            return redirect("customer_profile")
+            return redirect("users:customer_profile")
         else:
-            return redirect("staff_profile")
+            return redirect("users:staff_profile")
 
     if request.method == "POST":
         form = CustomAuthenticationForm(request, data=request.POST)
@@ -43,15 +43,16 @@ def login_view(request):
                 login(request, user)
 
                 if user.is_customer():
-                    return redirect("customer_profile")
+                    return redirect("users:customer_profile")
                 elif user.is_admin() or user.is_manager():
-                    return redirect("admin_dashboard")
+                    return redirect("analytics:dashboard")
                 elif user.is_kitchen_staff():
-                    return redirect("kitchen_dashboard")
+                    return redirect("kitchen:kitchen_dashboard")
+                # TODO Сделать дашборд для официантов
                 elif user.is_waiter():
                     return redirect("waiter_dashboard")
                 else:
-                    return redirect("staff_profile")
+                    return redirect("users:staff_profile")
             else:
                 messages.error(request, _("Неверное имя пользователя или пароль"))
     else:
@@ -63,13 +64,13 @@ def login_view(request):
 def logout_view(request):
     """Представление для выхода из системы."""
     logout(request)
-    return redirect("login")
+    return redirect("users:login")
 
 
 def register_view(request):
     """Представление для регистрации новых пользователей (клиентов)."""
     if request.user.is_authenticated:
-        return redirect("customer_profile")
+        return redirect("users:customer_profile")
 
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
@@ -86,7 +87,7 @@ def register_view(request):
                     "Пожалуйста, перейдите по ссылке в письме для активации аккаунта."
                 ),
             )
-            return redirect("login")
+            return redirect("users:login")
     else:
         form = CustomUserCreationForm()
 
@@ -108,7 +109,7 @@ def create_verification_token(user, token_type):
 
 def send_verification_email(user, token):
     """Отправляет письмо с подтверждением email."""
-    verify_url = f"{settings.SITE_URL}{reverse('verify_email', args=[token.token])}"
+    verify_url = f"{settings.SITE_URL}{reverse('users:verify_email', args=[token.token])}"
 
     subject = _("Подтверждение email на FeastFlux")
     html_message = render_to_string(
@@ -135,7 +136,7 @@ def verify_email_view(request, token):
 
     if not verification_token.is_valid():
         messages.error(request, _("Ссылка для подтверждения недействительна или истекла."))
-        return redirect("login")
+        return redirect("users:login")
 
     verification_token.is_used = True
     verification_token.save()
@@ -145,7 +146,7 @@ def verify_email_view(request, token):
     user.save()
 
     messages.success(request, _("Ваш email успешно подтвержден! Теперь вы можете войти в систему."))
-    return redirect("login")
+    return redirect("users:login")
 
 
 def password_reset_request(request):
@@ -160,9 +161,7 @@ def password_reset_request(request):
 
                 token = create_verification_token(user, "PASSWORD_RESET")
 
-                reset_url = (
-                    f"{settings.SITE_URL}{reverse('password_reset_confirm', args=[token.token])}"
-                )
+                reset_url = f"{settings.SITE_URL}{reverse('users:password_reset_confirm', args=[token.token])}"
 
                 subject = _("Сброс пароля на FeastFlux")
                 html_message = render_to_string(
@@ -187,7 +186,7 @@ def password_reset_request(request):
                         "Пожалуйста, проверьте свою почту."
                     ),
                 )
-                return redirect("login")
+                return redirect("users:login")
 
             except User.DoesNotExist:
                 messages.success(
@@ -197,7 +196,7 @@ def password_reset_request(request):
                         "мы отправим на него инструкции по сбросу пароля."
                     ),
                 )
-                return redirect("login")
+                return redirect("users:login")
     else:
         form = CustomPasswordResetForm()
 
@@ -212,7 +211,7 @@ def password_reset_confirm(request, token):
 
     if not verification_token.is_valid():
         messages.error(request, _("Ссылка для сброса пароля недействительна или истекла."))
-        return redirect("login")
+        return redirect("users:login")
 
     user = verification_token.user
 
@@ -227,7 +226,7 @@ def password_reset_confirm(request, token):
             messages.success(
                 request, _("Ваш пароль успешно изменен. Теперь вы можете войти в систему.")
             )
-            return redirect("login")
+            return redirect("users:login")
     else:
         form = CustomSetPasswordForm(user)
 
@@ -240,7 +239,7 @@ def customer_profile_view(request):
     user = request.user
 
     if not user.is_customer():
-        return redirect("staff_profile")
+        return redirect("users:staff_profile")
 
     if request.method == "POST":
         user_form = UserEditForm(request.POST, instance=user)
@@ -250,7 +249,7 @@ def customer_profile_view(request):
             user_form.save()
             profile_form.save()
             messages.success(request, _("Профиль успешно обновлен!"))
-            return redirect("customer_profile")
+            return redirect("users:customer_profile")
     else:
         user_form = UserEditForm(instance=user)
         profile_form = UserProfileForm(instance=user.profile)
@@ -272,7 +271,7 @@ def staff_profile_view(request):
     user = request.user
 
     if user.is_customer():
-        return redirect("customer_profile")
+        return redirect("users:customer_profile")
 
     if request.method == "POST":
         user_form = UserEditForm(request.POST, instance=user)
@@ -282,7 +281,7 @@ def staff_profile_view(request):
             user_form.save()
             profile_form.save()
             messages.success(request, _("Профиль успешно обновлен!"))
-            return redirect("staff_profile")
+            return redirect("users:staff_profile")
     else:
         user_form = UserEditForm(instance=user)
         profile_form = UserProfileForm(instance=user.profile)
@@ -296,6 +295,7 @@ def staff_profile_view(request):
 
 
 def is_admin_or_manager(user):
+    """Проверяет, является ли пользователь администратором или менеджером."""
     return user.is_authenticated and (user.is_admin() or user.is_manager())
 
 
@@ -337,7 +337,7 @@ def staff_create_view(request):
         if form.is_valid():
             user = form.save()
             messages.success(request, _("Сотрудник успешно создан!"))
-            return redirect("staff_list")
+            return redirect("users:staff_list")
     else:
         form = StaffUserCreationForm()
 
@@ -352,7 +352,7 @@ def staff_edit_view(request, user_id):
 
     if user_obj.is_customer():
         messages.error(request, _("Вы не можете редактировать клиентов через этот интерфейс."))
-        return redirect("staff_list")
+        return redirect("users:staff_list")
 
     if request.method == "POST":
         user_form = UserEditForm(request.POST, instance=user_obj)
@@ -380,7 +380,7 @@ def staff_edit_view(request, user_id):
             user_obj.save()
 
             messages.success(request, _("Сотрудник успешно обновлен!"))
-            return redirect("staff_list")
+            return redirect("users:staff_list")
     else:
         user_form = UserEditForm(instance=user_obj)
         profile_form = UserProfileForm(instance=user_obj.profile)
@@ -408,15 +408,15 @@ def staff_deactivate_view(request, user_id):
 
     if user_obj.is_customer():
         messages.error(request, _("Вы не можете деактивировать клиентов через этот интерфейс."))
-        return redirect("staff_list")
+        return redirect("users:staff_list")
 
     if user_obj == request.user:
         messages.error(request, _("Вы не можете деактивировать свой собственный аккаунт."))
-        return redirect("staff_list")
+        return redirect("users:staff_list")
 
     user_obj.is_active = False
     user_obj.is_active_employee = False
     user_obj.save()
 
     messages.success(request, _("Сотрудник успешно деактивирован!"))
-    return redirect("staff_list")
+    return redirect("users:staff_list")
