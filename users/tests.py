@@ -97,7 +97,7 @@ class AuthenticationTestCase(TestCase):
         response = self.client.post(
             self.login_url, {"username": "testwaiter", "password": "test123!"}
         )
-        self.assertRedirects(response, reverse("waiter_dashboard"))
+        self.assertRedirects(response, reverse("kitchen:waiter_dashboard"))
 
     def test_login_with_valid_kitchen_credentials(self):
         """Тест входа с корректными учетными данными сотрудника кухни."""
@@ -144,8 +144,8 @@ class RegistrationTestCase(TestCase):
     def setUp(self):
         self.client = Client()
         self.register_url = reverse("users:register")
-        self.allergen1 = Allergen.objects.create(name="Gluten", code="G")
-        self.allergen2 = Allergen.objects.create(name="Lactose", code="L")
+        self.allergen1 = Allergen.objects.create(name="Gluten")
+        self.allergen2 = Allergen.objects.create(name="Lactose")
 
     @patch("users.views.create_verification_token")
     @patch("users.views.send_verification_email")
@@ -448,8 +448,8 @@ class UserProfileTestCase(TestCase):
             role=User.UserRole.WAITER,
         )
 
-        self.allergen1 = Allergen.objects.create(name="Gluten", code="G")
-        self.allergen2 = Allergen.objects.create(name="Lactose", code="L")
+        self.allergen1 = Allergen.objects.create(name="Gluten")
+        self.allergen2 = Allergen.objects.create(name="Lactose")
 
         self.customer_profile_url = reverse("users:customer_profile")
         self.staff_profile_url = reverse("users:staff_profile")
