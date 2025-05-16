@@ -8,17 +8,17 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'menu_management_restaurant' restaurant.id %}">Управление меню</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'modifier_list_restaurant' restaurant.id %}">Модификаторы</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu:menu_management_restaurant' restaurant.id %}">Управление меню</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu:modifier_list_restaurant' restaurant.id %}">Модификаторы</a></li>
                     <li class="breadcrumb-item active">{% if is_create %}Добавление модификатора{% else %}Редактирование модификатора{% endif %}</li>
                 </ol>
             </nav>
             <h1>{% if is_create %}Добавление модификатора{% else %}Редактирование модификатора{% endif %}</h1>
         </div>
         <div>
-            <a href="{% url 'modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+            <a href="{% url 'menu:modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i> Назад к модификаторам
             </a>
         </div>
@@ -145,7 +145,7 @@
                         </div>
                         
                         <div class="d-flex justify-content-between">
-                            <a href="{% url 'modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+                            <a href="{% url 'menu:modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-1"></i> Отмена
                             </a>
                             <button type="submit" class="btn btn-primary">

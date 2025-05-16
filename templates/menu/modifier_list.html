@@ -8,20 +8,20 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'menu_management_restaurant' restaurant.id %}">Управление меню</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu:menu_management_restaurant' restaurant.id %}">Управление меню</a></li>
                     <li class="breadcrumb-item active">Модификаторы</li>
                 </ol>
             </nav>
             <h1>Модификаторы ресторана {{ restaurant.name }}</h1>
         </div>
         <div>
-            <a href="{% url 'menu_management_restaurant' restaurant.id %}" class="btn btn-outline-secondary me-2">
+            <a href="{% url 'menu:menu_management_restaurant' restaurant.id %}" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-arrow-left me-1"></i> Назад к меню
             </a>
             {% if perms.menu.add_modifier %}
-            <a href="{% url 'modifier_create_restaurant' restaurant.id %}" class="btn btn-primary">
+            <a href="{% url 'menu:modifier_create_restaurant' restaurant.id %}" class="btn btn-primary">
                 <i class="fas fa-plus-circle me-1"></i> Добавить модификатор
             </a>
             {% endif %}
@@ -62,7 +62,7 @@
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-filter me-1"></i> Применить фильтры
                                 </button>
-                                <a href="{% url 'modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+                                <a href="{% url 'menu:modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
                                     <i class="fas fa-undo me-1"></i> Сбросить фильтры
                                 </a>
                             </div>
@@ -76,7 +76,7 @@
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <a href="{% url 'modifier_create_restaurant' restaurant.id %}" class="btn btn-primary">
+                            <a href="{% url 'menu:modifier_create_restaurant' restaurant.id %}" class="btn btn-primary">
                                 <i class="fas fa-plus-circle me-1"></i> Добавить модификатор
                             </a>
                         </div>
@@ -172,13 +172,13 @@
                                     <td>
                                         <div class="btn-group btn-group-sm">
                                             {% if perms.menu.change_modifier %}
-                                            <a href="{% url 'modifier_edit' modifier.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
+                                            <a href="{% url 'menu:modifier_edit' modifier.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% endif %}
                                             
                                             {% if perms.menu.delete_modifier %}
-                                            <a href="{% url 'modifier_delete' modifier.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
+                                            <a href="{% url 'menu:modifier_delete' modifier.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
                                                 <i class="fas fa-trash-alt"></i>
                                             </a>
                                             {% endif %}
@@ -236,7 +236,7 @@
                     {% else %}
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i> По вашему запросу ничего не найдено. Попробуйте изменить параметры фильтрации или
-                        <a href="{% url 'modifier_create_restaurant' restaurant.id %}" class="alert-link">добавьте новый модификатор</a>.
+                        <a href="{% url 'menu:modifier_create_restaurant' restaurant.id %}" class="alert-link">добавьте новый модификатор</a>.
                     </div>
                     {% endif %}
                 </div>

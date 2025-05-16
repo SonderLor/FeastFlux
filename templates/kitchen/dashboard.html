@@ -15,8 +15,8 @@
                     <i class="fas fa-cog me-1"></i> Действия
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="moreActions">
-                    <li><a class="dropdown-item" href="{% url 'cooking_stations' %}"><i class="fas fa-blender me-2"></i> Кухонные станции</a></li>
-                    <li><a class="dropdown-item" href="{% url 'kitchen_log' %}"><i class="fas fa-clipboard-list me-2"></i> Журнал кухни</a></li>
+                    <li><a class="dropdown-item" href="{% url 'kitchen:cooking_stations' %}"><i class="fas fa-blender me-2"></i> Кухонные станции</a></li>
+                    <li><a class="dropdown-item" href="{% url 'kitchen:kitchen_log' %}"><i class="fas fa-clipboard-list me-2"></i> Журнал кухни</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal"><i class="fas fa-sliders-h me-2"></i> Настройки панели</a></li>
                 </ul>
@@ -158,7 +158,7 @@
                                         </div>
                                     </div>
                                     <div class="card-footer bg-white">
-                                        <a href="{% url 'kitchen_queue' stat.queue.id %}" class="btn btn-primary w-100">
+                                        <a href="{% url 'kitchen:kitchen_queue' stat.queue.id %}" class="btn btn-primary w-100">
                                             <i class="fas fa-eye me-1"></i> Просмотр очереди
                                         </a>
                                     </div>
@@ -240,10 +240,10 @@
                                                 {% endif %}
                                             </td>
                                             <td class="text-end">
-                                                <a href="{% url 'kitchen_order_details' order.id %}" class="btn btn-sm btn-outline-primary me-1">
+                                                <a href="{% url 'kitchen:kitchen_order_details' order.id %}" class="btn btn-sm btn-outline-primary me-1">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="{% url 'kitchen_queue' order.queue.id %}" class="btn btn-sm btn-outline-secondary">
+                                                <a href="{% url 'kitchen:kitchen_queue' order.queue.id %}" class="btn btn-sm btn-outline-secondary">
                                                     <i class="fas fa-list"></i>
                                                 </a>
                                             </td>

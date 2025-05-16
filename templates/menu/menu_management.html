@@ -8,16 +8,16 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'menu_view_restaurant' restaurant.id %}">Меню</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu:menu_view_restaurant' restaurant.id %}">Меню</a></li>
                     <li class="breadcrumb-item active">Управление меню</li>
                 </ol>
             </nav>
             <h1>Управление меню ресторана {{ restaurant.name }}</h1>
         </div>
         <div>
-            <a href="{% url 'menu_view_restaurant' restaurant.id %}" class="btn btn-outline-secondary me-2">
+            <a href="{% url 'menu:menu_view_restaurant' restaurant.id %}" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-arrow-left me-1"></i> Назад к меню
             </a>
             <div class="btn-group">
@@ -25,11 +25,11 @@
                     <i class="fas fa-plus-circle me-1"></i> Добавить
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="{% url 'category_create_restaurant' restaurant.id %}">Новая категория</a></li>
-                    <li><a class="dropdown-item" href="{% url 'menu_item_create_restaurant' restaurant.id %}">Новое блюдо</a></li>
+                    <li><a class="dropdown-item" href="{% url 'menu:category_create_restaurant' restaurant.id %}">Новая категория</a></li>
+                    <li><a class="dropdown-item" href="{% url 'menu:menu_item_create_restaurant' restaurant.id %}">Новое блюдо</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{% url 'ingredient_create_restaurant' restaurant.id %}">Добавить ингредиент</a></li>
-                    <li><a class="dropdown-item" href="{% url 'modifier_create_restaurant' restaurant.id %}">Добавить модификатор</a></li>
+                    <li><a class="dropdown-item" href="{% url 'menu:ingredient_create_restaurant' restaurant.id %}">Добавить ингредиент</a></li>
+                    <li><a class="dropdown-item" href="{% url 'menu:modifier_create_restaurant' restaurant.id %}">Добавить модификатор</a></li>
                 </ul>
             </div>
         </div>
@@ -89,10 +89,10 @@
                         <i class="fas fa-link fa-3x opacity-50"></i>
                     </div>
                     <div class="mt-2">
-                        <a href="{% url 'ingredient_list_restaurant' restaurant.id %}" class="btn btn-sm btn-light mb-2 me-2">
+                        <a href="{% url 'menu:ingredient_list_restaurant' restaurant.id %}" class="btn btn-sm btn-light mb-2 me-2">
                             <i class="fas fa-carrot me-1"></i> Ингредиенты
                         </a>
-                        <a href="{% url 'modifier_list_restaurant' restaurant.id %}" class="btn btn-sm btn-light mb-2">
+                        <a href="{% url 'menu:modifier_list_restaurant' restaurant.id %}" class="btn btn-sm btn-light mb-2">
                             <i class="fas fa-sliders-h me-1"></i> Модификаторы
                         </a>
                     </div>
@@ -108,7 +108,7 @@
                 <div class="card-header bg-light">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Структура меню</h5>
-                        <a href="{% url 'category_create_restaurant' restaurant.id %}" class="btn btn-sm btn-outline-primary">
+                        <a href="{% url 'menu:category_create_restaurant' restaurant.id %}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-folder-plus me-1"></i> Добавить категорию
                         </a>
                     </div>
@@ -126,16 +126,16 @@
                                     <small class="text-muted">{{ category_data.items_count }} позиций ({{ category_data.active_count }} активных)</small>
                                 </div>
                                 <div class="btn-group btn-group-sm">
-                                    <a href="{% url 'menu_item_create_category' restaurant.id category_data.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Добавить блюдо в категорию">
+                                    <a href="{% url 'menu:menu_item_create_category' restaurant.id category_data.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Добавить блюдо в категорию">
                                         <i class="fas fa-plus"></i>
                                     </a>
-                                    <a href="{% url 'category_edit' category_data.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать категорию">
+                                    <a href="{% url 'menu:category_edit' category_data.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать категорию">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <button type="button" class="btn btn-outline-primary toggle-category-status" data-category-id="{{ category_data.category.id }}" data-bs-toggle="tooltip" title="{% if category_data.category.is_active %}Деактивировать{% else %}Активировать{% endif %} категорию">
                                         <i class="fas {% if category_data.category.is_active %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
                                     </button>
-                                    <a href="{% url 'category_delete' category_data.category.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить категорию">
+                                    <a href="{% url 'menu:category_delete' category_data.category.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить категорию">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
                                 </div>
@@ -155,16 +155,16 @@
                                             <small class="text-muted">{{ subcategory.items_count }} позиций ({{ subcategory.active_count }} активных)</small>
                                         </div>
                                         <div class="btn-group btn-group-sm">
-                                            <a href="{% url 'menu_item_create_category' restaurant.id subcategory.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Добавить блюдо в подкатегорию">
+                                            <a href="{% url 'menu:menu_item_create_category' restaurant.id subcategory.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Добавить блюдо в подкатегорию">
                                                 <i class="fas fa-plus"></i>
                                             </a>
-                                            <a href="{% url 'category_edit' subcategory.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать подкатегорию">
+                                            <a href="{% url 'menu:category_edit' subcategory.category.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать подкатегорию">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <button type="button" class="btn btn-outline-primary toggle-category-status" data-category-id="{{ subcategory.category.id }}" data-bs-toggle="tooltip" title="{% if subcategory.category.is_active %}Деактивировать{% else %}Активировать{% endif %} подкатегорию">
                                                 <i class="fas {% if subcategory.category.is_active %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
                                             </button>
-                                            <a href="{% url 'category_delete' subcategory.category.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить подкатегорию">
+                                            <a href="{% url 'menu:category_delete' subcategory.category.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить подкатегорию">
                                                 <i class="fas fa-trash-alt"></i>
                                             </a>
                                         </div>
@@ -191,16 +191,16 @@
                                             </div>
                                             <div class="menu-item-actions">
                                                 <div class="btn-group btn-group-sm">
-                                                    <a href="{% url 'menu_item_detail' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Просмотр">
+                                                    <a href="{% url 'menu:menu_item_detail' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Просмотр">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <a href="{% url 'menu_item_edit' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
+                                                    <a href="{% url 'menu:menu_item_edit' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                     <button type="button" class="btn btn-outline-primary toggle-menu-item-status" data-item-id="{{ item.id }}" data-bs-toggle="tooltip" title="{% if item.is_active %}Деактивировать{% else %}Активировать{% endif %}">
                                                         <i class="fas {% if item.is_active %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
                                                     </button>
-                                                    <a href="{% url 'menu_item_delete' item.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
+                                                    <a href="{% url 'menu:menu_item_delete' item.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
                                                         <i class="fas fa-trash-alt"></i>
                                                     </a>
                                                 </div>
@@ -238,16 +238,16 @@
                                     </div>
                                     <div class="menu-item-actions">
                                         <div class="btn-group btn-group-sm">
-                                            <a href="{% url 'menu_item_detail' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Просмотр">
+                                            <a href="{% url 'menu:menu_item_detail' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Просмотр">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{% url 'menu_item_edit' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
+                                            <a href="{% url 'menu:menu_item_edit' item.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Редактировать">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <button type="button" class="btn btn-outline-primary toggle-menu-item-status" data-item-id="{{ item.id }}" data-bs-toggle="tooltip" title="{% if item.is_active %}Деактивировать{% else %}Активировать{% endif %}">
                                                 <i class="fas {% if item.is_active %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
                                             </button>
-                                            <a href="{% url 'menu_item_delete' item.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
+                                            <a href="{% url 'menu:menu_item_delete' item.id %}" class="btn btn-outline-danger" data-bs-toggle="tooltip" title="Удалить">
                                                 <i class="fas fa-trash-alt"></i>
                                             </a>
                                         </div>
@@ -263,7 +263,7 @@
                         {% empty %}
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i> В меню пока нет категорий.
-                            <a href="{% url 'category_create_restaurant' restaurant.id %}" class="alert-link">Добавить первую категорию</a>.
+                            <a href="{% url 'menu:category_create_restaurant' restaurant.id %}" class="alert-link">Добавить первую категорию</a>.
                         </div>
                         {% endfor %}
                     </div>
@@ -306,7 +306,7 @@
                                     <td>{{ item.category.name|truncatechars:15 }}</td>
                                     <td><small>{{ item.updated_at|date:"d.m.Y H:i" }}</small></td>
                                     <td>
-                                        <a href="{% url 'menu_item_detail' item.id %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Просмотр">
+                                        <a href="{% url 'menu:menu_item_detail' item.id %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Просмотр">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                     </td>
@@ -329,16 +329,16 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{% url 'menu_item_create_restaurant' restaurant.id %}" class="btn btn-primary">
+                        <a href="{% url 'menu:menu_item_create_restaurant' restaurant.id %}" class="btn btn-primary">
                             <i class="fas fa-plus-circle me-1"></i> Добавить блюдо
                         </a>
-                        <a href="{% url 'category_create_restaurant' restaurant.id %}" class="btn btn-outline-primary">
+                        <a href="{% url 'menu:category_create_restaurant' restaurant.id %}" class="btn btn-outline-primary">
                             <i class="fas fa-folder-plus me-1"></i> Добавить категорию
                         </a>
-                        <a href="{% url 'ingredient_list_restaurant' restaurant.id %}" class="btn btn-outline-primary">
+                        <a href="{% url 'menu:ingredient_list_restaurant' restaurant.id %}" class="btn btn-outline-primary">
                             <i class="fas fa-carrot me-1"></i> Управление ингредиентами
                         </a>
-                        <a href="{% url 'modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-primary">
+                        <a href="{% url 'menu:modifier_list_restaurant' restaurant.id %}" class="btn btn-outline-primary">
                             <i class="fas fa-sliders-h me-1"></i> Управление модификаторами
                         </a>
                     </div>

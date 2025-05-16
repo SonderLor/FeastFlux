@@ -8,13 +8,13 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'menu_view_restaurant' restaurant.id %}">Меню</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu:menu_view_restaurant' restaurant.id %}">Меню</a></li>
                     {% if is_create %}
                     <li class="breadcrumb-item active">Создание блюда</li>
                     {% else %}
-                    <li class="breadcrumb-item"><a href="{% url 'menu_item_detail' menu_item.id %}">{{ menu_item.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'menu:menu_item_detail' menu_item.id %}">{{ menu_item.name }}</a></li>
                     <li class="breadcrumb-item active">Редактирование</li>
                     {% endif %}
                 </ol>
@@ -23,11 +23,11 @@
         </div>
         <div>
             {% if is_create %}
-            <a href="{% url 'menu_management_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+            <a href="{% url 'menu:menu_management_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i> Отмена
             </a>
             {% else %}
-            <a href="{% url 'menu_item_detail' menu_item.id %}" class="btn btn-outline-secondary">
+            <a href="{% url 'menu:menu_item_detail' menu_item.id %}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i> Назад к блюду
             </a>
             {% endif %}
@@ -425,11 +425,11 @@
         
         <div class="d-flex justify-content-between">
             {% if is_create %}
-            <a href="{% url 'menu_management_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+            <a href="{% url 'menu:menu_management_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
                 <i class="fas fa-times me-1"></i> Отмена
             </a>
             {% else %}
-            <a href="{% url 'menu_item_detail' menu_item.id %}" class="btn btn-outline-secondary">
+            <a href="{% url 'menu:menu_item_detail' menu_item.id %}" class="btn btn-outline-secondary">
                 <i class="fas fa-times me-1"></i> Отмена
             </a>
             {% endif %}

@@ -10,7 +10,7 @@
             <div class="text-muted">{{ restaurant.name }}</div>
         </div>
         <div class="d-flex gap-2">
-            <a href="{% url 'kitchen_dashboard' %}" class="btn btn-outline-secondary">
+            <a href="{% url 'kitchen:kitchen_dashboard' %}" class="btn btn-outline-secondary">
                 <i class="fas fa-tachometer-alt me-1"></i> К панели кухни
             </a>
             <button id="refresh-queue" class="btn btn-outline-secondary">
@@ -45,7 +45,7 @@
                     <button type="submit" class="btn btn-primary me-2">
                         <i class="fas fa-filter me-1"></i> Применить
                     </button>
-                    <a href="{% url 'kitchen_queue' queue.id %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'kitchen:kitchen_queue' queue.id %}" class="btn btn-outline-secondary">
                         <i class="fas fa-eraser me-1"></i> Сбросить
                     </a>
                 </div>
@@ -261,7 +261,7 @@
                             </div>
                             <div class="card-footer bg-white d-flex justify-content-between">
                                 <div class="btn-group">
-                                    <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                    <form method="post" action="{% url 'kitchen:update_kitchen_order_status' order.id %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="status" value="IN_PROGRESS">
                                         <button type="submit" class="btn btn-primary btn-sm">
@@ -272,18 +272,18 @@
                                         <span class="visually-hidden">Другие действия</span>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{% url 'kitchen_order_details' order.id %}"><i class="fas fa-eye me-2"></i> Детали</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'kitchen:kitchen_order_details' order.id %}"><i class="fas fa-eye me-2"></i> Детали</a></li>
                                         <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#assignModal" data-order-id="{{ order.id }}"><i class="fas fa-user-tag me-2"></i> Назначить</a></li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                            <form method="post" action="{% url 'kitchen:update_kitchen_order_status' order.id %}">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="status" value="DELAYED">
                                                 <button type="submit" class="dropdown-item text-warning"><i class="fas fa-exclamation-triangle me-2"></i> Задержан</button>
                                             </form>
                                         </li>
                                         <li>
-                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                            <form method="post" action="{% url 'kitchen:update_kitchen_order_status' order.id %}">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="status" value="CANCELLED">
                                                 <button type="submit" class="dropdown-item text-danger"><i class="fas fa-times-circle me-2"></i> Отменить</button>
@@ -394,7 +394,7 @@
                             </div>
                             <div class="card-footer bg-white d-flex justify-content-between">
                                 <div class="btn-group">
-                                    <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                    <form method="post" action="{% url 'kitchen:update_kitchen_order_status' order.id %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="status" value="COMPLETED">
                                         <button type="submit" class="btn btn-success btn-sm">
@@ -405,18 +405,18 @@
                                         <span class="visually-hidden">Другие действия</span>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{% url 'kitchen_order_details' order.id %}"><i class="fas fa-eye me-2"></i> Детали</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'kitchen:kitchen_order_details' order.id %}"><i class="fas fa-eye me-2"></i> Детали</a></li>
                                         <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#assignModal" data-order-id="{{ order.id }}"><i class="fas fa-user-tag me-2"></i> Назначить</a></li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                            <form method="post" action="{% url 'kitchen:update_kitchen_order_status' order.id %}">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="status" value="DELAYED">
                                                 <button type="submit" class="dropdown-item text-warning"><i class="fas fa-exclamation-triangle me-2"></i> Задержан</button>
                                             </form>
                                         </li>
                                         <li>
-                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                            <form method="post" action="{% url 'kitchen:update_kitchen_order_status' order.id %}">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="status" value="CANCELLED">
                                                 <button type="submit" class="dropdown-item text-danger"><i class="fas fa-times-circle me-2"></i> Отменить</button>
@@ -520,7 +520,7 @@
                             </div>
                             <div class="card-footer bg-white d-flex justify-content-between">
                                 <div class="btn-group">
-                                    <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                    <form method="post" action="{% url 'kitchen:update_kitchen_order_status' order.id %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="status" value="IN_PROGRESS">
                                         <button type="submit" class="btn btn-primary btn-sm">
@@ -531,18 +531,18 @@
                                         <span class="visually-hidden">Другие действия</span>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{% url 'kitchen_order_details' order.id %}"><i class="fas fa-eye me-2"></i> Детали</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'kitchen:kitchen_order_details' order.id %}"><i class="fas fa-eye me-2"></i> Детали</a></li>
                                         <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#assignModal" data-order-id="{{ order.id }}"><i class="fas fa-user-tag me-2"></i> Назначить</a></li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                            <form method="post" action="{% url 'kitchen:update_kitchen_order_status' order.id %}">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="status" value="COMPLETED">
                                                 <button type="submit" class="dropdown-item text-success"><i class="fas fa-check me-2"></i> Готово</button>
                                             </form>
                                         </li>
                                         <li>
-                                            <form method="post" action="{% url 'update_kitchen_order_status' order.id %}">
+                                            <form method="post" action="{% url 'kitchen:update_kitchen_order_status' order.id %}">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="status" value="CANCELLED">
                                                 <button type="submit" class="dropdown-item text-danger"><i class="fas fa-times-circle me-2"></i> Отменить</button>
@@ -623,7 +623,7 @@
                                 </div>
                             </div>
                             <div class="card-footer bg-white text-center">
-                                <a href="{% url 'kitchen_order_details' order.id %}" class="btn btn-outline-secondary btn-sm">
+                                <a href="{% url 'kitchen:kitchen_order_details' order.id %}" class="btn btn-outline-secondary btn-sm">
                                     <i class="fas fa-eye me-1"></i> Просмотр деталей
                                 </a>
                             </div>

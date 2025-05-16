@@ -40,19 +40,19 @@
                         
                         <div class="d-grid">
                             {% if action == 'kitchen' %}
-                                <a href="{% url 'kitchen_dashboard' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                                <a href="{% url 'kitchen:kitchen_dashboard' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
                                     <i class="fas fa-utensils me-1"></i> Панель кухни
                                 </a>
                             {% elif action == 'cooking_stations' %}
-                                <a href="{% url 'cooking_stations' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                                <a href="{% url 'kitchen:cooking_stations' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
                                     <i class="fas fa-blender me-1"></i> Кухонные станции
                                 </a>
                             {% elif action == 'kitchen_log' %}
-                                <a href="{% url 'kitchen_log' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                                <a href="{% url 'kitchen:kitchen_log' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
                                     <i class="fas fa-clipboard-list me-1"></i> Журнал кухни
                                 </a>
                             {% else %}
-                                <a href="{% url 'kitchen_dashboard' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                                <a href="{% url 'kitchen:kitchen_dashboard' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
                                     <i class="fas fa-utensils me-1"></i> Открыть
                                 </a>
                             {% endif %}

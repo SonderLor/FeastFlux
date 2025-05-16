@@ -7,10 +7,10 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3">Кухонные станции - {{ restaurant.name }}</h1>
         <div class="d-flex gap-2">
-            <a href="{% url 'cooking_station_create' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+            <a href="{% url 'kitchen:cooking_station_create' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i> Добавить станцию
             </a>
-            <a href="{% url 'kitchen_dashboard' %}" class="btn btn-outline-secondary">
+            <a href="{% url 'kitchen:kitchen_dashboard' %}" class="btn btn-outline-secondary">
                 <i class="fas fa-tachometer-alt me-1"></i> К панели кухни
             </a>
         </div>
@@ -49,7 +49,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-filter me-1"></i> Применить
                         </button>
-                        <a href="{% url 'cooking_stations' %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'kitchen:cooking_stations' %}" class="btn btn-outline-secondary">
                             <i class="fas fa-eraser me-1"></i> Сбросить
                         </a>
                     </div>
@@ -83,7 +83,7 @@
                             <label class="form-label text-muted">Очередь</label>
                             <div>
                                 {% if station.queue %}
-                                    <a href="{% url 'kitchen_queue' station.queue.id %}" class="badge bg-primary text-decoration-none">
+                                    <a href="{% url 'kitchen:kitchen_queue' station.queue.id %}" class="badge bg-primary text-decoration-none">
                                         {{ station.queue.name }}
                                     </a>
                                 {% else %}
@@ -129,15 +129,15 @@
                     </div>
                     <div class="card-footer bg-white">
                         <div class="d-flex justify-content-between">
-                            <a href="{% url 'cooking_station_edit' station.id %}" class="btn btn-primary">
+                            <a href="{% url 'kitchen:cooking_station_edit' station.id %}" class="btn btn-primary">
                                 <i class="fas fa-edit me-1"></i> Редактировать
                             </a>
                             <div class="btn-group">
-                                <a href="{% url 'cooking_station_toggle' station.id %}" class="btn {% if station.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                                <a href="{% url 'kitchen:cooking_station_toggle' station.id %}" class="btn {% if station.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
                                     <i class="fas {% if station.is_active %}fa-toggle-off{% else %}fa-toggle-on{% endif %} me-1"></i> 
                                     {{ station.is_active|yesno:"Деактивировать,Активировать" }}
                                 </a>
-                                <a href="{% url 'cooking_station_delete' station.id %}" class="btn btn-outline-danger">
+                                <a href="{% url 'kitchen:cooking_station_delete' station.id %}" class="btn btn-outline-danger">
                                     <i class="fas fa-trash-alt"></i>
                                 </a>
                             </div>
@@ -152,7 +152,7 @@
                     {% if search %} Попробуйте изменить параметры поиска.{% endif %}
                 </div>
                 <div class="text-center mt-3">
-                    <a href="{% url 'cooking_station_create' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
+                    <a href="{% url 'kitchen:cooking_station_create' %}?restaurant={{ restaurant.id }}" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i> Добавить первую станцию
                     </a>
                 </div>

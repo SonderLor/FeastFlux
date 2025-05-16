@@ -28,7 +28,7 @@
                 </div>
                 <div class="card-footer bg-white">
                     <div class="d-grid">
-                        <a href="{% if action == 'ingredients' %}{% url 'ingredient_list_restaurant' restaurant.id %}{% elif action == 'modifiers' %}{% url 'modifier_list_restaurant' restaurant.id %}{% else %}{% url 'menu_management_restaurant' restaurant.id %}{% endif %}" class="btn btn-primary">
+                        <a href="{% if action == 'ingredients' %}{% url 'menu:ingredient_list_restaurant' restaurant.id %}{% elif action == 'modifiers' %}{% url 'menu:modifier_list_restaurant' restaurant.id %}{% else %}{% url 'menu:menu_management_restaurant' restaurant.id %}{% endif %}" class="btn btn-primary">
                             Выбрать
                         </a>
                     </div>

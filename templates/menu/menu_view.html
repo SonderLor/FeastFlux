@@ -8,19 +8,19 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_list' %}">Рестораны</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_list' %}">Рестораны</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'restaurants:restaurant_detail' restaurant.id %}">{{ restaurant.name }}</a></li>
                     <li class="breadcrumb-item active">Меню</li>
                 </ol>
             </nav>
             <h1>Меню ресторана {{ restaurant.name }}</h1>
         </div>
         <div>
-            <a href="{% url 'restaurant_detail' restaurant.id %}" class="btn btn-outline-secondary me-2">
+            <a href="{% url 'restaurants:restaurant_detail' restaurant.id %}" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-arrow-left me-1"></i> Назад к ресторану
             </a>
             {% if perms.menu.manage_menu %}
-            <a href="{% url 'menu_management_restaurant' restaurant.id %}" class="btn btn-primary">
+            <a href="{% url 'menu:menu_management_restaurant' restaurant.id %}" class="btn btn-primary">
                 <i class="fas fa-cog me-1"></i> Управление меню
             </a>
             {% endif %}
@@ -94,7 +94,7 @@
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-filter me-1"></i> Применить фильтры
                                 </button>
-                                <a href="{% url 'menu_view_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
+                                <a href="{% url 'menu:menu_view_restaurant' restaurant.id %}" class="btn btn-outline-secondary">
                                     <i class="fas fa-undo me-1"></i> Сбросить фильтры
                                 </a>
                             </div>
@@ -157,7 +157,7 @@
                                     
                                     <div class="d-flex justify-content-between align-items-center mt-auto">
                                         <span class="fs-5 fw-bold text-primary">{{ item.price }} ₽</span>
-                                        <a href="{% url 'menu_item_detail' item.id %}" class="btn btn-sm btn-outline-primary">
+                                        <a href="{% url 'menu:menu_item_detail' item.id %}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-info-circle me-1"></i> Подробнее
                                         </a>
                                     </div>

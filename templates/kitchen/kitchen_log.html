@@ -12,12 +12,12 @@
                     <i class="fas fa-download me-1"></i> Экспорт
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
-                    <li><a class="dropdown-item" href="{% url 'export_kitchen_log' %}?format=csv&restaurant={{ restaurant.id }}"><i class="fas fa-file-csv me-2"></i> Экспорт в CSV</a></li>
-                    <li><a class="dropdown-item" href="{% url 'export_kitchen_log' %}?format=excel&restaurant={{ restaurant.id }}"><i class="fas fa-file-excel me-2"></i> Экспорт в Excel</a></li>
-                    <li><a class="dropdown-item" href="{% url 'export_kitchen_log' %}?format=pdf&restaurant={{ restaurant.id }}"><i class="fas fa-file-pdf me-2"></i> Экспорт в PDF</a></li>
+                    <li><a class="dropdown-item" href="{% url 'kitchen:export_kitchen_log' %}?format=csv&restaurant={{ restaurant.id }}"><i class="fas fa-file-csv me-2"></i> Экспорт в CSV</a></li>
+                    <li><a class="dropdown-item" href="{% url 'kitchen:export_kitchen_log' %}?format=excel&restaurant={{ restaurant.id }}"><i class="fas fa-file-excel me-2"></i> Экспорт в Excel</a></li>
+                    <li><a class="dropdown-item" href="{% url 'kitchen:export_kitchen_log' %}?format=pdf&restaurant={{ restaurant.id }}"><i class="fas fa-file-pdf me-2"></i> Экспорт в PDF</a></li>
                 </ul>
             </div>
-            <a href="{% url 'kitchen_dashboard' %}" class="btn btn-outline-secondary">
+            <a href="{% url 'kitchen:kitchen_dashboard' %}" class="btn btn-outline-secondary">
                 <i class="fas fa-tachometer-alt me-1"></i> К панели кухни
             </a>
         </div>
@@ -62,7 +62,7 @@
                 
                 <div class="col-md-3 d-flex align-items-end">
                     <div class="d-grid gap-2 w-100">
-                        <a href="{% url 'kitchen_log' %}?restaurant={{ restaurant.id }}" class="btn btn-outline-secondary">
+                        <a href="{% url 'kitchen:kitchen_log' %}?restaurant={{ restaurant.id }}" class="btn btn-outline-secondary">
                             <i class="fas fa-eraser me-1"></i> Сбросить
                         </a>
                     </div>
@@ -131,7 +131,7 @@
                                         <td>{{ event.description|truncatechars:50 }}</td>
                                         <td>
                                             {% if event.kitchen_order %}
-                                                <a href="{% url 'kitchen_order_details' event.kitchen_order.id %}" class="text-decoration-none">
+                                                <a href="{% url 'kitchen:kitchen_order_details' event.kitchen_order.id %}" class="text-decoration-none">
                                                     {{ event.kitchen_order.order.order_number }}
                                                 </a>
                                             {% else %}
