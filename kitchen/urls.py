@@ -30,7 +30,19 @@ urlpatterns = [
     path("waiter/orders/", views.waiter_orders, name="waiter_orders"),
     path("waiter/reservations/", views.waiter_reservations, name="waiter_reservations"),
     path("waiter/order/<uuid:id>/", views.waiter_order_details, name="waiter_order_details"),
-    path("waiter/order/<uuid:id>/update-status/", views.waiter_update_order_status, name="waiter_update_order_status"),
-    path("waiter/table/<uuid:id>/update-status/", views.waiter_update_table_status, name="waiter_update_table_status"),
-    path("waiter/payment/<uuid:order_id>/", views.waiter_process_payment, name="waiter_process_payment"),
+    path(
+        "waiter/order/<uuid:id>/update-status/",
+        views.waiter_update_order_status,
+        name="waiter_update_order_status",
+    ),
+    path(
+        "waiter/table/<uuid:id>/update-status/",
+        views.waiter_update_table_status,
+        name="waiter_update_table_status",
+    ),
+    path(
+        "waiter/payment/<uuid:order_id>/",
+        views.waiter_process_payment,
+        name="waiter_process_payment",
+    ),
 ]

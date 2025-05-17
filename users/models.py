@@ -189,9 +189,7 @@ def assign_default_permissions(user):
     Назначает пользователю разрешения в зависимости от его роли.
     Включает разрешения из всех приложений системы.
     """
-    basic_perms = [
-        ("users", "view_own_profile")
-    ]
+    basic_perms = [("users", "view_own_profile")]
 
     customer_perms = [
         ("restaurants", "view_public_tables"),
@@ -199,7 +197,7 @@ def assign_default_permissions(user):
         ("users", "view_own_cart"),
         ("users", "add_customer_order"),
         ("users", "checkout_order"),
-        ("restaurants", "view_reservation")
+        ("restaurants", "view_reservation"),
     ]
 
     staff_perms = [
@@ -217,7 +215,7 @@ def assign_default_permissions(user):
         ("restaurants", "view_reservation"),
         ("restaurants", "add_reservation"),
         ("restaurants", "change_reservation"),
-        ("restaurants", "change_table")
+        ("restaurants", "change_table"),
     ]
 
     kitchen_perms = [
@@ -225,7 +223,7 @@ def assign_default_permissions(user):
         ("kitchen", "view_kitchen_queue"),
         ("kitchen", "view_kitchen_order"),
         ("orders", "view_order"),
-        ("menu", "view_menu_item")
+        ("menu", "view_menu_item"),
     ]
 
     bartender_perms = kitchen_perms
@@ -257,7 +255,7 @@ def assign_default_permissions(user):
         ("analytics", "view_staff_performance"),
         ("analytics", "view_table_occupancy"),
         ("analytics", "view_nutritional_analytics"),
-        ("analytics", "view_customer_segmentation")
+        ("analytics", "view_customer_segmentation"),
     ]
 
     admin_perms = manager_perms
@@ -296,8 +294,7 @@ def _add_permissions(user, permission_list):
     for app_label, codename in permission_list:
         try:
             permission = Permission.objects.get(
-                content_type__app_label=app_label,
-                codename=codename
+                content_type__app_label=app_label, codename=codename
             )
             user.user_permissions.add(permission)
         except Permission.DoesNotExist:

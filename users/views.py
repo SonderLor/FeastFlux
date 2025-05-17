@@ -1,5 +1,7 @@
 import uuid
 from datetime import timedelta
+
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -295,7 +297,9 @@ def staff_profile_view(request):
 
 def is_admin_or_manager(user):
     """Проверяет, является ли пользователь администратором или менеджером."""
-    return user.is_authenticated and (user.is_admin() or user.is_manager())
+    if not (user.is_authenticated and (user.is_admin() or user.is_manager())):
+        raise PermissionDenied
+    return True
 
 
 @login_required

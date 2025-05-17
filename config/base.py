@@ -133,6 +133,10 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
 ).split(",")
 
 AUTH_USER_MODEL = "users.User"
+AUTHENTICATION_BACKENDS = [
+    "users.backends.EmailOrUsernameModelBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
 
 LOGIN_URL = "/users/login/"
 LOGIN_REDIRECT_URL = "/"

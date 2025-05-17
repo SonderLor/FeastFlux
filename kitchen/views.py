@@ -1084,53 +1084,49 @@ def waiter_dashboard(request):
             Order.OrderStatus.DRAFT,
             Order.OrderStatus.PLACED,
             Order.OrderStatus.PREPARING,
-            Order.OrderStatus.READY
-        ]
-    ).order_by('-created_at')[:5]
+            Order.OrderStatus.READY,
+        ],
+    ).order_by("-created_at")[:5]
 
     ready_orders = Order.objects.filter(
-        restaurant=restaurant,
-        waiter=user,
-        status=Order.OrderStatus.READY
-    ).order_by('-created_at')
+        restaurant=restaurant, waiter=user, status=Order.OrderStatus.READY
+    ).order_by("-created_at")
 
     today_reservations = Reservation.objects.filter(
         restaurant=restaurant,
         reservation_date=today,
-        status=Reservation.ReservationStatus.CONFIRMED
-    ).order_by('reservation_time')
+        status=Reservation.ReservationStatus.CONFIRMED,
+    ).order_by("reservation_time")
 
-    upcoming_reservations = today_reservations.filter(
-        reservation_time__gt=current_time
-    )[:5]
+    upcoming_reservations = today_reservations.filter(reservation_time__gt=current_time)[:5]
 
     today_completed_orders = Order.objects.filter(
         restaurant=restaurant,
         waiter=user,
         status=Order.OrderStatus.COMPLETED,
-        completed_at__date=today
+        completed_at__date=today,
     )
 
-    today_revenue = today_completed_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    today_revenue = today_completed_orders.aggregate(Sum("total_amount"))["total_amount__sum"] or 0
 
     today_orders_count = today_completed_orders.count()
 
     avg_order_amount = today_revenue / today_orders_count if today_orders_count > 0 else 0
 
     context = {
-        'restaurant': restaurant,
-        'tables_count': tables.count(),
-        'tables_free': tables_free,
-        'tables_occupied': tables_occupied,
-        'tables_reserved': tables_reserved,
-        'active_orders': active_orders,
-        'ready_orders': ready_orders,
-        'ready_orders_count': ready_orders.count(),
-        'upcoming_reservations': upcoming_reservations,
-        'today_revenue': today_revenue,
-        'today_orders_count': today_orders_count,
-        'avg_order_amount': avg_order_amount,
-        'today': today,
+        "restaurant": restaurant,
+        "tables_count": tables.count(),
+        "tables_free": tables_free,
+        "tables_occupied": tables_occupied,
+        "tables_reserved": tables_reserved,
+        "active_orders": active_orders,
+        "ready_orders": ready_orders,
+        "ready_orders_count": ready_orders.count(),
+        "upcoming_reservations": upcoming_reservations,
+        "today_revenue": today_revenue,
+        "today_orders_count": today_orders_count,
+        "avg_order_amount": avg_order_amount,
+        "today": today,
     }
 
     return render(request, "kitchen/waiter_dashboard.html", context)
@@ -1152,13 +1148,13 @@ def waiter_tables(request):
 
     restaurant = user.restaurant
 
-    tables = Table.objects.filter(restaurant=restaurant).order_by('number')
+    tables = Table.objects.filter(restaurant=restaurant).order_by("number")
 
-    status_filter = request.GET.get('status', '')
+    status_filter = request.GET.get("status", "")
     if status_filter:
         tables = tables.filter(status=status_filter)
 
-    search = request.GET.get('search', '')
+    search = request.GET.get("search", "")
     if search:
         tables = tables.filter(number__icontains=search)
 
@@ -1174,23 +1170,23 @@ def waiter_tables(request):
                 Order.OrderStatus.PREPARING,
                 Order.OrderStatus.READY,
                 Order.OrderStatus.SERVED,
-            ]
-        ).order_by('-created_at')
+            ],
+        ).order_by("-created_at")
 
         table.reservations_today = Reservation.objects.filter(
             restaurant=restaurant,
             table=table,
             reservation_date=today,
-            status=Reservation.ReservationStatus.CONFIRMED
-        ).order_by('reservation_time')
+            status=Reservation.ReservationStatus.CONFIRMED,
+        ).order_by("reservation_time")
 
     context = {
-        'restaurant': restaurant,
-        'tables': tables,
-        'status_filter': status_filter,
-        'search': search,
-        'status_choices': Table.TableStatus.choices,
-        'today': today,
+        "restaurant": restaurant,
+        "tables": tables,
+        "status_filter": status_filter,
+        "search": search,
+        "status_choices": Table.TableStatus.choices,
+        "today": today,
     }
 
     return render(request, "kitchen/waiter_tables.html", context)
@@ -1212,20 +1208,17 @@ def waiter_orders(request):
 
     restaurant = user.restaurant
 
-    orders = Order.objects.filter(
-        restaurant=restaurant,
-        waiter=user
-    ).order_by('-created_at')
+    orders = Order.objects.filter(restaurant=restaurant, waiter=user).order_by("-created_at")
 
-    status_filter = request.GET.get('status', '')
+    status_filter = request.GET.get("status", "")
     if status_filter:
         orders = orders.filter(status=status_filter)
 
-    table_filter = request.GET.get('table', '')
+    table_filter = request.GET.get("table", "")
     if table_filter:
         orders = orders.filter(table__number=table_filter)
 
-    date_filter = request.GET.get('date', '')
+    date_filter = request.GET.get("date", "")
     if date_filter:
         try:
             filter_date = timezone.datetime.strptime(date_filter, "%Y-%m-%d").date()
@@ -1233,10 +1226,10 @@ def waiter_orders(request):
         except ValueError:
             pass
 
-    tables = Table.objects.filter(restaurant=restaurant).order_by('number')
+    tables = Table.objects.filter(restaurant=restaurant).order_by("number")
 
     paginator = Paginator(orders, 15)
-    page = request.GET.get('page')
+    page = request.GET.get("page")
 
     try:
         orders_page = paginator.page(page)
@@ -1246,14 +1239,14 @@ def waiter_orders(request):
         orders_page = paginator.page(paginator.num_pages)
 
     context = {
-        'restaurant': restaurant,
-        'orders': orders_page,
-        'tables': tables,
-        'status_filter': status_filter,
-        'table_filter': table_filter,
-        'date_filter': date_filter,
-        'status_choices': Order.OrderStatus.choices,
-        'order_type_choices': Order.OrderType.choices,
+        "restaurant": restaurant,
+        "orders": orders_page,
+        "tables": tables,
+        "status_filter": status_filter,
+        "table_filter": table_filter,
+        "date_filter": date_filter,
+        "status_choices": Order.OrderStatus.choices,
+        "order_type_choices": Order.OrderType.choices,
     }
 
     return render(request, "kitchen/waiter_orders.html", context)
@@ -1277,7 +1270,7 @@ def waiter_reservations(request):
 
     reservations = Reservation.objects.filter(restaurant=restaurant)
 
-    date_filter = request.GET.get('date')
+    date_filter = request.GET.get("date")
     if date_filter:
         try:
             filter_date = timezone.datetime.strptime(date_filter, "%Y-%m-%d").date()
@@ -1287,26 +1280,26 @@ def waiter_reservations(request):
     else:
         reservations = reservations.filter(reservation_date=timezone.now().date())
 
-    status_filter = request.GET.get('status')
+    status_filter = request.GET.get("status")
     if status_filter:
         reservations = reservations.filter(status=status_filter)
 
-    table_filter = request.GET.get('table')
+    table_filter = request.GET.get("table")
     if table_filter:
         reservations = reservations.filter(table_id=table_filter)
 
-    reservations = reservations.order_by('reservation_time')
+    reservations = reservations.order_by("reservation_time")
 
-    tables = Table.objects.filter(restaurant=restaurant).order_by('number')
+    tables = Table.objects.filter(restaurant=restaurant).order_by("number")
 
     context = {
-        'restaurant': restaurant,
-        'reservations': reservations,
-        'tables': tables,
-        'statuses': Reservation.ReservationStatus.choices,
-        'filter_date': date_filter or timezone.now().date().strftime("%Y-%m-%d"),
-        'status_filter': status_filter,
-        'table_filter': table_filter,
+        "restaurant": restaurant,
+        "reservations": reservations,
+        "tables": tables,
+        "statuses": Reservation.ReservationStatus.choices,
+        "filter_date": date_filter or timezone.now().date().strftime("%Y-%m-%d"),
+        "status_filter": status_filter,
+        "table_filter": table_filter,
     }
 
     return render(request, "kitchen/waiter_reservations.html", context)
@@ -1327,30 +1320,38 @@ def waiter_order_details(request, id):
         messages.error(request, _("У вас нет доступа к этому заказу."))
         return redirect("kitchen:waiter_dashboard")
 
-    order_items = OrderItem.objects.filter(order=order).select_related('menu_item').order_by('created_at')
+    order_items = (
+        OrderItem.objects.filter(order=order).select_related("menu_item").order_by("created_at")
+    )
 
     order_nutrition = order.get_order_nutrition()
-    order_allergens = order.get_order_allergens() if hasattr(order, 'get_order_allergens') else []
+    order_allergens = order.get_order_allergens() if hasattr(order, "get_order_allergens") else []
 
-    payments = Payment.objects.filter(order=order).order_by('-payment_date')
+    payments = Payment.objects.filter(order=order).order_by("-payment_date")
 
     customer_info = {
-        'name': order.customer_name or (order.customer.get_full_name() if order.customer else ''),
-        'phone': order.customer_phone or (
-            order.customer.profile.phone_number if order.customer and hasattr(order.customer, 'profile') else ''),
-        'dietary_preferences': order.nutritional_preferences or {},
+        "name": order.customer_name or (order.customer.get_full_name() if order.customer else ""),
+        "phone": order.customer_phone
+        or (
+            order.customer.profile.phone_number
+            if order.customer and hasattr(order.customer, "profile")
+            else ""
+        ),
+        "dietary_preferences": order.nutritional_preferences or {},
     }
 
     context = {
-        'order': order,
-        'order_items': order_items,
-        'order_nutrition': order_nutrition,
-        'order_allergens': order_allergens,
-        'restaurant': order.restaurant,
-        'status_choices': Order.OrderStatus.choices,
-        'payments': payments,
-        'customer_info': customer_info,
-        'total_paid': sum(p.amount for p in payments.filter(status=Payment.PaymentStatus.COMPLETED)),
+        "order": order,
+        "order_items": order_items,
+        "order_nutrition": order_nutrition,
+        "order_allergens": order_allergens,
+        "restaurant": order.restaurant,
+        "status_choices": Order.OrderStatus.choices,
+        "payments": payments,
+        "customer_info": customer_info,
+        "total_paid": sum(
+            p.amount for p in payments.filter(status=Payment.PaymentStatus.COMPLETED)
+        ),
     }
 
     return render(request, "kitchen/waiter_order_details.html", context)
@@ -1372,7 +1373,7 @@ def waiter_update_order_status(request, id):
         return redirect("kitchen:waiter_dashboard")
 
     if request.method == "POST":
-        new_status = request.POST.get('status')
+        new_status = request.POST.get("status")
         if new_status in dict(Order.OrderStatus.choices).keys():
             order.status = new_status
 
@@ -1384,17 +1385,24 @@ def waiter_update_order_status(request, id):
             if new_status in [Order.OrderStatus.COMPLETED, Order.OrderStatus.CANCELLED]:
                 OrderItem.objects.filter(order=order).update(status=new_status)
 
-            if new_status in [Order.OrderStatus.COMPLETED, Order.OrderStatus.CANCELLED] and order.table:
-                other_active_orders = Order.objects.filter(
-                    table=order.table,
-                    status__in=[
-                        Order.OrderStatus.DRAFT,
-                        Order.OrderStatus.PLACED,
-                        Order.OrderStatus.PREPARING,
-                        Order.OrderStatus.READY,
-                        Order.OrderStatus.SERVED
-                    ]
-                ).exclude(id=order.id).exists()
+            if (
+                new_status in [Order.OrderStatus.COMPLETED, Order.OrderStatus.CANCELLED]
+                and order.table
+            ):
+                other_active_orders = (
+                    Order.objects.filter(
+                        table=order.table,
+                        status__in=[
+                            Order.OrderStatus.DRAFT,
+                            Order.OrderStatus.PLACED,
+                            Order.OrderStatus.PREPARING,
+                            Order.OrderStatus.READY,
+                            Order.OrderStatus.SERVED,
+                        ],
+                    )
+                    .exclude(id=order.id)
+                    .exists()
+                )
 
                 if not other_active_orders:
                     order.table.status = Table.TableStatus.FREE
@@ -1424,7 +1432,7 @@ def waiter_update_table_status(request, id):
         return redirect("kitchen:waiter_dashboard")
 
     if request.method == "POST":
-        new_status = request.POST.get('status')
+        new_status = request.POST.get("status")
         if new_status in dict(Table.TableStatus.choices).keys():
             active_orders = Order.objects.filter(
                 table=table,
@@ -1433,8 +1441,8 @@ def waiter_update_table_status(request, id):
                     Order.OrderStatus.PLACED,
                     Order.OrderStatus.PREPARING,
                     Order.OrderStatus.READY,
-                    Order.OrderStatus.SERVED
-                ]
+                    Order.OrderStatus.SERVED,
+                ],
             ).exists()
 
             today = timezone.now().date()
@@ -1444,13 +1452,15 @@ def waiter_update_table_status(request, id):
                 reservation_date=today,
                 reservation_time__lte=current_time,
                 end_time__gt=current_time,
-                status=Reservation.ReservationStatus.CONFIRMED
+                status=Reservation.ReservationStatus.CONFIRMED,
             ).exists()
 
             if active_orders and new_status == Table.TableStatus.FREE:
                 messages.error(request, _("Невозможно освободить столик с активными заказами."))
             elif active_reservations and new_status == Table.TableStatus.FREE:
-                messages.error(request, _("Невозможно освободить столик с активными бронированиями."))
+                messages.error(
+                    request, _("Невозможно освободить столик с активными бронированиями.")
+                )
             else:
                 table.status = new_status
                 table.save()
@@ -1458,7 +1468,7 @@ def waiter_update_table_status(request, id):
         else:
             messages.error(request, _("Некорректный статус столика."))
 
-    referer = request.META.get('HTTP_REFERER')
+    referer = request.META.get("HTTP_REFERER")
     if referer:
         return redirect(referer)
     else:
@@ -1481,8 +1491,8 @@ def waiter_process_payment(request, order_id):
         return redirect("kitchen:waiter_dashboard")
 
     if request.method == "POST":
-        payment_method = request.POST.get('payment_method')
-        amount = request.POST.get('amount')
+        payment_method = request.POST.get("payment_method")
+        amount = request.POST.get("amount")
 
         try:
             amount = Decimal(amount)
@@ -1500,7 +1510,7 @@ def waiter_process_payment(request, order_id):
             amount=amount,
             status=Payment.PaymentStatus.COMPLETED,
             processed_by=request.user,
-            transaction_id=f"MANUAL-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+            transaction_id=f"MANUAL-{timezone.now().strftime('%Y%m%d%H%M%S')}",
         )
 
         total_paid = sum(
@@ -1509,23 +1519,27 @@ def waiter_process_payment(request, order_id):
 
         if total_paid >= order.total_amount and order.status in [
             Order.OrderStatus.SERVED,
-            Order.OrderStatus.READY
+            Order.OrderStatus.READY,
         ]:
             order.status = Order.OrderStatus.COMPLETED
             order.completed_at = timezone.now()
             order.save(update_fields=["status", "completed_at"])
 
             if order.table:
-                other_active_orders = Order.objects.filter(
-                    table=order.table,
-                    status__in=[
-                        Order.OrderStatus.DRAFT,
-                        Order.OrderStatus.PLACED,
-                        Order.OrderStatus.PREPARING,
-                        Order.OrderStatus.READY,
-                        Order.OrderStatus.SERVED
-                    ]
-                ).exclude(id=order.id).exists()
+                other_active_orders = (
+                    Order.objects.filter(
+                        table=order.table,
+                        status__in=[
+                            Order.OrderStatus.DRAFT,
+                            Order.OrderStatus.PLACED,
+                            Order.OrderStatus.PREPARING,
+                            Order.OrderStatus.READY,
+                            Order.OrderStatus.SERVED,
+                        ],
+                    )
+                    .exclude(id=order.id)
+                    .exists()
+                )
 
                 if not other_active_orders:
                     order.table.status = Table.TableStatus.FREE
@@ -1539,10 +1553,10 @@ def waiter_process_payment(request, order_id):
     )
 
     context = {
-        'order': order,
-        'restaurant': order.restaurant,
-        'payment_methods': Payment.PaymentMethod.choices,
-        'remaining_amount': remaining_amount,
+        "order": order,
+        "restaurant": order.restaurant,
+        "payment_methods": Payment.PaymentMethod.choices,
+        "remaining_amount": remaining_amount,
     }
 
     return render(request, "kitchen/waiter_payment_form.html", context)

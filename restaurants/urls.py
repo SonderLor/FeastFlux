@@ -13,7 +13,9 @@ urlpatterns = [
         views.reservation_confirmation,
         name="reservation_confirmation",
     ),
-    path("my/reservations/", views.customer_reservation_history, name="customer_reservation_history"),
+    path(
+        "my/reservations/", views.customer_reservation_history, name="customer_reservation_history"
+    ),
     path("", views.restaurant_list, name="restaurant_list"),
     path("<uuid:id>/", views.restaurant_detail, name="restaurant_detail"),
     path("manage/", views.restaurant_manage, name="restaurant_manage"),

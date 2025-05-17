@@ -157,7 +157,7 @@ class UserProfileForm(forms.ModelForm):
         dietary_preferences = {}
         for key, value in self.cleaned_data.items():
             if key.startswith("diet_") and value:
-                pref_key = key[5:]  # remove 'diet_' prefix
+                pref_key = key[5:]
                 dietary_preferences[pref_key] = True
 
         profile.dietary_preferences = dietary_preferences

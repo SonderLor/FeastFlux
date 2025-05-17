@@ -8,7 +8,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import TemplateView, ListView, DetailView
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.db.models import Sum, Avg, Count, F, Q
+from django.db.models import Sum, Avg, Count, F, Q, ExpressionWrapper, FloatField
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -94,7 +94,12 @@ class AnalyticsDashboardView(LoginRequiredMixin, PermissionRequiredMixin, Templa
 
         table_occupancy = (
             occupancy_query.values("table__number")
-            .annotate(avg_occupancy=Avg("occupancy_rate"), total_revenue=Sum("total_revenue"))
+            .annotate(
+                avg_occupancy=ExpressionWrapper(
+                    F("usage_minutes") * 100.0 / (24 * 60), output_field=FloatField()
+                ),
+                total_revenue=Sum("total_revenue"),
+            )
             .order_by("-avg_occupancy")[:10]
         )
 
@@ -872,7 +877,16 @@ class TableOccupancyView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVi
                             day_occupancy = (
                                 occupancy_query.filter(
                                     table__number=table_num, date__week_day=weekday_idx + 1
-                                ).aggregate(avg=Avg("occupancy_rate"))["avg"]
+                                ).aggregate(
+                                    avg=Avg(
+                                        ExpressionWrapper(
+                                            F("usage_minutes") * 100.0 / (24 * 60),
+                                            output_field=FloatField(),
+                                        )
+                                    )
+                                )[
+                                    "avg"
+                                ]
                                 or 0
                             )
 
@@ -894,7 +908,12 @@ class TableOccupancyView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVi
                     for hour in range(24):
                         avg_occupancy = (
                             occupancy_query.filter(peak_usage_hour=hour).aggregate(
-                                avg=Avg("occupancy_rate")
+                                avg=Avg(
+                                    ExpressionWrapper(
+                                        F("usage_minutes") * 100.0 / (24 * 60),
+                                        output_field=FloatField(),
+                                    )
+                                )
                             )["avg"]
                             or 0
                         )
@@ -915,9 +934,14 @@ class TableOccupancyView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVi
                     day_data = []
                     for date in date_range:
                         avg_occupancy = (
-                            occupancy_query.filter(date=date).aggregate(avg=Avg("occupancy_rate"))[
-                                "avg"
-                            ]
+                            occupancy_query.filter(date=date).aggregate(
+                                avg=Avg(
+                                    ExpressionWrapper(
+                                        F("usage_minutes") * 100.0 / (24 * 60),
+                                        output_field=FloatField(),
+                                    )
+                                )
+                            )["avg"]
                             or 0
                         )
 
@@ -949,7 +973,12 @@ class TableOccupancyView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVi
                     for weekday_idx in range(7):
                         avg_occupancy = (
                             occupancy_query.filter(date__week_day=weekday_idx + 1).aggregate(
-                                avg=Avg("occupancy_rate")
+                                avg=Avg(
+                                    ExpressionWrapper(
+                                        F("usage_minutes") * 100.0 / (24 * 60),
+                                        output_field=FloatField(),
+                                    )
+                                )
                             )["avg"]
                             or 0
                         )
@@ -973,7 +1002,11 @@ class TableOccupancyView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVi
                 table_data = (
                     occupancy_query.values("table__number")
                     .annotate(
-                        avg_occupancy=Avg("occupancy_rate"),
+                        avg_occupancy=Avg(
+                            ExpressionWrapper(
+                                F("usage_minutes") * 100.0 / (24 * 60), output_field=FloatField()
+                            )
+                        ),
                         avg_revenue=Avg("total_revenue"),
                         avg_guests=Avg("total_guests"),
                         total_usage=Sum("usage_minutes"),
@@ -998,7 +1031,14 @@ class TableOccupancyView(LoginRequiredMixin, PermissionRequiredMixin, TemplateVi
                 context["table_data"] = table_data
 
             summary = {
-                "avg_occupancy": occupancy_query.aggregate(avg=Avg("occupancy_rate"))["avg"] or 0,
+                "avg_occupancy": occupancy_query.aggregate(
+                    avg=Avg(
+                        ExpressionWrapper(
+                            F("usage_minutes") * 100.0 / (24 * 60), output_field=FloatField()
+                        )
+                    )
+                )["avg"]
+                or 0,
                 "total_revenue": occupancy_query.aggregate(sum=Sum("total_revenue"))["sum"] or 0,
                 "total_orders": occupancy_query.aggregate(sum=Sum("total_orders"))["sum"] or 0,
                 "total_guests": occupancy_query.aggregate(sum=Sum("total_guests"))["sum"] or 0,
