@@ -361,9 +361,12 @@ class ReservationForm(forms.ModelForm):
             reservation.user = self.user
             reservation.created_by = self.user
 
+        reservation.reservation_date = self.cleaned_data.get("reservation_date")
+        reservation.reservation_date = self.cleaned_data.get("reservation_time")
+
         if self.cleaned_data.get("reservation_time") and self.cleaned_data.get("duration"):
             reservation_datetime = timezone.datetime.combine(
-                timezone.datetime.today(), self.cleaned_data["reservation_time"]
+                self.cleaned_data.get("reservation_date"), self.cleaned_data.get("reservation_time")
             )
             end_datetime = reservation_datetime + timezone.timedelta(
                 hours=self.cleaned_data["duration"]
@@ -402,8 +405,14 @@ class StaffReservationForm(ReservationForm):
             ).order_by("number")
 
         if self.instance.pk:
-            self.fields["table"].initial = self.instance.table
-            self.fields["status"].initial = self.instance.status
+            try:
+                self.fields["table"].initial = self.instance.table
+            except Reservation.table.RelatedObjectDoesNotExist:
+                pass
+            try:
+                self.fields["status"].initial = self.instance.status
+            except Reservation.status.RelatedObjectDoesNotExist:
+                pass
 
             if self.instance.dietary_preferences:
                 if self.instance.dietary_preferences.get("vegetarian"):
