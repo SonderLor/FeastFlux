@@ -22,14 +22,35 @@
                     <a href="{% url 'analytics:dashboard' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-chart-line me-2"></i> Панель управления
                     </a>
+                    <a href="{% url 'restaurants:restaurant_manage' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-building me-2"></i> Управление ресторанами
+                    </a>
                     <a href="{% url 'menu:menu_management' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-utensils me-2"></i> Управление меню
+                    </a>
+                    <a href="{% url 'menu:ingredient_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-pepper-hot me-2"></i> Ингредиенты
+                    </a>
+                    <a href="{% url 'menu:modifier_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-sliders-h me-2"></i> Модификаторы
+                    </a>
+                    <a href="{% url 'orders:discount_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-percentage me-2"></i> Скидки
+                    </a>
+                    <a href="{% url 'kitchen:cooking_stations' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-fire me-2"></i> Кухонные станции
                     </a>
                 {% endif %}
 
                 {% if user.is_kitchen_staff %}
                     <a href="{% url 'kitchen:kitchen_dashboard' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-fire me-2"></i> Панель кухни
+                    </a>
+                    <a href="{% url 'kitchen:kitchen_queue' user.restaurant.id %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-list-ol me-2"></i> Очередь заказов
+                    </a>
+                    <a href="{% url 'menu:menu_view' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-book-open me-2"></i> Просмотр меню
                     </a>
                 {% endif %}
 
@@ -39,6 +60,18 @@
                     </a>
                     <a href="{% url 'kitchen:waiter_tables' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-table me-2"></i> Столики
+                    </a>
+                    <a href="{% url 'kitchen:waiter_orders' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-receipt me-2"></i> Заказы
+                    </a>
+                    <a href="{% url 'kitchen:waiter_reservations' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-calendar-check me-2"></i> Бронирования
+                    </a>
+                    <a href="{% url 'orders:active_orders' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-spinner me-2"></i> Активные заказы
+                    </a>
+                    <a href="{% url 'orders:create_order' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-plus-circle me-2"></i> Создать заказ
                     </a>
                 {% endif %}
 
@@ -58,8 +91,40 @@
                     <h5>{{ user.restaurant.name }}</h5>
                     <p><i class="fas fa-map-marker-alt me-2"></i> {{ user.restaurant.address }}</p>
                     <p><i class="fas fa-phone me-2"></i> {{ user.restaurant.phone }}</p>
-                    <div class="d-grid">
-                        <a href="#" class="btn btn-outline-info">Подробнее</a>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'restaurants:restaurant_detail' user.restaurant.id %}" class="btn btn-outline-info">Подробнее</a>
+                        {% if user.is_admin or user.is_manager %}
+                        <a href="{% url 'restaurants:restaurant_edit' user.restaurant.id %}" class="btn btn-outline-primary">Редактировать</a>
+                        <a href="{% url 'restaurants:table_layout' user.restaurant.id %}" class="btn btn-outline-secondary">Столики</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Блок аналитики (для админов и менеджеров) -->
+        {% if user.is_admin or user.is_manager %}
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Аналитика</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="{% url 'analytics:sales_report' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-chart-bar me-2"></i> Отчет по продажам
+                        </a>
+                        <a href="{% url 'analytics:menu_analysis' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-chart-pie me-2"></i> Анализ меню
+                        </a>
+                        <a href="{% url 'analytics:staff_performance' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-user-check me-2"></i> Эффективность персонала
+                        </a>
+                        <a href="{% url 'analytics:table_occupancy' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-chair me-2"></i> Загруженность столиков
+                        </a>
+                        <a href="{% url 'analytics:customer_segmentation' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-users-cog me-2"></i> Сегментация клиентов
+                        </a>
                     </div>
                 </div>
             </div>

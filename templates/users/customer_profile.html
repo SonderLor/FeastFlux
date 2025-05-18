@@ -20,6 +20,12 @@
                 <a href="{% url 'restaurants:customer_reservation_history' %}" class="list-group-item list-group-item-action">
                     <i class="fas fa-calendar-alt me-2"></i> Бронирования
                 </a>
+                <a href="{% url 'orders:customer_menu_selection' %}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-shopping-cart me-2"></i> Сделать заказ
+                </a>
+                <a href="{% url 'orders:customer_cart' %}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-shopping-basket me-2"></i> Корзина
+                </a>
                 <!-- TODO Сделать пользователю избранное -->
                 <a href="#" class="list-group-item list-group-item-action">
                     <i class="fas fa-heart me-2"></i> Избранное
@@ -41,6 +47,29 @@
                 <div class="d-grid gap-2">
                     <a href="#" class="btn btn-outline-success">Использовать баллы</a>
                     <a href="#" class="btn btn-outline-primary">Как накопить больше?</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ближайшие бронирования -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Ближайшие бронирования</h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_reservations %}
+                    {% for reservation in upcoming_reservations %}
+                    <div class="mb-2 pb-2 border-bottom">
+                        <strong>{{ reservation.restaurant.name }}</strong>
+                        <div>{{ reservation.reservation_date|date:"d.m.Y" }} {{ reservation.reservation_time }}</div>
+                        <div>Гостей: {{ reservation.guests_count }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center">У вас нет предстоящих бронирований</p>
+                {% endif %}
+                <div class="d-grid mt-2">
+                    <a href="{% url 'restaurants:public_restaurants' %}" class="btn btn-outline-info">Забронировать столик</a>
                 </div>
             </div>
         </div>

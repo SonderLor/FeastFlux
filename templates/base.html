@@ -30,6 +30,93 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'restaurants:public_restaurants' %}">Рестораны</a>
                 </li>
+
+                <!-- Добавляем динамическое меню для авторизованных пользователей -->
+                {% if user.is_authenticated %}
+                    {% if user.is_admin or user.is_manager %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            Управление
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                            <li><a class="dropdown-item" href="{% url 'restaurants:restaurant_manage' %}">Управление ресторанами</a></li>
+                            <li><a class="dropdown-item" href="{% url 'orders:discount_list' %}">Управление скидками</a></li>
+                            <li><a class="dropdown-item" href="{% url 'kitchen:cooking_stations' %}">Кухонные станции</a></li>
+                            <li><a class="dropdown-item" href="{% url 'kitchen:kitchen_log' %}">Журнал кухни</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="menuDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            Меню
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="menuDropdown">
+                            <li><a class="dropdown-item" href="{% url 'menu:menu_management' %}">Управление меню</a></li>
+                            <li><a class="dropdown-item" href="{% url 'menu:ingredient_list' %}">Ингредиенты</a></li>
+                            <li><a class="dropdown-item" href="{% url 'menu:modifier_list' %}">Модификаторы</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="analyticsDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            Аналитика
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="analyticsDropdown">
+                            <li><a class="dropdown-item" href="{% url 'analytics:dashboard' %}">Обзор</a></li>
+                            <li><a class="dropdown-item" href="{% url 'analytics:sales_report' %}">Отчет по продажам</a></li>
+                            <li><a class="dropdown-item" href="{% url 'analytics:menu_analysis' %}">Анализ меню</a></li>
+                            <li><a class="dropdown-item" href="{% url 'analytics:staff_performance' %}">Эффективность персонала</a></li>
+                            <li><a class="dropdown-item" href="{% url 'analytics:table_occupancy' %}">Загруженность столиков</a></li>
+                            <li><a class="dropdown-item" href="{% url 'analytics:nutritional_analytics' %}">Пищевая ценность</a></li>
+                            <li><a class="dropdown-item" href="{% url 'analytics:customer_segmentation' %}">Сегментация клиентов</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    {% if user.is_kitchen_staff %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="kitchenDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            Кухня
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="kitchenDropdown">
+                            <li><a class="dropdown-item" href="{% url 'kitchen:kitchen_dashboard' %}">Панель кухни</a></li>
+                            <li><a class="dropdown-item" href="{% url 'menu:menu_view' %}">Просмотр меню</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    {% if user.is_waiter %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="waiterDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            Обслуживание
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="waiterDropdown">
+                            <li><a class="dropdown-item" href="{% url 'kitchen:waiter_dashboard' %}">Панель официанта</a></li>
+                            <li><a class="dropdown-item" href="{% url 'kitchen:waiter_tables' %}">Столики</a></li>
+                            <li><a class="dropdown-item" href="{% url 'kitchen:waiter_orders' %}">Заказы</a></li>
+                            <li><a class="dropdown-item" href="{% url 'kitchen:waiter_reservations' %}">Бронирования</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    {% if user.is_customer %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="ordersDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            Заказы
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="ordersDropdown">
+                            <li><a class="dropdown-item" href="{% url 'orders:customer_menu_selection' %}">Сделать заказ</a></li>
+                            <li><a class="dropdown-item" href="{% url 'orders:customer_cart' %}">Корзина</a></li>
+                            <li><a class="dropdown-item" href="{% url 'orders:customer_orders_history' %}">История заказов</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                {% endif %}
+
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'core:about' %}">О нас</a>
                 </li>
@@ -56,6 +143,7 @@
                         {% if user.is_admin or user.is_manager %}
                         <li><a class="dropdown-item" href="{% url 'users:staff_list' %}">Управление персоналом</a></li>
                         <li><a class="dropdown-item" href="{% url 'analytics:dashboard' %}">Панель управления</a></li>
+                        <li><a class="dropdown-item" href="{% url 'restaurants:restaurant_list' %}">Список ресторанов</a></li>
                         {% endif %}
                         {% if user.is_kitchen_staff %}
                         <li><a class="dropdown-item" href="{% url 'kitchen:kitchen_dashboard' %}">Панель кухни</a></li>
