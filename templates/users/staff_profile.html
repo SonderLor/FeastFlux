@@ -19,25 +19,25 @@
                     <a href="{% url 'users:staff_list' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-users me-2"></i> Управление персоналом
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'analytics:dashboard' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-chart-line me-2"></i> Панель управления
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'menu:menu_management' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-utensils me-2"></i> Управление меню
                     </a>
                 {% endif %}
 
                 {% if user.is_kitchen_staff %}
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'kitchen:kitchen_dashboard' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-fire me-2"></i> Панель кухни
                     </a>
                 {% endif %}
 
                 {% if user.is_waiter %}
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'kitchen:waiter_dashboard' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-clipboard me-2"></i> Панель официанта
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
+                    <a href="{% url 'kitchen:waiter_tables' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-table me-2"></i> Столики
                     </a>
                 {% endif %}
