@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load restaurants_tags %}
 
 {% block title %}{% if is_create %}Добавление ресторана{% else %}Редактирование ресторана{% endif %} | FeastFlux{% endblock %}
 
@@ -207,10 +208,14 @@
                                     <label class="form-label mb-0">{{ day|title }}</label>
                                 </div>
                                 <div class="col-md-4">
-                                    {{ form|getattribute:day|add:"_open" }}
+                                    {% with open_field_name=day|add:"_open" %}
+                                        {{ form|get_field:open_field_name }}
+                                    {% endwith %}
                                 </div>
                                 <div class="col-md-4">
-                                    {{ form|getattribute:day|add:"_close" }}
+                                    {% with close_field_name=day|add:"_close" %}
+                                        {{ form|get_field:close_field_name }}
+                                    {% endwith %}
                                 </div>
                             </div>
                             {% endfor %}

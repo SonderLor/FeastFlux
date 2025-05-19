@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load restaurants_tags %}
 
 {% block title %}Бронирования | {{ restaurant.name }} | FeastFlux{% endblock %}
 
@@ -84,23 +85,23 @@
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Ожидает подтверждения
-                            <span class="badge bg-warning text-dark rounded-pill">{{ reservations.filter.status='PENDING').count }}</span>
+                            <span class="badge bg-warning text-dark rounded-pill">{{ reservations|filter_by_status:"PENDING"|length }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Подтверждено
-                            <span class="badge bg-success rounded-pill">{{ reservations.filter.status='CONFIRMED').count }}</span>
+                            <span class="badge bg-success rounded-pill">{{ reservations|filter_by_status:"CONFIRMED"|length }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Отменено
-                            <span class="badge bg-danger rounded-pill">{{ reservations.filter.status='CANCELLED').count }}</span>
+                            <span class="badge bg-danger rounded-pill">{{ reservations|filter_by_status:"CANCELLED"|length }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Завершено
-                            <span class="badge bg-secondary rounded-pill">{{ reservations.filter.status='COMPLETED').count }}</span>
+                            <span class="badge bg-secondary rounded-pill">{{ reservations|filter_by_status:"COMPLETED"|length }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Не пришли
-                            <span class="badge bg-dark rounded-pill">{{ reservations.filter.status='NO_SHOW').count }}</span>
+                            <span class="badge bg-dark rounded-pill">{{ reservations|filter_by_status:"NO_SHOW"|length }}</span>
                         </li>
                     </ul>
                 </div>
