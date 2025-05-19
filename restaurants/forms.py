@@ -397,6 +397,7 @@ class StaffReservationForm(ReservationForm):
 
     def __init__(self, *args, **kwargs):
         self.restaurant = kwargs.pop("restaurant", None)
+        self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
         if self.restaurant:
